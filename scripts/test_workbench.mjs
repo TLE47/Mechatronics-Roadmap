@@ -316,6 +316,9 @@ async function main() {
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'studio2e', script: 'e2e_studio.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
+    // The split resource workspace: the only suite that proves a provider frame survives Expand,
+    // the divider and the phone pane toggle without being remounted.
+    { label: 'resources2e', script: 'e2e_resource_workspace.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-b', browser: true },
     { label: 'mobile2e', script: 'e2e_mobile.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     // These two used to be extra `npm run` steps queued behind a shard, each booting its own server

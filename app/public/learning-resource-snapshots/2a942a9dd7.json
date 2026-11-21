@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Checksum (\"Simple checksums\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Checksum",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:24.105Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Checksum"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "A checksum is a small-sized block of data derived from another block of digital data for the purpose of detecting errors that may have been introduced during its transmission or storage. By themselves, checksums are often used to verify data integrity but are not relied upon to verify data authenticity."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The procedure that generates this checksum is called a checksum function or checksum algorithm. Depending on its design goals, a good checksum algorithm usually outputs a significantly different value, even for small changes made to the input. This is especially true of cryptographic hash functions, which may be used to detect many data corruption errors and verify overall data integrity; if the computed checksum for the current data input matches the stored value of a previously computed checksum, there is a very high probability the data has not been accidentally altered or corrupted."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Checksum functions are related to hash functions, fingerprints, randomization functions, and cryptographic hash functions. However, each of those concepts has different applications and therefore different design goals. For instance, a function returning the start of a string can provide a hash appropriate for some applications but will never be a suitable checksum. Checksums are used as cryptographic primitives in larger authentication algorithms. For cryptographic systems with these two specific design goals,[clarification needed] see HMAC."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Check digits and parity bits are special cases of checksums, appropriate for small blocks of data (such as Social Security numbers, bank account numbers, computer words, single bytes, etc.). Some error-correcting codes are based on special checksums which not only detect common errors but also allow the original data to be recovered in certain cases."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Algorithms"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Parity byte or parity word"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The simplest checksum algorithm is the so-called longitudinal parity check, which breaks the data into \"words\" with a fixed number n of bits, and then computes the bitwise exclusive or (XOR) of all those words. The result is appended to the message as an extra word. In simpler terms, for n=1 this means adding a bit to the end of the data bits to guarantee that there is an even number of '1's. To check the integrity of a message, the receiver computes the bitwise exclusive or of all its words, including the checksum; if the result is not a word consisting of n zeros, the receiver knows a transmission error occurred."
+    },
+    {
+      "kind": "paragraph",
+      "text": "With this checksum, any transmission error that flips a single bit of the message, or an odd number of bits, will be detected as an incorrect checksum. However, an error that affects two bits will not be detected if those bits lie at the same position in two distinct words. Also, swapping of two or more words will not be detected. If the affected bits are independently chosen at random, the probability of a two-bit error being undetected is 1/n."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Sum complement"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A variant of the previous algorithm is to add all the \"words\" as unsigned binary numbers, discarding any overflow bits, and append the two's complement of the total as the checksum. To validate a message, the receiver adds all the words in the same manner, including the checksum; if the result is not a word full of zeros, an error must have occurred. This variant, too, detects any single-bit error, but the pro modular sum is used in SAE J1708."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Position-dependent"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The simple checksums described above fail to detect some common errors which affect many bits at once, such as changing the order of data words, or inserting or deleting words with all bits set to zero. The checksum algorithms most used in practice, such as Fletcher's checksum, Adler-32, and cyclic redundancy checks (CRCs), address these weaknesses by considering not only the value of each word but also its position in the sequence. This feature generally increases the cost of computing the checksum."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Fuzzy checksum"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The idea of fuzzy checksum was developed for detection of email spam by building up cooperative databases from multiple ISPs of email suspected to be spam. The content of such spam may often vary in its details, which would render normal checksumming ineffective. By contrast, a \"fuzzy checksum\" reduces the body text to its characteristic minimum, then generates a checksum in the usual manner. This greatly increases the chances of slightly different spam emails producing the same checksum. The ISP spam detection software, such as SpamAssassin, of cooperating ISPs submits checksums of all emails to the centralised service such as DCC. If the count of a submitted fuzzy checksum exceeds a certain threshold, the database notes that this probably indicates spam. ISP service users similarly generate a fuzzy checksum on each of their emails and request the service for a spam likelihood."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "General considerations"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A message that is m bits long can be viewed as a corner of the m-dimensional hypercube. The effect of a checksum algorithm that yields an n-bit checksum is to map each m-bit message to a corner of a larger hypercube, with dimension m + n. The 2m + n corners of this hypercube represent all possible received messages. The valid received messages (those that have the correct checksum) comprise a smaller set, with only 2m corners."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A single-bit transmission error then corresponds to a displacement from a valid corner (the correct message and checksum) to one of the m adjacent corners. An error which affects k bits moves the message to a corner which is k steps removed from its correct corner. The goal of a good checksum algorithm is to spread the valid corners as far from each other as possible, to increase the likelihood that typical transmission errors will end up in an invalid corner."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "paragraph",
+      "text": "General topic"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Algorithm",
+        "Check digit",
+        "Damm algorithm",
+        "Data rot",
+        "File verification",
+        "Fletcher's checksum",
+        "Frame check sequence",
+        "cksum",
+        "md5sum",
+        "sha1sum",
+        "Parchive",
+        "Sum (Unix)",
+        "SYSV checksum",
+        "BSD checksum",
+        "xxHash"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Error correction"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Hamming code",
+        "Reed–Solomon error correction",
+        "IPv4 header checksum"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Hash functions"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "List of hash functions",
+        "Luhn algorithm",
+        "Parity bit",
+        "Rolling checksum",
+        "Verhoeff algorithm"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "File systems"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Bcachefs, Btrfs, ReFS and ZFS – file systems that perform automatic file integrity checking using checksums"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Related concepts"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Isopsephy",
+        "Gematria",
+        "File fixity"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Further reading"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Koopman, Philip; Driscoll, Kevin; Hall, Brendan (March 2015). \"Cyclic Redundancy Code and Checksum Algorithms to Ensure Critical Data Integrity\" (PDF). Federal Aviation Administration. DOT/FAA/TC-14/49. Archived (PDF) from the original on 2015-05-18.",
+        "Koopman, Philip (2023). \"Large-Block Modular Addition Checksum Algorithms\". arXiv:2302.13432 [cs.DS]."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Additive Checksums (C) theory from Barr Group",
+        "Practical Application of Cryptographic Checksums *A4 *US-Letter *US-Letter two-column",
+        "Checksum Calculator",
+        "Open source python based application with GUI used to verify downloads."
+      ]
+    }
+  ]
+}

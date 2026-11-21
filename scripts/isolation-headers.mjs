@@ -13,4 +13,10 @@
 export const ISOLATION_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
+  // Frame URLs are the provider allowlist, not a wildcard. `default-src` is deliberately absent:
+  // this policy governs nested browsing contexts only, so the worker, wasm and blob URLs Pyodide
+  // needs are untouched. Every entry here is a provider the resolver can choose and the embed
+  // report has approved; an unknown host stays a link.
+  'Content-Security-Policy':
+    "frame-src 'self' https://futurecoder.io https://docs.python.org https://www.youtube-nocookie.com https://www.youtube.com",
 };

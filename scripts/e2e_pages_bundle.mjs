@@ -271,6 +271,8 @@ export function startStaticServer({ isolation = true, root = distDir, cacheContr
     if (isolation) {
       headers['Cross-Origin-Opener-Policy'] = 'same-origin';
       headers['Cross-Origin-Embedder-Policy'] = 'require-corp';
+      headers['Content-Security-Policy'] =
+        "frame-src 'self' https://futurecoder.io https://docs.python.org https://www.youtube-nocookie.com https://www.youtube.com";
     }
     // A regression fixture can make the document cache long-lived the way GitHub Pages does; the
     // normal suites leave this off so every request is served fresh.

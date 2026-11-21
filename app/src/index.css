@@ -1633,3 +1633,23 @@ number-flow {
 .lesson-compact [data-testid='guide-offer'] {
   display: none;
 }
+
+/* The reader's resource workspace: one column below xl (the Lesson/Resource toggle picks the
+   visible pane), and a lesson | divider | resource grid above it. The divider is a real grid track,
+   so a drag changes the two free shares and never remounts the framed provider. Expanded removes
+   the lesson track without unmounting it; the prose is hidden, not destroyed. */
+.reader-resource-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+@media (min-width: 1280px) {
+  .reader-resource-split[data-workspace='true'] {
+    grid-template-columns:
+      minmax(0, var(--lesson-share, 1fr)) 0.5rem
+      minmax(0, var(--resource-share, 1fr));
+  }
+  .reader-resource-split[data-workspace='true'][data-expanded='true'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

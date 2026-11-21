@@ -8,7 +8,7 @@
  * bundle does not have, and it cannot hide a lesson or lock a learner out.
  */
 
-export const FLAG_NAMES = ['guided_tour'] as const;
+export const FLAG_NAMES = ['guided_tour', 'resource_workspace'] as const;
 
 export type FlagName = (typeof FLAG_NAMES)[number];
 
@@ -22,7 +22,7 @@ export const MAX_ANNOUNCEMENT_CHARS = 280;
 export function defaultPublicSettings(): PublicSettings {
   return {
     announcement: '',
-    flags: { guided_tour: true },
+    flags: { guided_tour: true, resource_workspace: true },
   };
 }
 

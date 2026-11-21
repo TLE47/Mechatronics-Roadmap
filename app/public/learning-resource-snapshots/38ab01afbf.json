@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "title": "SparkFun — Accelerometer Basics",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/accelerometer-basics",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:26.278Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/accelerometer-basics"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "What is an Accelerometer?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Accelerometers are devices that measure acceleration, which is the rate of change of the velocity of an object. They measure in meters per second squared (m/s2) or in G-forces (g). A single G-force for us here on planet Earth is equivalent to 9.8 m/s2, but this does vary slightly with elevation (and will be a different value on different planets due to variations in gravitational pull). Accelerometers are useful for sensing vibrations in systems or for orientation applications."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you are unfamiliar with any of the topics below, you may want to read up on those before moving ahead with accelerometers."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Serial Peripheral Interface (SPI)"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Analog to Digital Conversion"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Pulse Width Modulation"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Logic Levels"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "I2C"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "How an Accelerometer Works"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Accelerometers are electromechanical devices that sense either static or dynamic forces of acceleration. Static forces include gravity, while dynamic forces can include vibrations and movement."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Accelerometers can measure acceleration on one, two, or three axes. 3-axis units are becoming more common as the cost of development for them decreases."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Generally, accelerometers contain capacitive plates internally. Some of these are fixed, while others are attached to minuscule springs that move internally as acceleration forces act upon the sensor. As these plates move in relation to each other, the capacitance between them changes. From these changes in capacitance, the acceleration can be determined."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Other accelerometers can be centered around piezoelectric materials. These tiny crystal structures output electrical charge when placed under mechanical stress ( e.g. acceleration)."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "How to Connect to an Accelerometer"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For most accelerometers, the basic connections required for operation are power and the communication lines. As always, read the datasheet to ensure proper connections are made."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Communication Interface"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Accelerometers will communicate over an analog, digital, or pulse-width modulated connection interface."
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Analog - Accelerometers with an analog interface show accelerations through varying voltage levels. These values generally fluctuate between ground and the supply voltage level. An ADC on a microcontroller can then be used to read this value. These are generally less expensive than digital accelerometers.",
+        "Digital - Accelerometers with a digital interface can either communicate over SPI or I2C communication protocols. These tend to have more functionality and be less susceptible to noise than analog accelerometers.",
+        "Pulse-Width Modulation (PWM) - Accelerometers that output data over pulse-width modulation (PWM) output square waves with a known period, but a duty cycle that varies with changes in acceleration."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Power"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Accelerometers are generally low-power devices. The required current typically falls in the micro (µ) or milli-amp range, with a supply voltage of 5V or less. The current consumption can vary depending on the settings (e.g., power saving mode versus standard operating mode). These different modes can make accelerometers well suited for battery powered applications."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Make sure that proper logic levels are matched, especially with the digital interfaces."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "How to Select an Accelerometer"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When choosing which accelerometer to use, several features are important to consider including power requirements and communication interfaces as discussed previously. Additional features for consideration are below."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Range"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Most accelerometers will have a selectable range of forces they can measure. These ranges can vary from ±1g up to ±250g. Typically, the smaller the range, the more sensitive the readings will be from the accelerometer. For example, to measure small vibrations on a tabletop, using a small-range accelerometer will provide more detailed data than using a 250g range (which is more suited for rockets)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Additional Features"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Some accelerometers include features such as tap detection (useful for low-power applications), free-fall detection (used for Active Hard Drive Protection), temperature compensation (to increase accuracy in dead reckoning situations ) and 0-g range sensing, which are other features to take into consideration when purchasing an accelerometer. The need for these types of features on the accelerometer will be determined by the application in which the accelerometer is incorporated."
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are also IMUs (Inertial Measurement Units) available, which can include accelerometers, gyroscopes and even, occasionally, magnetometers into a single IC package or board. Some examples of this include the MPU6050 and MPU9150. These are commonly used in motion tracking applications and UAV guidance systems, where location and orientation of an object is important."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Purchasing an Accelerometer"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now that you've learned the abc's of the x's, y's, and z's, take a look at our recommended accelerometers from the SparkFun catalog"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Our Recommendations:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For a more in-depth look at choosing an accelerometer, take a look at our buying guide to find the right fit for your project."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Resources and Going Further"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You should now have all the basic tools and skills required to implement an accelerometer in your own project."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Please check out the following links, to learn more about accelerometers:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Accelerometer Buying Guide",
+        "MMA8452Q Accelerometer Breakout Hookup Guide",
+        "The Uncertain 7-Cube",
+        "Das Blinken Top Hat"
+      ]
+    }
+  ]
+}

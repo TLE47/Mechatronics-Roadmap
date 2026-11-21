@@ -1,6 +1,6 @@
 # Learning Resources — Phase 0 Repository Audit
 
-**Status:** Phase 0 complete. The approved external-first Phase 1/2 slice, including internal lesson routing and explicit local-file fallback, is implemented; the embedded workspace remains deferred. See §10.
+**Status:** Phase 0 complete. The external-first slice (§10), the credentialless embedded workspace, native player facade, embed verifier and gates (§11), and Reader Mode for every licence-cleared source (§11.1) are implemented. §4 records the per-source licensing verdicts and conditions; §11.1 records the snapshot scope, the visible attribution surface and the remaining counsel caveat. This page keeps the Phase 0 findings as written; §11 records the decisions that followed.
 **Date:** 20 November 2026
 **Plan:** `MechaLab Upgrade.txt` — Hybrid External Learning Workspace
 **Scope reviewed:** `track-p`, `stage-0`, the eight numbered tracks, `modules`, `resources`, the reader payload pipeline, the workbench `.tsx` surface, the service worker, CI, and the existing link checker.
@@ -13,13 +13,15 @@ The plan's first phase asked for an architecture audit before any broad code cha
 
 > **The proposed embedded split view cannot ship as written under MechaLab's existing cross-origin isolation policy.** The document is served with `COEP: require-corp` so `SharedArrayBuffer` can back the in-place Python Stop/Pause controls. A cross-origin iframe must therefore send a compatible `Cross-Origin-Resource-Policy` (CORP) header. None of the P.1 resources does. The repository already documents this exact constraint in [`docs/VERIFICATION.md`](VERIFICATION.md) and [`docs/PLAN-2.0-GAP.md`](PLAN-2.0-GAP.md): "A link and not an `iframe` is a requirement, not a preference."
 
+> **Update (see §11):** the obstacle was an *ordinary* frame. A `credentialless` iframe gives the provider no credentials or shared storage while the top document stays isolated, and that is the surface that shipped for futurecoder and the Python docs. The findings below remain the evidence for why an ordinary frame is not the answer and why blocked providers stay links.
+
 The rest of the audit is favourable to the plan:
 
 - Lesson Markdown **is** a usable single source of truth. The lesson/module set contains **159 authored `Primary`/`Alternative` resource lines across 51 files** (**155 external links**), with **111 unique external URLs across 16 domains**.
 - The generated reader payload and the workbench reader already render those sections as ordinary outbound links. There is no resource registry, resolver, reading-guide model, provider allowlist, or workspace yet.
 - The P.1 pilot is smaller than the plan assumes: **4 resource entries, 2 unique URLs** (futurecoder and CS50P). P.1 does **not** cite `docs.python.org`; the official Python docs are cited elsewhere. The plan's "three pilot providers" should be corrected to "two providers and two unique URLs".
 - The same URL can appear as both primary and alternative in one lesson with different instructions. P.1's futurecoder URL and CS50P URL each appear twice. The plan's `id = lessonId:shortHash(url)` would collide; the registry needs a stable **occurrence** identity or a merged guide with per-idea sections.
-- A conservative, useful first release is still possible: generated registry + authored reading guides + an external resource card/launcher, using the existing browser split-view guidance. The iframe workspace should be deferred until a deliberate isolation decision is made and browser-tested.
+- A conservative, useful first release is still possible: generated registry + authored reading guides + an external resource card/launcher, using the existing browser split-view guidance. The iframe workspace was subsequently shipped after a deliberate isolation decision and browser tests; Reader Mode followed for permission-cleared text (§11.1).
 
 The implemented slice is one generated read path, with three honest dispositions at the end of it:
 
@@ -211,30 +213,47 @@ No browser embed test was run in Phase 0. The repository's existing documentatio
 
 ## 4. Licensing matrix
 
-This is a **permission-to-reproduce** audit, not a legal opinion. Reader Mode (any local snapshot, excerpt, or adaptation) remains deferred. The safe default for every resource is: **link out, show the authored guide, never rehost the content**.
+This is a **permission-to-reproduce** audit, not a legal opinion. It records both the permission verdict
+and the obligations the Reader Mode build carries. Reader Mode now ships 70 text-only snapshots for
+the seven `reuse: allowed` providers; every `reuse: no` or `unknown` source remains a link. The
+snapshot builder, the attribution surface and the condition guard are recorded in §11.1. Verified
+2026-11-21.
 
-| Provider | Material in the course | License / terms | Reproduction / adaptation | Embedding | Phase 0 decision |
+| Provider | Material in the course | License / terms | Snapshot + adaptation | Embedding | Reader Mode decision |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| futurecoder | Interactive Python course | Repository code: MIT (`github.com/alexmojaki/futurecoder`). Confirm asset-level exceptions before copying prose or images. | Do not copy course prose into the app until confirmed. | Header-permitted, but blocked by app COEP. | Link + guide only. |
-| Harvard CS50P | Lecture notes | CC BY-NC-SA 4.0 (`cs50.harvard.edu/python/license/`) | Attribution, non-commercial, share-alike; not suitable for un-attributed Reader Mode excerpts. | `X-Frame-Options: SAMEORIGIN` and `frame-ancestors 'self'` — forbidden. | Link + guide only. |
-| Python docs | Language/library docs | PSF License v2 (`docs.python.org/3/license.html`) | Reproduction allowed with the PSF notice; still requires attribution and care. | Header-permitted, but blocked by app COEP. | Link + guide only; Reader Mode deferred. |
-| YouTube | Videos | YouTube Terms (`youtube.com/t/terms`) | No downloading or rehosting; use the official player. | Official `youtube-nocookie.com/embed/` player sends CORP: cross-origin. | The only verified embeddable renderer; use a click-to-load facade, never a raw watch-page iframe. |
-| SparkFun | Tutorials | Terms not audited (`sparkfun.com/terms`) | Unknown. | `X-Frame-Options: DENY`. | Link only. |
-| PhET | Simulations | Licensing page (`phet.colorado.edu/en/licensing`) — not audited in detail | Unknown; do not copy simulation assets. | Provider forbids framing. | Link only. |
-| Wikipedia | Reference articles | CC BY-SA 4.0 (`en.wikipedia.org/wiki/Wikipedia:Copyrights`) | Attribution/share-alike if adapted; do not imply endorsement. | No CORP; blocked by app COEP. | Link + guide only. |
-| Physics Classroom | Tutorials | Terms not audited | Unknown. | No CORP; blocked by app COEP. | Link only. |
-| MathsIsFun | Explanations | Terms not audited | Unknown. | No CORP; blocked by app COEP. | Link only. |
-| AllAboutCircuits | Textbook | Terms not audited | Unknown. | XFO SAMEORIGIN. | Link only. |
-| MyPhysicsLab | Simulations | Terms not audited | Unknown. | No CORP; blocked by app COEP. | Link only. |
-| BetterExplained | Articles | Terms not audited | Unknown. | XFO SAMEORIGIN (despite CORP). | Link only. |
-| Hades / Modern Robotics | Textbook | Copyright; free preprint/videos | Do not rehost. | No CORP. | Link only. |
-| MIT OCW | Course | OCW terms; likely CC BY-NC-SA, verify | Do not copy without attribution/license review. | No CORP. | Link only. |
-| Underactuated Robotics | Textbook | Copyright; free online | Do not rehost. | No CORP. | Link only. |
-| FBS / Åström–Murray | Textbook | Copyright; free PDF | Do not rehost. | No CORP. | Link only. |
-| DataBook | Textbook | Copyright; free PDF | Do not rehost. | XFO SAMEORIGIN. | Link only. |
-| TI | Application notes | TI terms | Do not rehost. | XFO/frame-ancestors restrict to TI. | Link only. |
+| futurecoder | Interactive Python course | MIT ([repository LICENSE](https://github.com/alexmojaki/futurecoder/blob/main/LICENSE.txt)); course chapters in [`core/chapters/`](https://github.com/alexmojaki/futurecoder/tree/main/core/chapters). | **Yes** — retain the MIT notice; no trademark or logo; text/code only; per-asset check for images and linked videos. | No framing denial; a credentialless frame works under COEP. | Clear for text/code; text snapshot shipped. |
+| Python docs | Language/library docs | PSF-2.0 ([license](https://docs.python.org/3/license.html)); examples, recipes and code also 0BSD. | **Yes** — retain the PSF licence and copyright notice; include a brief summary of changes; no trademark or logo; check each page for third-party material. | No framing denial; a credentialless frame works under COEP. | Clear for text/code; text snapshot shipped. |
+| Wikipedia | Reference articles | CC BY-SA 4.0 ([copyrights](https://en.wikipedia.org/wiki/Wikipedia:Copyrights)); images have separate licences. | **Yes** — attribution and a link to the article; share-alike; indicate changes; text only. | No CORP; blocked by app COEP. | Clear for text; text snapshot shipped with attribution, share-alike and change notice. |
+| SparkFun | Tutorials | CC BY-SA 4.0 tutorial text; MIT code; images may be CC BY-NC-SA ([tutorial footer](https://learn.sparkfun.com/tutorials/what-is-gps-rtk/all)). | **Yes, share-alike** — attribution, share-alike, indicate changes; check each tutorial footer and each image. | `X-Frame-Options: DENY`. | Clear for text with attribution/share-alike; text snapshot shipped, images excluded. |
+| Harvard CS50P | Lecture notes | CC BY-NC-SA 4.0 ([license](https://cs50.harvard.edu/python/license/)). | **Yes, non-commercial only** — attribution, share-alike, indicate changes; per-asset check. | `X-Frame-Options: SAMEORIGIN` and `frame-ancestors 'self'` — forbidden. | Conditional; text snapshot shipped for non-commercial use. |
+| BetterExplained | Articles | CC BY-NC-SA 3.0 US ([about](https://betterexplained.com/about/)). | **Yes, non-commercial only** — attribution, share-alike, indicate changes; commercial use needs the author's permission. | `X-Frame-Options: SAMEORIGIN`. | Conditional; text snapshot shipped for non-commercial use. |
+| MIT OCW | Course | CC BY-NC-SA 4.0 ([terms](https://ocw.mit.edu/terms/)). | **Yes, non-commercial only** — attribution, share-alike, indicate changes; check course-specific third-party material; MIT name/logo restrictions. | No CORP. | Conditional; no MIT OCW resource is authored in the current registry, so no snapshot is shipped. |
+| FBSwiki | Textbook wiki | FBSwiki: CC BY-NC-SA 4.0 ([wiki](https://www.fbsbook.org/)); linked book PDF is Princeton copyright, personal use only. | **Yes, wiki only, non-commercial** — attribution, share-alike, indicate changes; do not snapshot the PDF. | No CORP. | Conditional for wiki; text snapshot shipped, linked PDF excluded. |
+| PhET | Simulations | CC BY-NC 4.0 simulation files ([licensing](https://phet.colorado.edu/en/licensing)); page text separate. | **Not cleared for text** — simulation files permit non-commercial adaptation with exact attribution and logo; the page text needs a separate decision. | `X-Frame-Options: SAMEORIGIN` and `frame-ancestors 'self'` — forbidden. | Not a text candidate; link only. |
+| Falstad | Simulations | Custom permission: non-commercial applet modification/redistribution with credit and link ([licensing](https://www.falstad.com/licensing.html)); page text unstated. | **Not cleared for text** — applets only; third-party code may add restrictions. | No CORP; link-only. | Not a text candidate; link only. |
+| MyPhysicsLab | Simulations | Apache-2.0 software ([docs](https://www.myphysicslab.com/develop/docs/Building.html)); website prose licence unstated. | **Code only** — Apache-2.0 licence/NOTICE and change notices; prose needs permission. | No CORP; blocked by app COEP. | No for prose; link only. |
+| Wokwi docs | Documentation | Wokwi Terms of Service ([terms](https://wokwi.com/legal/terms)); content licence not stated. | **Not cleared** — permission required; project pages require authentication. | Documentation is link-only. | No. |
+| Physics Classroom | Tutorials | Copyright; usage policy explicitly prohibits downloading and reuse in other projects ([About](https://www.physicsclassroom.com/About)). | **No** — use of text, images or animations in other projects is prohibited, including non-profit ones; permission requests are denied. | No CORP; blocked by app COEP. | No. |
+| HyperPhysics | Reference pages | Copyright © C.R. Nave; copying or mirroring needs authorization ([home](https://hyperphysics.gsu.edu/)). | **No without permission** — personal/classroom use only; the author is open to non-profit proposals. | TLS certificate mismatch in the Phase 0 probe; never embedded. | No. |
+| Hades / Modern Robotics | Textbook | Cambridge University Press copyright; free preprint is not open-licensed; the wiki page states no content licence ([page](https://hades.mech.northwestern.edu/index.php/Modern_Robotics)). | **No** — permission required. | No CORP. | No. |
+| Underactuated Robotics | Textbook | Notes © Russ Tedrake ([book](https://underactuated.mit.edu/)); code BSD-3-Clause (LICENSE.TXT in the book repository). | **No for prose; code only** — code with the BSD notice; prose needs permission. | No CORP. | No for prose. |
+| DataBook | Textbook | Cambridge University Press copyright; no reuse licence found ([book](https://databookuw.com/)). | **No** — permission required. | `X-Frame-Options: SAMEORIGIN`. | No. |
+| AllAboutCircuits | Textbook | Copyright © EETech Group; all rights reserved ([site](https://www.allaboutcircuits.com/)). | **No** — permission required. | `X-Frame-Options: SAMEORIGIN`. | No. |
+| MathsIsFun | Explanations | Copyright © Rod Pierce; no reuse licence found ([link-to-us](https://www.mathsisfun.com/link-to-us.html)). | **No** — permission required. | No CORP; blocked by app COEP. | No. |
+| Dynapar | Reference article | Copyright; no reuse licence found ([site](https://www.dynapar.com/)). | **No** — permission required. | No CORP; link-only. | No. |
+| TI | Application notes | TI terms; application notes are copyrighted. | **No** — no rehosting. | `X-Frame-Options`/`frame-ancestors` restrict to TI. | No. |
+| YouTube | Videos | YouTube Terms of Service ([terms](https://www.youtube.com/t/terms)). | **No** — no downloading or rehosting; official player only. | Official `youtube-nocookie.com/embed/` player sends CORP: cross-origin. | No; embed only. |
 
-**Reader Mode remains out of scope.** None of the P.1 material has been cleared for local reproduction. A future Reader Mode needs a per-resource license decision and an attribution surface; it cannot be inferred from "free to read".
+**Reader Mode is implemented for the seven permitted providers.** The build ships 70 unique text-only
+snapshots (95 authored occurrences) under `app/public/learning-resource-snapshots/`; the generator
+refuses a `reuse: allowed` record without a matching snapshot, and the resolver refuses a snapshot
+whose conditions are not all in `readerRights.satisfied`. No source with `reuse: no` or `unknown` has
+a snapshot path. The visible surface carries the publisher, original URL, licence, change notice and
+the condition list; images, tables, scripts and navigation are excluded. Python docs and futurecoder
+are clear without non-commercial or share-alike terms; Wikipedia and SparkFun add share-alike; CS50P,
+BetterExplained and the FBSwiki add non-commercial; PhET, Falstad, MyPhysicsLab and Wokwi are not
+cleared for text; the remaining sources are link-only. This remains a licence review, not legal
+advice.
 
 ---
 
@@ -297,7 +316,9 @@ The registry must be generated; it must not be a second manually maintained list
 The external-first slice implements the generator, JSON, index, panel, registry, resolver, and test
 rows below, and the two documentation rows it owes: the isolation decision and drift gate are in
 [`docs/VERIFICATION.md`](VERIFICATION.md), and the authoring contract is §8 of
-[`docs/QUALITY_SPEC.md`](QUALITY_SPEC.md). The provider/renderer rows remain deferred with Phase 3.
+[`docs/QUALITY_SPEC.md`](QUALITY_SPEC.md). The provider/renderer rows are implemented in §11; where
+this Phase 0 proposal named `types.ts`, `urlSafety.ts` or `resolveResource.ts`, the shipped code puts
+those responsibilities in `registry.ts`, `resolver.ts` and `providers.ts`.
 
 ### New files
 
@@ -325,7 +346,7 @@ rows below, and the two documentation rows it owes: the isolation decision and d
 | `app/src/components/LessonReader.tsx` | Mount a resource entry point only when the current lesson has a registry record. Do not alter reading position, notes, or progress. |
 | `app/src/index.css` | Only if the approved panel/card needs tokens; reuse existing `bg-panel`, `border-line`, `text-muted`, etc. |
 | `docs/VERIFICATION.md` | Record the final isolation/embedding decision so a future plan cannot silently reintroduce an iframe. |
-| `docs/QUALITY_SPEC.md` | Add the resource-authoring rules: primary/alternative, guide fields, provider allowlist, no local snapshots. |
+| `docs/QUALITY_SPEC.md` | Add the resource-authoring rules: primary/alternative, guide fields, provider allowlist, licensed text snapshots only, and the external fallback. |
 
 ### Explicitly not changed
 
@@ -334,7 +355,7 @@ rows below, and the two documentation rows it owes: the isolation decision and d
 - `app/public/lesson-pages/**` payloads (resource data stays separate and lazy).
 - `app/public/sw.js` external caching (third-party pages must not be cached).
 - Progress, notes, FSRS, gamification, or auth stores.
-- No backend, no proxy, no rehosting.
+- No backend, no proxy; text snapshots are checked in only for permission-cleared sources.
 
 ---
 
@@ -352,7 +373,7 @@ rows below, and the two documentation rows it owes: the isolation decision and d
 | 8 | Iframe lifecycle/persistence cannot be tested because no P.1 provider embeds. | High | Defer to a browser spike after an isolation decision. |
 | 9 | The LessonReader already sits beside the editor; a third pane is not viable at common widths. | High | Use a panel/sheet from the reader; do not add a third column to Study. |
 | 10 | External resources are not offline; the service worker does not cache them. | Medium | Say so in the UI; do not cache third-party content. |
-| 11 | Reader Mode licensing is unresolved. | High | Keep deferred; no excerpts/snapshots. |
+| 11 | Reader Mode snapshots could outrun their permission. | High | Mitigated: the generator refuses a `reuse: allowed` resource without a snapshot; the resolver requires every recorded condition in `readerRights.satisfied`; the reader shows the licence, attribution and change notice. The non-commercial/share-alike product decision is recorded in §11.1; counsel review remains prudent. |
 | 12 | Progress and lesson state must remain authoritative. | Medium | The resource layer is read-only; no new progress writes. |
 | 13 | `check_links.py` treats futurecoder as an SPA and cannot verify chapter headings. | Medium | Preserve `[verify in-app]`; do not claim heading verification. |
 | 14 | No CSP is served by GitHub Pages; adding embedded frames would widen the attack surface. | Medium | External links only; no untrusted embeds without a provider allowlist. |
@@ -382,7 +403,7 @@ Keep the existing "Split view" tip and make no registry/UI changes. This is the 
 1. **Phase 1:** generate the registry for the 159 authored lines / 111 unique URLs (155 external links); fail `--check` on unparsed resource lines; add fixtures for P.1, the nested-bracket line, local links, and duplicate URLs.
 2. **Phase 2:** P.1 pilot with four resource cards and authored reading guides; "Open resource" opens the external site in a new tab; local Markdown links route to their lesson's `?lesson=` address, and an unserved local file stays visible with a reason; the existing browser split-view tip remains the side-by-side mechanism. No iframe.
 3. **Defer Phase 3** (embedded workspace) until the isolation decision is made and a browser spike proves it.
-4. **Phase 4/5:** hardening, then Reader Mode only with explicit licensing.
+4. **Phase 4/5:** hardening, then Reader Mode for permission-cleared text with the visible conditions recorded in §11.1.
 
 This is a plan revision, not a rejection of the goal. The authored reading guides are the part that keeps learners oriented; the iframe was the delivery mechanism that conflicts with the runtime.
 
@@ -393,14 +414,15 @@ This is a plan revision, not a rejection of the goal. The authored reading guide
 - [x] Repository architecture inspected.
 - [x] Complete external-domain inventory generated (`learning-resources-domains.json`).
 - [x] Embedding compatibility matrix produced from live headers.
-- [x] Licensing matrix produced; Reader Mode kept deferred.
+- [x] Licensing matrix produced; Reader Mode implemented for the seven permitted providers.
 - [x] Existing pipeline diagrammed; proposed pipeline documented.
 - [x] File-by-file change list written.
 - [x] Risks/blockers and scope recommendation written.
 - [x] **Plan review / isolation decision** — external-first path approved.
 - [x] Phase 1 registry implementation — completed in §10.
 - [x] Phase 2 external-first UI, including local lesson routing — completed in §10.
-- [ ] Phase 3 workspace — blocked by the COEP/CORP finding.
+- [x] Phase 3 workspace — shipped in §11 with credentialless frames and blocked providers kept external.
+- [x] Reader Mode decision recorded and implemented — text-only snapshots ship for permission-cleared providers, with condition enforcement, attribution and a link-only fallback (§11.1).
 
 **No application code was changed in Phase 0.** The seven pre-existing walkthrough files in the worktree are unrelated and remain untouched; this audit adds only `docs/learning-resources-audit.md` and `docs/learning-resources-domains.json`.
 
@@ -408,8 +430,10 @@ This is a plan revision, not a rejection of the goal. The authored reading guide
 
 ## 10. Post-audit implementation — external-first slice
 
-The approved path A is implemented. The embedded split view, native YouTube facade, and Reader Mode
-remain deferred; no provider in P.1 can be embedded under the current isolation policy.
+This section records the external-first slice that shipped first. The credentialless workspace, the
+native YouTube facade and the embed verifier shipped afterwards — §11 records them. Reader Mode for
+permission-cleared sources shipped after that — §11.1 records the 70 text-only snapshots and their
+conditions; the per-source licence question is answered in §4.
 
 **Added**
 
@@ -460,8 +484,9 @@ touched.
   Board card finding so a later plan cannot quietly reintroduce an embed.
 - [`docs/QUALITY_SPEC.md`](QUALITY_SPEC.md) §8 is the resource-line contract: one primary and one
   alternative per idea, a required link, the authored read/skip/takeaway, occurrence-not-URL cards,
-  relative-link handling, no rehosting or framing, a read-only panel, and the generate/check/test
-  commands; §5's definition of done now requires the resource check to be green.
+  relative-link handling, licensed text snapshots only, no unlicensed rehosting, no guessed framing,
+  a read-only panel, and the generate/check/test commands; §5's definition of done now requires the
+  resource check to be green.
 - [`docs/README.md`](README.md) indexes this audit under "How a claim is checked".
 
 **Browser evidence**
@@ -483,30 +508,170 @@ explicit local-file reason. The resolver suite covers all 155 external entries.
 
 **Still open**
 
-- Phase 3 embedded workspace: blocked by COEP/CORP; no P.1 provider qualifies. The decision is now
-  recorded in [`docs/VERIFICATION.md`](VERIFICATION.md) and in §8 of
-  [`docs/QUALITY_SPEC.md`](QUALITY_SPEC.md), so it needs a deliberate isolation change and a browser
-  spike rather than a resource-layer edit.
-- Reader Mode: deferred pending per-provider licensing; no excerpt or snapshot exists.
+- Phase 3 embedded workspace: **shipped in §11** without changing the top-level isolation policy.
+  A provider with no CORP is framed with the `credentialless` content attribute; a blocked or
+  unverified one is an external card.
+- Reader Mode: 70 text-only snapshots ship for the seven `reuse: allowed` providers; non-permitted sources remain links. §11.1 records the conditions and the counsel caveat.
 - Provider pages themselves are external and not cached; no offline claim is made for them.
 
 **Questions for the maintainer**
 
-- **Q1 — an isolation decision, not a code change.** Should MechaLab change its cross-origin
-  isolation policy, or add a separate, deliberately non-isolated resource window, so provider pages
-  can be framed? The evidence is §3: the workbench needs `COEP: require-corp` for
-  `SharedArrayBuffer` and the Python Stop/Pause, CS50P sends `X-Frame-Options: SAMEORIGIN` with
-  `frame-ancestors 'self'`, futurecoder sends no CORP, and **0 of P.1's 2 unique URLs is embeddable**
-  (point-in-time header probe, 20 November 2026). Either answer needs a Chromium/Firefox/Safari
-  matrix, a security review, a provider-terms review, and a browser test that Stop/Pause still works;
-  none of that can be settled by editing the resource layer. The recommended answer remains
-  external-first.
-- **Q2 — a licensing decision, not a code change.** Which providers, if any, permit a local excerpt
-  or snapshot in Reader Mode, and what attribution would ship beside it? §4 records CS50P's
-  CC BY-NC-SA 4.0, futurecoder's MIT code with asset-level exceptions to confirm, the PSF licence for
-  the Python docs, and the providers whose terms were not audited; "free to read" is not permission
-  to reproduce. Until that list is answered provider by provider, no excerpt, snapshot or local copy
-  is stored or served.
+- **Q1 — resolved in §11 without changing the isolation policy.** The top-level document keeps
+  `COEP: require-corp` for `SharedArrayBuffer` and the Python Stop/Pause. A provider that sends no
+  CORP is framed only with the HTML `credentialless` attribute, which gives the frame no credentials
+  or shared storage; a provider that refuses framing (CS50P, SparkFun, PhET, BetterExplained) is an
+  external card. The Chromium path is proven by `npm run test:e2e:resources`; Firefox and Safari fall
+  back to the external card when they do not support the attribute. Provider terms remain a review,
+  not a legal opinion.
+- **Q2 — answered as a per-source licensing matrix in §4 and implemented in §11.1.**
+  Python docs (PSF-2.0) and futurecoder (MIT, text/code) permit a build-time snapshot with notice.
+  Wikipedia and SparkFun add share-alike; CS50P, BetterExplained and the FBSwiki add non-commercial
+  (and mostly share-alike); PhET, Falstad, MyPhysicsLab and Wokwi are not cleared for text; the rest
+  are link-only. The app ships only text for the seven permitted providers, with the recorded conditions
+  shown beside the snapshot. "Free to read" is still not permission to reproduce.
+
+## 11. Phase 3–4 — the workspace, its policy, and its gates
+
+The embedded workspace ships for the providers that actually permit it, while the app keeps
+`COEP: require-corp` for `SharedArrayBuffer`. The mechanism is the HTML `credentialless` iframe
+attribute, set imperatively after React mounts the frame and **before** `src` is assigned; ordinary
+React rendering drops the boolean attribute, and without it a no-CORP provider is refused with
+`net::ERR_BLOCKED_BY_RESPONSE`. The top-level document stays isolated, and the frame gets no
+credentials or shared storage. The policy is explicit: an unknown host never reaches the iframe path,
+and an approved host still needs a fresh `embeddable` report entry with method `corp` or
+`credentialless`.
+
+**Evidence.** `scripts/verify_resource_embeds.py --write` probed 16 hosts: 12 embeddable (all
+credentialless, none with CORP) and 4 blocked (CS50P, SparkFun, PhET, BetterExplained). The report is
+[`docs/learning-resources-embeds.json`](learning-resources-embeds.json); `--check` gates host coverage
+and a 45-day freshness window, and `.github/workflows/embeds.yml` re-probes weekly with
+`--revalidate`, failing without writing when a provider's verdict moves.
+
+**Workspace.** The reader splits its own prose rather than adding a third workbench column:
+[`app/src/features/learning-resources/ResourceWorkspace.tsx`](../app/src/features/learning-resources/ResourceWorkspace.tsx)
+renders the authored [`ReadingGuide`](../app/src/features/learning-resources/ReadingGuide.tsx) and a
+renderer choice from [`resolver.ts`](../app/src/features/learning-resources/resolver.ts) — iframe,
+native YouTube facade, external card, licensed Reader Mode snapshot, internal lesson, or an explicit
+unavailable reason. A permitted source with a snapshot offers a **Reader** toggle; a source whose
+frame is blocked opens its snapshot directly, and a source with no permission never receives one.
+`ResourceView.tsx` is the only frame surface; it adds offline and 12-second timeout states without
+unmounting the frame. The divider is a real `role="separator"` with
+pointer capture and Arrow/Home/End control, the split is stored in
+`mechalab_resource_workspace_v1` (clamped 30–70%), and Expand / the phone Lesson–Resource toggle are
+CSS-only changes around the same DOM node. A public `resource_workspace` site flag is the kill switch.
+The frame URL is bounded by a `frame-src` CSP in the dev server, the service worker and the
+built-bundle test server; there is no wildcard.
+
+**Gates and browser evidence.** `npm run test:resources` now includes the generator check, 20 Python
+tests (registry plus embed classifier/report and the CSP surfaces), 16 Node resolver/loader checks and 7 workspace
+arithmetic/persistence checks. `npm run test:e2e:resources` drives P.1 in Chromium: it reads the
+`credentialless` attribute and futurecoder URL, marks the frame, presses Expand, ArrowRight/End/Home
+and the phone toggle, and finds the marker still present. It first opens Reader directly from a card
+in the sheet and checks the external link is still there, then switches the workspace to Reader Mode,
+checks the MIT notice and snapshot text, returns to the interactive page, selects CS50P and asserts
+its authored non-commercial snapshot with zero iframes. It finishes on 00.1 with Physics Classroom,
+asserting an external card, zero snapshots and the original link, and that only the SparkFun card has
+a direct Reader action. The frame actually loaded
+futurecoder's course page in that run (the provider's own console showed its `LOAD_USER` action), so
+the check is not merely an attribute test.
+
+### 11.1 Reader Mode — implemented for permission-cleared text
+
+**Status: implemented. 70 unique text-only snapshots (95 authored occurrences) for the seven `reuse: allowed` providers.**
+
+**Scope and builder.** `scripts/build_learning_resource_snapshots.mjs` is the only code that fetches
+a provider page. It selects an external record only when the provider policy says `reuse: allowed`,
+extracts headings, paragraphs, lists, code and quotations, and explicitly removes images, tables,
+forms, navigation, scripts and other assets. The output is checked into
+`app/public/learning-resource-snapshots/`; the app fetches the local JSON, never the provider. The
+builder records the source URL, retrieval date, licence, publisher, original link and a change notice
+in each snapshot. A source with `reuse: no` or `unknown` is never a candidate, so it stays a link.
+
+**Product decision recorded here.** The user asked for Reader Mode on permitted sources and link-only
+behaviour elsewhere. The app has no pricing, ads or paid tier and is treated as non-commercial for the
+CS50P, BetterExplained and FBSwiki snapshots. Attribution, share-alike and change notices are shown in
+the reader surface. This is a product and licensing review, not a legal opinion; counsel review remains
+prudent before commercial distribution or a change to the app's non-commercial status.
+
+**Enforcement.** `license.conditions` in [`learningResourceProviders.json`](../app/src/data/learningResourceProviders.json)
+and the generated registry record every obligation. [`readerRightsFor`](../app/src/features/learning-resources/resolver.ts)
+returns rights only for an allowed licence, a snapshot path and conditions this text reader actually
+implements. The resolver then requires `readerEnabled`, `license.reuse === 'allowed'`, a
+`readerRights.satisfied` list containing every recorded condition and a `snapshot.path`; a missing or
+incomplete list returns the original instead of a reader. The generator is stricter still: a
+`reuse: allowed` resource without a snapshot, or a snapshot whose source URL/licence has drifted from
+the authored record, fails `check:resources`. No non-permitted resource receives a snapshot path.
+
+**Surface.** [`ResourceView.tsx`](../app/src/features/learning-resources/ResourceView.tsx) renders the
+snapshot as semantic headings, paragraphs, lists, code and quotations with React text nodes — no
+`dangerouslySetInnerHTML`. It shows the licence link, condition list, change notice, retrieval date,
+publisher, original URL and an **Open original** action. A truncated long page says so. The snapshot is
+same-origin content and can be cached by the service worker; provider pages are still never cached.
+A permitted card in [`ResourceGuides.tsx`](../app/src/features/learning-resources/ResourceGuides.tsx)
+also has a direct **Reader** action: it opens the same `ReaderSurface` in the reusable focus-trapped
+`Sheet`, without first opening the workspace, and keeps the card's **Open resource** link. The
+surface is lazy-loaded on that press, so the initial bundle does not carry the frame renderer.
+[`ResourceWorkspace.tsx`](../app/src/features/learning-resources/ResourceWorkspace.tsx) offers a
+**Reader** toggle when a permitted interactive provider also has a snapshot, and a **Interactive**
+return. A source whose frame is blocked (CS50P) opens its snapshot directly; a source with no reuse
+permission gets the external card and a reason, with no frame, no reader and no snapshot action.
+
+**Checks.** `npm run test:resources` validates all 95 snapshot paths, the 70 unique files, the
+licence/source match, the no-snapshot rule for non-permitted sources, condition failure, rights
+construction and snapshot loading. `npm run test:e2e:resources` exercises the direct card Reader
+sheet, the futurecoder workspace Reader toggle, CS50P's non-commercial reader and Physics
+Classroom's link-only card in Chromium, and asserts that only the one snapshot-bearing card on 00.1
+shows a direct Reader action. The 70 files are checked in, so the normal build never needs a provider
+request.
+
+## 12. Plan-item closure
+
+The plan is closed item by item below. Every row points at the code and the check that proves it.
+Reader Mode is implemented for every permission-cleared source; sources without reuse permission are
+intentionally links. §11.1 records the snapshot scope, the visible conditions and the remaining
+counsel caveat. No row is partial or unknown.
+
+**Status key:** **Implemented** means code/data plus a passing gate. The link-only treatment of
+non-permitted sources is the required behaviour, not an unserved item. Re-verified against the
+worktree on 2026-11-21; the commands and their results are recorded at the end of this section.
+
+| Plan item | Status | Implementation | Check |
+| :--- | :--- | :--- | :--- |
+| Phase 0 architecture audit and inventory | Implemented | [`learning-resources-audit.md`](learning-resources-audit.md), [`learning-resources-domains.json`](learning-resources-domains.json) | Full text gate table |
+| Generated occurrence registry and lesson index | Implemented | [`generate_learning_resources.py`](../scripts/generate_learning_resources.py), [`learning-resources.json`](../app/public/learning-resources.json), [`learningResourceIndex.ts`](../app/src/data/learningResourceIndex.ts) | `npm run test:resources` (20 Python checks), `npm run check:resources` |
+| Provider allowlist, attribution and licence policy | Implemented | [`learningResourceProviders.json`](../app/src/data/learningResourceProviders.json) (verdict plus conditions), [`providers.ts`](../app/src/features/learning-resources/providers.ts) | `npm run test:resources` (condition assertions for every non-null licence and the reader-rights guard), `npm run check:embeds` |
+| Header probe, 45-day freshness and weekly revalidation | Implemented | [`verify_resource_embeds.py`](../scripts/verify_resource_embeds.py), [`learning-resources-embeds.json`](learning-resources-embeds.json), [`.github/workflows/embeds.yml`](../.github/workflows/embeds.yml) | `npm run check:embeds`, `--revalidate`, workflow scan |
+| Pure resolver with safe URLs and external/internal/unavailable dispositions | Implemented | [`resolver.ts`](../app/src/features/learning-resources/resolver.ts) | Node resolver suite, including the unsafe-URL guard |
+| Authored reading guides and resource panel | Implemented | [`ResourceGuides.tsx`](../app/src/features/learning-resources/ResourceGuides.tsx), [`ReadingGuide.tsx`](../app/src/features/learning-resources/ReadingGuide.tsx) | 20 Python checks, 16 Node checks, resource browser suite; a snapshot-bearing card also has the direct **Reader** sheet action, while its **Open resource** link remains |
+| Credentialless iframe, native YouTube facade and external fallback | Implemented | [`ResourceView.tsx`](../app/src/features/learning-resources/ResourceView.tsx), [`providers.ts`](../app/src/features/learning-resources/providers.ts) | `npm run test:e2e:resources` (credentialless attribute set before `src`, sandbox retained across Expand/divider/phone, blocked provider card); Node resolver suite (native YouTube URL parsing) |
+| Side-by-side workspace, divider, Expand, phone toggle and remembered split | Implemented | [`LessonReader.tsx`](../app/src/components/LessonReader.tsx), [`ResourceWorkspace.tsx`](../app/src/features/learning-resources/ResourceWorkspace.tsx), [`resourceWorkspace.ts`](../app/src/features/learning-resources/resourceWorkspace.ts) | 7 workspace checks, resource browser suite, `npm run check:snapshot` (72 surfaces) |
+| Isolation and framing hardening | Implemented | [`sw.js`](../app/public/sw.js), [`isolation-headers.mjs`](../scripts/isolation-headers.mjs), [`ResourceView.tsx`](../app/src/features/learning-resources/ResourceView.tsx) | `npm run test:resources` CSP assertions, `npm run test:e2e:pages`, `npm run check:axe` |
+| Lazy workspace chunk and weight discipline | Implemented | [`LessonReader.tsx`](../app/src/components/LessonReader.tsx) lazy declaration; [`ResourceGuides.tsx`](../app/src/features/learning-resources/ResourceGuides.tsx) lazy `ReaderSurface` | `npm run check:weight` in both shapes |
+| Public kill switch, including the admin writer | Implemented | [`siteSettingsModel.ts`](../app/src/siteSettingsModel.ts), [`_shared/siteSettings.ts`](../supabase/functions/_shared/siteSettings.ts), [`admin-action/index.ts`](../supabase/functions/admin-action/index.ts) | `npm run test:accounts` exercises the exact admin validator and the public flag list; `npm run test:schema` pins the server boundary |
+| Progress and lesson state remain authoritative | Implemented | The workspace is read-only; it writes only its own layout key | Resource browser suite, existing reader tests |
+| Reader Mode for permission-cleared sources | Implemented | [`build_learning_resource_snapshots.mjs`](../scripts/build_learning_resource_snapshots.mjs), [`registry.ts`](../app/src/features/learning-resources/registry.ts), [`resolver.ts`](../app/src/features/learning-resources/resolver.ts), [`ResourceView.tsx`](../app/src/features/learning-resources/ResourceView.tsx), [`ResourceWorkspace.tsx`](../app/src/features/learning-resources/ResourceWorkspace.tsx), 70 files under [`app/public/learning-resource-snapshots/`](../app/public/learning-resource-snapshots/) | `npm run test:resources` (95 snapshot paths, 70 unique files, licence/source match, condition guard, loader); `npm run test:e2e:resources` (direct card Reader sheet, Reader toggle, CS50P reader, Physics Classroom link-only); full 48-gate run green |
+| CI, browser and documentation gates | Implemented | [`package.json`](../package.json), [`check_all.py`](../scripts/check_all.py), [`setup_browser_deps.sh`](../scripts/setup_browser_deps.sh), [`VERIFICATION.md`](VERIFICATION.md), embed workflow | Bootstrap from a deleted sysroot with `bash scripts/setup_browser_deps.sh`, documented in [`VERIFICATION.md`](VERIFICATION.md#browser-gates-on-a-linux-host-without-system-chromium-libraries). `npm run check:all` is the 48-gate fast set; the separate browser/audit gates were run explicitly (see the verification record below), not implied by that count. |
+
+### Verification record — 2026-11-21
+
+| Command | Result |
+| :--- | :--- |
+| `npm run check:all` | 48/48 fast gates passed in 87.9 s |
+| `npm run test:resources` | 20 Python checks, 16 Node resolver checks and 7 workspace checks passed |
+| `npm run test:e2e:resources` | 11 browser checks passed: direct Reader sheet, phone long-URL/title fit, phone long-formula fit, credentialless frame, Expand, divider, phone toggle, Reader/Interactive, CS50P reader, link-only Physics Classroom, card visibility |
+| `npm run test:e2e:pages` | Chromium bundle checks passed; the Firefox sample was skipped because that browser binary is not installed in this workspace |
+| `npm run check:axe` | 16 tabs + Home × 4 palettes; 0 serious/critical findings, 0 exceptions |
+| `npm run check:snapshot` | 72 surfaces measured at 1440×900; all matched |
+| `npm run check:weight` | Both the `local_only` and `signed_in` shapes are within budget |
+| `npm run check:embeds` | 16 hosts, committed report checked `2026-11-20T23:32:17Z` (inside the 45-day window) |
+| `npm run test:accounts` | 29 checks, including the exact admin `feature_flags` validator and the browser flag list |
+| `npm run test:schema` | 18 server-boundary checks passed |
+| `npx tsc -b` | Passed |
+| `git diff --check` | Clean |
+
+No plan row is partial or absent. The only non-code row is the licensing caveat in §11.1: the
+snapshot release is a recorded product/permission decision, not a missing implementation, and counsel
+review remains prudent rather than being claimed here.
 
 ## Appendix A — Reproducing the inventory
 

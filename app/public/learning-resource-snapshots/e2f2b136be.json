@@ -1,0 +1,373 @@
+{
+  "version": 1,
+  "title": "SparkFun — Binary",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/binary",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:37.033Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/binary"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "ABC's of 1's and 0's"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Prepare to have your perception of reality shattered. Everything you ever thought you knew about something so simple as numbers is going to change. All your life you thought having 100 somethings meant having this many:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When, really, it only meant having this many:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "No, Rod Serling’s not about to cross into the frame, and you haven’t swallowed any red pills. You’ve entered the binary zone and have just encountered base numbering systems."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Number Systems and Bases"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Number systems are the methods we use to represent numbers. Since grade school, we’ve all been mostly operating within the comfy confines of a base-10 number system, but there are many others. Base-2, base-8, base-16, base-20, base...you get the point. There are an infinite variety of base-number systems out there, but only a few are especially important to electrical engineering."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The really popular number systems even have their own name. Base-10, for example, is commonly referred to as the decimal number system. Base-2, which we’re here to talk about today, also goes by the moniker of binary. Another popular numeral system, base-16, is called hexadecimal."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The base of a number is often represented by a subscripted integer trailing a value. So in the introduction above, the first image would actually be 10010 somethings while the second image would be 1002 somethings. This is a handy way to specify a number’s base when there’s ever any possibility of ambiguity."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Why Binary?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Why binary you ask? Well, why decimal? We’ve been using decimal forever and have mostly taken for granted the reason we settled on the base-10 number system for our everyday number needs. Maybe it’s because we have 10 fingers, or maybe it’s just because the Romans forced it upon their ancient subjugates. Regardless of what lead to it, tricks we’ve learned along the way have solidified base-10’s place in our heart; everyone can count by 10’s. We even round large numbers to the nearest multiple of 10. We’re obsessed with 10!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Computers and electronics are rather limited in the finger-and-toe department. At the lowest level, they really only have two ways to represent the state of anything: ON or OFF, high or low, 1 or 0. And so, almost all electronics rely on a base-2 number system to store, manipulate, and math numbers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The heavy reliance electronics place on binary numbers means it’s important to know how the base-2 number system works. You’ll commonly encounter binary, or its cousins, like hexadecimal, all over computer programs. Analysis of Digital logic circuits and other very low-level electronics also requires heavy use of binary."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In this tutorial, you’ll find that anything you can do to a decimal number can also be done to a binary number. Some operations may be even easier to do on a binary number (though others can be more painful). We’ll cover all of that and more in this tutorial."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "We’re reaching pretty deep into the concepts bin. A lot of this tutorial builds on mathematical concepts like addition, multiplication, division (including remainders), and exponents."
+    },
+    {
+      "kind": "paragraph",
+      "text": "No previous knowledge of electronics is required (except for knowing how the base-10 system works, which most people do), but we do observe how binary is used in Arduino programming, and knowing something about data types could come in handy. In addition, knowledge of digital logic will help to supplement all of this binary business."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Counting and Converting"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The base of each number system is also called the radix. The radix of a decimal number is ten, and the radix of binary is two. The radix determines how many different symbols are required in order to flesh out a number system. In our decimal number system we’ve got 10 numeral representations for values between nothing and ten somethings: 0, 1, 2, 3, 4, 5, 6, 7, 8, and 9. Each of those symbols represents a very specific, standardized value."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In binary we’re only allowed two symbols: 0 and 1. But using those two symbols we can create any number that a decimal system can."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Counting in binary"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You can count in decimal endlessly, even in your sleep, but how would you count in binary? Zero and one in base-two should look pretty familiar: 0 and 1. From there things get decidedly binary."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Remember that we’ve only got those two digits, so as we do in decimal, when we run out of symbols we’ve got to shift one column to the left, add a 1, and turn all of the digits to right to 0. So after 1 we get 10, then 11, then 100. Let’s start counting..."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Does that start to paint the picture? Let’s examine how we might convert from those binary numbers to decimal."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Converting binary to decimal"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There's no one way to convert binary-to-decimal. We'll outline two methods below, the more \"mathy\" method, and another that's more visual. We'll cover both, but if the first uses too much ugly terminology skip down to the second."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Method 1"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There's a handy function we can use to convert any binary number to decimal:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are four important elements to that equation:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "an, an-1, a1, etc., are the digits of a number. These are the 0's and 1's you're familiar with, but in binary they can only be 0 or 1.",
+        "The position of a digit is also important to observe. The position starts at 0, on the right-most digit; this 1 or 0 is the least-significant. Every digit you move to the left increases in significance, and also increases the position by 1.",
+        "The length of a binary number is given by the value of n, actually it's n+1. For example, a binary number like 101 has a length of 3, something larger, like 10011110 has a length of 8.",
+        "Each digit is multiplied by a weight: the 2n, 2n-1, 21, etc. The right-most weight - 20 equates to 1, move one digit to the left and the weight becomes 2, then 4, 8, 16, 32, 64, 128, 256,... and on and on. Powers of two are of great importance to binary, they quickly become very familiar."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let's get rid of those n's and exponents, and carry out our binary positional notation equation out eight positions:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Taking that further, let's plug in some values for the digits. What if you had a binary number like: 10011011? That would mean an values of:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For the sake of this tutorial, assume that the right-most value is always the least-significant. The least-significant digit in a number is the digit that has the smallest influence on a number’s ultimate value. The significance of the digits is arbitrary - part of a convention called endianness. A binary number can be either big-endian, where the most-significant digit is the left-most, or little-endian which we’ll use in this tutorial (and you’ll usually see binary numbers written this way)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now, plug those digits into our binary to decimal equation. Because our number is little-endian the least-significant value should be multiplied by the smallest weight."
+    },
+    {
+      "kind": "code",
+      "text": "1 * 2<sup>7</sup> + 0 * 2<sup>6</sup> + 0 * 2<sup>5</sup> + 1 * 2<sup>4</sup> + 1 * 2<sup>3</sup> + 0 * 2<sup>2</sup> + 1 * 2<sup>1</sup> + 1 * 2<sup>0</sup>"
+    },
+    {
+      "kind": "paragraph",
+      "text": "And we can simplify it down to find our decimal number:"
+    },
+    {
+      "kind": "code",
+      "text": "= 1 * 128 + 0 * 64 + 0 * 32 + 1 * 16 + 1 * 8 + 0 * 4 + 1 * 2 + 1 * 1\n= 128 + 16 + 8  + 2 + 1\n= 155"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You’ll quickly notice that it takes many more digits to represent a number in binary than it does in decimal, but it’s all done with just two digits!"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Method 2"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another, more visual way to convert binary numbers to decimal is to begin by sorting each 1 and 0 into a bin. Each bin has a successive power of two weight to it, the 1, 2, 4, 8, 16,... we’re used to. Carrying it out eight places would look something like this:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "So, if we sorted our 10011011 binary number into those bins, it’d look like this:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For every bin that has a binary 0 value in it, just cross out and remove it."
+    },
+    {
+      "kind": "paragraph",
+      "text": "And then add up any remaining weights to get your number!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Converting from decimal to binary"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Just like going from binary to decimal, there's more than one way to convert decimal to binary. The first uses division and remainders, and the second uses subtraction. Try both, or stick to one you're comfortable with!"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Method 1"
+    },
+    {
+      "kind": "paragraph",
+      "text": "It isn’t quite as simple to convert a decimal number to binary. This conversion requires repeatedly dividing the decimal number by 2, until you’ve reduced it to zero. Every time you divide the remainder of the division becomes a digit in the binary number you’re creating."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Don't remember how to do remainders? If it's been a while, remember that, since we're dividing by two, if the dividend is even, the remainder will be 0; an odd dividend means a remainder of 1."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For example, to convert 155 to binary you’d go through this process:"
+    },
+    {
+      "kind": "code",
+      "text": "155 ÷ 2 = 77 R 1 (That’s the right-most digit, 1st position)\n 77 ÷ 2 = 38 R 1 (2nd position)\n 38 ÷ 2 = 19 R 0 (3rd position)\n 19 ÷ 2 =  9 R 1\n  9 ÷ 2 =  4 R 1\n  4 ÷ 2 =  2 R 0\n  2 ÷ 2 =  1 R 0\n  1 ÷ 2 =  0 R 1 (8th position)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The first remainder is the least-significant (right-most) digit, so read from top-to-bottom to flesh out our binary number right-to-left: 10011011. Match it up to the example above...that’s a bingo!"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Method 2"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If dividing and finding remainders isn’t your thing, there may be an easier method for converting decimal to binary. Start by finding the largest power of two that’s still smaller than your decimal number, and subtract it from the decimal. Then, continue to subtract by the largest possible power of two until you get to zero. Every weight-position that was subtracted, gets a binary 1 digit; digits that weren’t subtracted get a 0."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Continuing with our example, 155 can be subtracted by 128, producing 27:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Our new number, 27, can’t be subtracted by either 64 or 32. Both of those positions get a 0. We can subtract by 16, producing 11."
+    },
+    {
+      "kind": "paragraph",
+      "text": "And 8 subtracts from 11, producing 3. After that, no such luck with 4."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Our 3 can be subtracted by 2, producing 1. And finally, the 1 subtracts by 1 to make 0."
+    },
+    {
+      "kind": "paragraph",
+      "text": "We’ve got a binary number!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Conversion calculators"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Fortunately, there are tons of binary-to-decimal and vice-versa calculators out there. You shouldn’t often need to resort to long-hand conversion."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here! Plug some numbers into these boxes, and the other should magically change."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Make sure you only put 1's or 0's in the binary box, and 0-9 in the decimal one. Have fun!"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Bits, Nibbles, and Bytes"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In discussing the make of a binary number, we briefly covered the length of the number. The length of a binary number is the amount of 1's and 0's it has."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Common binary number lengths"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Binary values are often grouped into a common length of 1’s and 0’s, this number of digits is called the length of a number. Common bit-lengths of binary numbers include bits, nibbles, and bytes (hungry yet?). Each 1 or 0 in a binary number is called a bit. From there, a group of 4 bits is called a nibble, and 8-bits makes a byte."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Bytes are a pretty common buzzword when working in binary. Processors are all built to work with a set length of bits, which is usually this length is a multiple of a byte: 8, 16, 32, 64, etc."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To sum it up:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Word is another length buzzword that gets thrown out from time-to-time. Word is much less yummy sounding and much more ambiguous. The length of a word is usually dependent on the architecture of a processor. It could be 16-bits, 32, 64, or even more."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Padding with leading zeros"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You might see binary values represented in bytes (or more), even if making a number 8-bits-long requires adding leading zeros. Leading zeros are one or more 0’s added to the left of the most-significant 1-bit in a number. You usually don't see leading zeros in a decimal number: 007 doesn't tell you any more about the value of a number 7 (it might say something else)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Leading zeros aren't required on binary values, but they do help present information about the bit-length of a number. For example, you may see the number 1 printed as 00000001, just to tell you we're working within the realm of a byte. Both numbers represent the same value, however, the number with seven 0’s in front adds information about the bit-length of a value."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Bitwise Operators"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are a number of ways to manipulate binary values. Just as you can with decimal numbers, you can perform standard mathematical operations - addition, subtraction, multiplication, division - on binary values (which we’ll cover on the next page). You can also manipulate individual bits of a binary value using bitwise operators."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Bitwise operators perform functions bit-by-bit on either one or two full binary numbers. They make use of boolean logic operating on a group of binary symbols. These bitwise operators are widely used throughout both electronics and programming."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Complement (NOT)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The complement of a binary value is like finding the exact opposite of everything about it. The complement function looks at a number and turns every 1 into a 0 and every 0 becomes a 1. The complement operator is also called NOT."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For example to find the complement of 10110101:"
+    },
+    {
+      "kind": "code",
+      "text": "NOT 10110101 (decimal 181)\n    -------- =\n    01001010 (decimal 74)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "NOT is the only bitwise operator which only operates on a single binary value."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "OR"
+    }
+  ]
+}

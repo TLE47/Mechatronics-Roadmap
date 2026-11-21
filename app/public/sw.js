@@ -96,6 +96,13 @@ if (typeof window === 'undefined') {
     headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
     headers.set('Cross-Origin-Opener-Policy', 'same-origin');
     headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    // Keep the framing surface to the provider allowlist. A policy with only `frame-src` leaves
+    // scripts, workers and wasm on this page exactly as they were; a host that is not named here can
+    // never be framed by the workspace, even if a registry record is hand-edited.
+    headers.set(
+      'Content-Security-Policy',
+      "frame-src 'self' https://futurecoder.io https://docs.python.org https://www.youtube-nocookie.com https://www.youtube.com"
+    );
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,

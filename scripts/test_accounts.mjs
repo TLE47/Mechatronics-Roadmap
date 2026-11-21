@@ -37,11 +37,17 @@ import {
   isAdminAction,
 } from '../app/src/adminModel.ts';
 import {
+  FLAG_NAMES as BROWSER_FLAG_NAMES,
   MAX_ANNOUNCEMENT_CHARS,
   defaultPublicSettings,
   flagOn,
   parsePublicSettings,
 } from '../app/src/siteSettingsModel.ts';
+import {
+  FLAG_NAMES as SERVER_FLAG_NAMES,
+  MAX_ANNOUNCEMENT as SERVER_MAX_ANNOUNCEMENT,
+  validateSetting,
+} from '../supabase/functions/_shared/siteSettings.ts';
 
 let passed = 0;
 function test(name, fn) {
@@ -397,6 +403,7 @@ test('settings default to the behaviour the build already had', () => {
   const defaults = defaultPublicSettings();
   assert.equal(defaults.announcement, '');
   assert.equal(flagOn(defaults, 'guided_tour'), true);
+  assert.equal(flagOn(defaults, 'resource_workspace'), true);
 });
 
 test('an announcement is trimmed and capped; only known boolean flags are read', () => {
@@ -407,16 +414,45 @@ test('an announcement is trimmed and capped; only known boolean flags are read',
   ]);
   assert.equal(parsed.announcement.length, MAX_ANNOUNCEMENT_CHARS);
   assert.equal(flagOn(parsed, 'guided_tour'), false);
-  assert.deepEqual(Object.keys(parsed.flags), ['guided_tour']);
+  assert.equal(flagOn(parsed, 'resource_workspace'), true);
+  assert.deepEqual(Object.keys(parsed.flags), ['guided_tour', 'resource_workspace']);
 });
 
 test('a non-boolean or non-string row cannot change settings', () => {
   const parsed = parsePublicSettings([
     { key: 'announcement', value: 42 },
-    { key: 'feature_flags', value: { guided_tour: 'no' } },
+    { key: 'feature_flags', value: { guided_tour: 'no', resource_workspace: 'no' } },
   ]);
   assert.equal(parsed.announcement, '');
   assert.equal(flagOn(parsed, 'guided_tour'), true);
+  assert.equal(flagOn(parsed, 'resource_workspace'), true);
+  assert.equal(flagOn(parsePublicSettings([
+    { key: 'feature_flags', value: { resource_workspace: false } },
+  ]), 'resource_workspace'), false, 'an explicit false is the kill switch');
+});
+
+test('the admin writer accepts exactly the public flags and validates their values', () => {
+  assert.deepEqual(
+    SERVER_FLAG_NAMES,
+    BROWSER_FLAG_NAMES,
+    'a server flag the public reader does not know would be writable but unreadable'
+  );
+  assert.equal(SERVER_MAX_ANNOUNCEMENT, MAX_ANNOUNCEMENT_CHARS);
+  assert.equal(
+    validateSetting('feature_flags', { resource_workspace: false }),
+    null,
+    'the admin writer must accept the workspace kill switch'
+  );
+  assert.match(validateSetting('feature_flags', { resource_workspace: 'no' }), /true or false/);
+  assert.match(validateSetting('feature_flags', { unknown_flag: true }), /Unknown flag/);
+  assert.match(validateSetting('feature_flags', []), /object/);
+  assert.equal(validateSetting('announcement', '  hello  '), null);
+  assert.match(
+    validateSetting('announcement', 'x'.repeat(MAX_ANNOUNCEMENT_CHARS + 1)),
+    /under 280/
+  );
+  assert.equal(validateSetting('announcement', 42), 'The announcement must be a string.');
+  assert.match(validateSetting('other', false), /Unknown setting/);
 });
 
 test('a half-finished two-factor attempt is cleared, a working factor never is', () => {

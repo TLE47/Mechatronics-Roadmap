@@ -1,0 +1,386 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Buck converter (\"Theory\" & \"Concept\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Buck_converter",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:18.759Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Buck_converter"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "A buck converter or step-down converter is a DC-to-DC converter which decreases voltage, while increasing current, from its input (supply) to its output (load). It is a class of switched-mode power supply. Switching converters (such as buck converters) provide much greater power efficiency as DC-to-DC converters than linear regulators, which are simpler circuits that dissipate power as heat, but do not step up output current. The efficiency of buck converters can be very high, often over 90%, making them useful for tasks such as converting a computer's main supply voltage, which is usually 12 V, down to lower voltages needed by USB, DRAM and the CPU, which are usually 5, 3.3 or 1.8 V."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Buck converters typically contain at least two semiconductors (a diode and a transistor, although modern buck converters frequently replace the diode with a second transistor used for synchronous rectification) and at least an inductor as energy storage element, usually in combination with a capacitor. To reduce voltage ripple, filters made of capacitors (sometimes in combination with additional inductors) are normally added to such a converter's output (load-side filter) and input (supply-side filter). Its name derives from the inductor that “bucks” or opposes the supply voltage."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Buck converters typically operate with a switching frequency range from 100 kHz to a few MHz[citation needed]. A higher switching frequency allows for use of smaller inductors and capacitors, but also increases lost efficiency to more frequent transistor switching."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Theory"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The basic concept of a buck converter is:"
+    },
+    {
+      "kind": "list",
+      "ordered": true,
+      "items": [
+        "Use the higher-than-needed voltage of the source to quickly induce a current into an inductor (\"on\" in fig. 2 and 4).",
+        "Disconnect the source and use the inertia of the current in the inductor to provide more current than the source delivers (\"off\" in fig. 2 and 4). To close the circuit with the source disconnected, a second switch, usually a diode, is needed."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "During on-state, the source may need to momentarily provide more current than its rating for constant load allows, but the on-time is too short for the source to take damage. During off-state, no current is drawn from the source, and the components can cool down. The average current draw over both states needs to be below the source specification."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To even out voltage spikes from the switching between on-state and off-state, a capacitor is used on the output side."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A mechanical analogy for a buck converter would be to pedal a bicycle in single, strong bursts (force ~ voltage), and let the bicycle roll in between (inertia ~ inductor)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The basic operation of the buck converter has the current in an inductor controlled by two switches (fig. 2). In a physical implementation, these switches are realized by a transistor and a diode, or two transistors (which avoids the loss associated with the diode's voltage drop)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Idealised case"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The conceptual model of the buck converter is best understood in terms of the relation between current and voltage of the inductor. Beginning with the switch open (off-state), the current in the circuit is zero. When the switch is first closed (on-state), the current will begin to increase, and the inductor will produce an opposing voltage across its terminals in response to the changing current. This voltage drop counteracts the voltage of the source and therefore reduces the net voltage across the load. Over time, the rate of change of current decreases, and the voltage across the inductor also then decreases, increasing the voltage at the load. During this time, the inductor stores energy in the form of a magnetic field."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If the switch is opened while the current is still changing, then there will always be a voltage drop across the inductor, so the net voltage at the load will always be less than the input voltage source. When the switch is opened again (off-state), the voltage source will be removed from the circuit, and the current will decrease. The decreasing current will produce a voltage drop across the inductor (opposite to the drop at on-state), and now the inductor becomes a current source. The stored energy in the inductor's magnetic field supports the current flow through the load. This current, flowing while the input voltage source is disconnected, when appended to the current flowing during on-state, totals to current greater than the average input current (being zero during off-state)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The increase in average current makes up for the reduction in voltage, and ideally preserves the power provided to the load. During the off-state, the inductor is discharging its stored energy into the rest of the circuit. If the switch is closed again before the inductor fully discharges (on-state), the voltage at the load will always be greater than zero."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Continuous mode"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Buck converters operate in continuous mode if the current through the inductor (IL) never falls to zero during the commutation cycle. In this mode, the operating principle is described by the plots in figure 4:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "When the switch pictured above is closed (top of figure 2), the voltage across the inductor is VL=Vi−Vo. The current through the inductor rises linearly (in approximation, so long as the voltage drop is almost constant). As the diode is reverse-biased by the voltage source Vi, no current flows through it;",
+        "When the switch is opened (bottom of figure 2), the diode is forward biased. The voltage across the inductor is VL=−Vo (neglecting diode drop). Current IL decreases."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The energy stored in inductor L is"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Therefore, it can be seen that the energy stored in L increases during on-time as IL increases and then decreases during the off-state. L is used to transfer energy from the input to the output of the converter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The rate of change of IL can be calculated from:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "With VL equal to Vi−Vo during the on-state and to −Vo during the off-state. Therefore, the increase in current during the on-state is given by:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where D is a scalar called the duty cycle with a value between 0 and 1."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Conversely, the decrease in current during the off-state is given by:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Assuming that the converter operates in the steady state, the energy stored in each component at the end of a commutation cycle T is equal to that at the beginning of the cycle. That means that the current IL is the same at t=0 and at t=T (figure 4)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "So, from the above equations it can be written as:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The above integrations can be done graphically. In figure 4, ΔILon is proportional to the area of the yellow surface, and ΔILoff to the area of the orange surface, as these surfaces are defined by the inductor voltage (red lines). As these surfaces are simple rectangles, their areas can be found easily: (Vi−Vo)ton for the yellow rectangle and −Votoff for the orange one. For steady state operation, these areas must be equal."
+    },
+    {
+      "kind": "paragraph",
+      "text": "As can be seen in figure 4, ton=DT and toff=(1−D)T."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This yields:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "From this equation, it can be seen that the output voltage of the converter varies linearly with the duty cycle for a given input voltage. As the duty cycle D is equal to the ratio between ton and the period T, it cannot be more than 1. Therefore, Vo≤Vi. This is why this converter is referred to as step-down converter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "So, for example, stepping 12 V down to 3 V (output voltage equal to one quarter of the input voltage) would require a duty cycle of 25%, in this theoretically ideal circuit."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Discontinuous mode"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In some cases, the amount of energy required by the load is too small. In this case, the current through the inductor falls to zero during part of the period. The only difference in the principle described above is that the inductor is completely discharged at the end of the commutation cycle (see figure 5). This has, however, some effect on the previous equations."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The inductor current falling below zero results in the discharging of the output capacitor during each cycle and therefore higher switching losses [de]. A different control technique known as pulse-frequency modulation can be used to minimize these losses."
+    },
+    {
+      "kind": "paragraph",
+      "text": "We still consider that the converter operates in steady state. Therefore, the energy in the inductor is the same at the beginning and at the end of the cycle (in the case of discontinuous mode, it is zero). This means that the average value of the inductor voltage (VL) is zero; i.e., that the area of the yellow and orange rectangles in figure 5 are the same. This yields:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "So the value of δ is:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The output current delivered to the load (Io) is constant, as we consider that the output capacitor is large enough to maintain a constant voltage across its terminals during a commutation cycle. This implies that the current flowing through the capacitor has a zero average value. Therefore, we have:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Where IL‾ is the average value of the inductor current. As can be seen in figure 5, the inductor current waveform has a triangular shape. Therefore, the average value of IL can be sorted out geometrically as follows:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The inductor current is zero at the beginning and rises during ton up to ILmax. That means that ILmax is equal to:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Substituting the value of ILmax in the previous equation leads to:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "And substituting δ by the expression given above yields:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This expression can be rewritten as:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "It can be seen that the output voltage of a buck converter operating in discontinuous mode is much more complicated than its counterpart of the continuous mode. Furthermore, the output voltage is now a function not only of the input voltage (Vi) and the duty cycle D, but also of the inductor value (L), the commutation period (T) and the output current (Io)."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "From discontinuous to continuous mode (and vice versa)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The converter operates in discontinuous mode when low current is drawn by the load, and in continuous mode at higher load current levels. The limit between discontinuous and continuous modes is reached when the inductor current falls to zero exactly at the end of the commutation cycle. Using the notations of figure 5, this corresponds to:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Therefore, the output current (equal to the average inductor current) at the limit between discontinuous and continuous modes is (see above):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Substituting ILmax by its value:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "On the limit between the two modes, the output voltage obeys both the expressions given respectively in the continuous and the discontinuous sections. In particular, the former is"
+    },
+    {
+      "kind": "paragraph",
+      "text": "So Iolim can be written as:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let's now introduce two more notations:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "the normalized voltage, defined by |Vo|=VoVi. It is zero when Vo=0, and 1 when Vo=Vi;",
+        "the normalized current, defined by |Io|=LTViIo. The term TViL is equal to the maximum increase of the inductor current during a cycle; i.e., the increase of the inductor current with a duty cycle D=1. So, in steady state operation of the converter, this means that |Io| equals 0 for no output current, and 1 for the maximum current the converter can deliver."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using these notations, we have:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "in continuous mode: |Vo|=D",
+        "in discontinuous mode: |Vo|=12LIoD2ViT+1=12|Io|D2+1=D22|Io|+D2"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "the current at the limit between continuous and discontinuous mode is:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Therefore, the locus of the limit between continuous and discontinuous modes is given by:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "These expressions have been plotted in figure 6. From this, it can be deduced that in continuous mode, the output voltage does only depend on the duty cycle, whereas it is far more complex in the discontinuous mode. This is important from a control point of view."
+    },
+    {
+      "kind": "paragraph",
+      "text": "On the circuit level, the detection of the boundary between CCM and DCM are usually provided by an inductor current sensing, requiring high accuracy and fast detectors as:"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Real-world factors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The analysis above was conducted with the assumptions:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "The output capacitor has enough capacitance to supply power to the load (a simple resistance) without any noticeable variation in its voltage.",
+        "The voltage drop across the diode when forward biased is zero",
+        "No commutation losses in the switch nor in the diode"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "These assumptions can be fairly far from reality, and the imperfections of the real components can have a detrimental effect on the operation of the converter."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Output voltage ripple (continuous mode)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Output voltage ripple is the name given to the phenomenon where the output voltage rises during the On-state and falls during the Off-state. Several factors contribute to this including, but not limited to, switching frequency, output capacitance, inductor, load and any current limiting features of the control circuitry. At the most basic level the output voltage will rise and fall as a result of the output capacitor charging and discharging:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "We can best approximate output ripple voltage by shifting the output current versus time waveform (continuous mode) down so that the average output current is along the time axis. When we do this, we see the AC current waveform flowing into and out of the output capacitor (sawtooth waveform). We note that Vc-min (where Vc is the capacitor voltage) occurs at ton/2 (just after capacitor has discharged) and Vc-max at toff/2. By integrating Idt (= dQ; as I = dQ/dt, C = Q/V so dV = dQ/C) under the output current waveform through writing output ripple voltage as dV = Idt/C we integrate the area above the axis to get the peak-to-peak ripple voltage as: ΔV = ΔI T/8C (where ΔI is the peak-to-peak ripple current and T is the time period of ripple. A full explanation is given there.) We note from basic AC circuit theory that our ripple voltage should be roughly sinusoidal: capacitor impedance times ripple current peak-to-peak value, or ΔV = ΔI / (ωC) where ω = 2πf, f is the ripple frequency, and f = 1/T, T the ripple period. This gives: ΔV = ΔI T/2πC), and we compare to this value to confirm the above in that we have a factor of 8 vs a factor of ~ 6.3 from basic AC circuit theory for a sinusoid. This gives confidence in our assessment here of ripple voltage. The paragraph directly below pertains that directly above and may be incorrect. Use the equations in this paragraph. Once again, please see talk tab for more: pertaining output ripple voltage and AoE (Art of Electronics 3rd edition)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "During the off-state, the current in this equation is the load current. In the on-state the current is the difference between the switch current (or source current) and the load current. The duration of time (dT) is defined by the duty cycle and by the switching frequency."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For the on-state:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For the off-state:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Qualitatively, as the output capacitance or switching frequency increase, the magnitude of the ripple decreases. Output voltage ripple is typically a design specification for the power supply and is selected based on several factors. Capacitor selection is normally determined based on cost, physical size and non-idealities of various capacitor types. Switching frequency selection is typically determined based on efficiency requirements, which tends to decrease at higher operating frequencies, as described below in Effects of non-ideality on the efficiency. Higher switching frequency can also raise EMI concerns."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Output voltage ripple is one of the disadvantages of a switching power supply, and can also be a measure of its quality."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Effects on the efficiency"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The simplified analysis above, does not account for non-idealities of the circuit components nor does it account for the required control circuitry. Power losses due to the control circuitry are usually insignificant when compared with the losses in the power devices (switches, diodes, inductors, etc.) The non-idealities of the power devices account for the bulk of the power losses in the converter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Both static and dynamic power losses occur in any switching regulator. Static power losses include I2R (conduction) losses in the wires or PCB traces, as well as in the switches and inductor, as in any electrical circuit. Dynamic power losses occur as a result of switching, such as the charging and discharging of the switch gate, and are proportional to the switching frequency."
+    },
+    {
+      "kind": "paragraph",
+      "text": "It is useful to begin by calculating the duty cycle for a non-ideal buck converter, which is:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Vsw is the voltage drop on the power switch,",
+        "Vsw,sync is the voltage drop on the synchronous switch or diode, and",
+        "VL is the voltage drop on the inductor."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The voltage drops described above are all static power losses which are dependent primarily on DC current, and can therefore be easily calculated. For a diode drop, Vsw and Vsw,sync may already be known, based on the properties of the selected device."
+    },
+    {
+      "kind": "paragraph",
+      "text": "where:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Ron is the on-resistance of each switch, and",
+        "RDC is the DC resistance of the inductor."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The duty cycle equation is somewhat recursive. A rough analysis can be made by first calculating the values Vsw and Vsw,sync using the ideal duty cycle equation."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For a MOSFET voltage drop, a common approximation is to use RDSon from the MOSFET's datasheet in Ohm's law, V = IDSRDSon(sat). This approximation is acceptable because the MOSFET is in the linear state, with a relatively constant drain-source resistance. This approximation is only valid at relatively low VDS values. For more accurate calculations, MOSFET datasheets contain graphs on the VDS and IDS relationship at multiple VGS values. Observe VDS at the VGS and IDS which most closely match what is expected in the buck converter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In addition, power loss occurs as a result of leakage currents. This power loss is simply"
+    }
+  ]
+}

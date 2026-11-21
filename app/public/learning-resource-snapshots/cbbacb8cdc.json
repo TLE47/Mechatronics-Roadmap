@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "title": "Wikipedia — struct (C programming language)",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Struct_(C_programming_language)",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:24.405Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Struct_(C_programming_language)"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "In the C programming language, struct (referring to a structure) is the keyword used to define a composite, a.k.a. record, data type – a named set of values that occupy a block of memory. It allows for the different values to be accessed via a single identifier, often a pointer. A struct can contain other data types, so it is used for mixed-data-type records. For example, a bank customer struct might contain fields for the customer's name, address, telephone number, and balance."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A struct occupies a contiguous block of memory, usually delimited (sized) by word-length boundaries. [clarification needed] It corresponds to the similarly named feature available in some assemblers for Intel processors. Being a block of contiguous memory, each field within a struct is located at a certain fixed offset from the start."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The sizeof operator results in the number of bytes needed to store a particular struct, just as it does for a primitive data type. The alignment of particular fields in the struct (with respect to word boundaries) is implementation-specific and may include padding. Modern compilers typically support the #pragma pack directive, which sets the size in bytes for alignment."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The C struct feature was derived from the same-named concept in ALGOL 68."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Declaration"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The following simple example depicts declaring a struct named Foo, with two fields of types Type1 and Type2 respectively."
+    },
+    {
+      "kind": "code",
+      "text": "struct Foo {\n    Type1 member1;\n    Type2 member2;\n};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The added name Foo is optional in some contexts."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Members may possibly be padded for memory alignment, and thus it is often recommended to order fields from largest to smallest size for efficient memory usage."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A function may directly return a struct, although this is often not efficient at run-time. Since C99, a struct may also end with a flexible array member."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Structs can be composed of other structs:"
+    },
+    {
+      "kind": "code",
+      "text": "struct Date {\n    int year;\n    int month;\n    int day;\n};\n\nstruct Birthday {\n    char name[50];\n    struct Date dob;\n};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "It is legal to declare an anonymous struct within a struct, but it cannot be named in C (as there is no notion of nested types, unlike C++ where nesting named structs is legal)."
+    },
+    {
+      "kind": "code",
+      "text": "struct Person {\n    char name[50];\n    int age;\n    struct {\n        char city[50];\n        int zip;\n    } addr;\n};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A struct containing a pointer to a struct of its own type is commonly used to build linked data structures:"
+    },
+    {
+      "kind": "code",
+      "text": "struct LinkedList {\n    void* item; // stores the current item\n    struct LinkedList* next; // stores the next list, or NULL if nothing next\n};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Circularly referencing between two structs must be done using a forward declaration and pointers:"
+    },
+    {
+      "kind": "code",
+      "text": "struct B;\n\nstruct A {\n    struct B* b;\n};\n\nstruct B {\n    struct A* a;\n};"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Typedef"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Via the keyword typedef, a struct type can be referenced without using the struct keyword. However, some programming style guides advise against this, claiming that it can obfuscate the type."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For example:"
+    },
+    {
+      "kind": "code",
+      "text": "typedef struct Foo {\n    Type1 member1;\n    Type2 member2;\n} Foo;\n\n// struct Foo can now be referred to as 'Foo'\nFoo foo;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C++ code, the type may be referred to as either struct Foo or Foo (without any need for typedef). typedef in C++ is also superseded by the using statement, which can alias types that have templates."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Initialization"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Considering the struct declaration:"
+    },
+    {
+      "kind": "code",
+      "text": "struct Point {\n    int x;\n    int y;\n};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are three ways to initialize a structure:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "C89-style initializers are used when contiguous members may be given. For example:"
+    },
+    {
+      "kind": "code",
+      "text": "struct Point a = { 1, 2 };"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For non contiguous or out of order members list, the designated initializer style (introduced in C99) may be used. For example:"
+    },
+    {
+      "kind": "code",
+      "text": "struct Point a = { .x = 1, .b = 2 };\n\n// May initialize fields out of order too\nstruct Point b = { .y = 4, .x = -3 };"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If an initializer is given or if the object is statically allocated, omitted elements are initialized to 0."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A third way of initializing a structure is to copy the value of an existing object of the same type. For example:"
+    },
+    {
+      "kind": "code",
+      "text": "struct Point b = a;"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Copy"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The state of a struct can be copied to another instance. A compiler might use memcpy() to copy the bytes of the memory block."
+    },
+    {
+      "kind": "code",
+      "text": "struct Point a = { 1, 3 };\nstruct Point b;\nb = a;"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Bit fields"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Structs may also use bit fields to allow fields to share the same storage units, but layouts are implementation-defined."
+    },
+    {
+      "kind": "code",
+      "text": "struct Properties {\n    // three fields can be compactly packed in one byte\n    unsigned char visible : 1; // a occupies 1 bit\n    unsigned char color : 3; // b occupies 3 bits\n    unsigned char size : 4; // c occupies 4 bits\n};"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Pointers"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers can be used to refer to a struct by its address. This is useful for passing a struct to a function to avoid the overhead of copying the struct. The -> operator dereferences the pointer (left operand) and accesses the value of a struct member (right operand)."
+    },
+    {
+      "kind": "code",
+      "text": "struct Point p = { 3, 7 };\nint x = p.x;\np.x = 10;\nstruct Point* pp = &p;\nx = pp->x;\npp->x = 8;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Functions may take a struct as a parameter by value, but this is expensive as it copies the entire struct. Meanwhile, passing it by pointer is often preferable as the size of a pointer is known (typically 4 or 8 bytes)."
+    },
+    {
+      "kind": "code",
+      "text": "#include <stdio.h>\n\n// a larger struct which may carry a lot of data\nstruct Student {\n    char name[50];\n    unsigned int id;\n    unsigned int semester;\n    float gpa;\n};\n\n// passing by value\nvoid print_student(struct Student s) {\n    printf(\"Name: %s, ID: %d, in semester %d, with GPA: %.2f\\n\", s.name, s.id, s.semester, s.gpa);\n}\n\n// passing by pointer\nvoid print_student(struct Student* s) {\n    printf(\"Name: %s, ID: %d, in semester %d, with GPA: %.2f\\n\", s->name, s->id, s->semester, s->gpa);\n}"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In other languages"
+    },
+    {
+      "kind": "paragraph",
+      "text": "ALGOL 68, Crystal (programming language), D, Go, Julia, Rust, Swift and Zig have structs."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "C++"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C++, struct is essentially the same as for C, but also with methods. Further, a class is the same as a struct but with different default visibility: class members are private by default, whereas struct members are public by default."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": ".NET"
+    },
+    {
+      "kind": "paragraph",
+      "text": ".NET languages have a feature similar to struct in C, those being struct in C# and Structure in Visual Basic.NET. This construct provides many features of a class, but acts as a value type instead of a reference type. For example, when passing a.NET struct to a function, the value is copied so that changes to the input parameter do not affect the value passed in."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Java"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Java does not have the struct keyword itself, but has record for record types (which are similar to struct in that they are used to aggregate data), as well as value class in Project Valhalla for objects whose identity is determined solely by their values of the fields."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Bit field – Data structure that maps one or more adjacent bits",
+        "Flexible array member – C language feature",
+        "Passive data structure – Another term for record",
+        "Union type – Data type that allows for values that are one of multiple different data types"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    }
+  ]
+}

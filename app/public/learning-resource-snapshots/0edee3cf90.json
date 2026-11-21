@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Impedance control",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Impedance_control",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:27.051Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Impedance_control"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "Impedance control is an approach to dynamic control relating force and position. It is often used in applications where a manipulator interacts with its environment and the force position relation is of concern. Examples of such applications include humans interacting with robots, where the force produced by the human relates to how fast the robot should move/stop. Simpler control methods, such as position control or torque control, perform poorly when the manipulator experiences contacts. Thus impedance control is commonly used in these settings."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Mechanical impedance is the ratio of force output to velocity input. This is analogous to electrical impedance, that is the ratio of voltage output to current input (e.g. resistance is voltage divided by current). A \"spring constant\" defines the force output for a displacement (extension or compression) of the spring. A \"damping constant\" defines the force output for a velocity input. If we control the impedance of a mechanism, we are controlling the force of resistance to external motions that are imposed by the environment."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Mechanical admittance is the inverse of impedance - it defines the motions that result from a force input. If a mechanism applies a force to the environment, the environment will move, or not move, depending on its properties and the force applied. For example, a marble sitting on a table will react very differently to a given force than will a log floating in a lake."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The key theory behind the method is to treat the environment as an admittance and the manipulator as an impedance. It assumes the postulate that \"no controller can make the manipulator appear to the environment as anything other than a physical system.\" This rule of thumb can also be stated as: \"in the most common case in which the environment is an admittance (e.g. a mass, possibly kinematically constrained) that relation should be an impedance, a function, possibly nonlinear, dynamic, or even discontinuous, specifying the force produced in response to a motion imposed by the environment.\""
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Principle"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Impedance control doesn't simply regulate the force or position of a mechanism. Instead it regulates the relationship between force and position on the one hand, and velocity and acceleration on the other hand, i.e. the impedance of the mechanism. It requires a position (velocity or acceleration) as input and has a resulting force as output. The inverse of impedance is admittance. It imposes position. So actually the controller imposes a spring-mass-damper behavior on the mechanism by maintaining a dynamic relationship between force (𝑭) and position, velocity and acceleration (𝒙,𝒗,𝒂): 𝑭=M𝒂+C𝒗+K𝒙+𝒇+𝒔, with 𝒇 being friction and 𝒔 being static force."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Masses (M) and springs (with stiffness K) are energy storing elements, whereas a damper (with damping C) is an energy dissipating device. If we can control impedance, we are able to control energy exchange during interaction, i.e. the work being done. So impedance control is interaction control."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Note that mechanical systems are inherently multi-dimensional - a typical robot arm can place an object in three dimensions ((x,y,z) coordinates) and in three orientations (e.g. roll, pitch, yaw). In theory, an impedance controller can cause the mechanism to exhibit a multi-dimensional mechanical impedance. For example, the mechanism might act very stiff along one axis and very compliant along another. By compensating for the kinematics and inertias of the mechanism, we can orient those axes arbitrarily and in various coordinate systems. For example, we might cause a robotic part holder to be very stiff tangentially to a grinding wheel, while being very compliant (controlling force with little concern for position) in the radial axis of the wheel."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Mathematical basics"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Joint space"
+    },
+    {
+      "kind": "paragraph",
+      "text": "An uncontrolled robot can be expressed in Lagrangian formulation as"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where 𝒒 denotes joint angular position, 𝑴 is the symmetric and positive-definite inertia matrix, 𝒄 the Coriolis and centrifugal torque, 𝒈 the gravitational torque, 𝒉 includes further torques from, e.g., inherent stiffness, friction, etc., and 𝝉ext summarizes all the external forces from the environment. The actuation torque 𝝉 on the left side is the input variable to the robot."
+    },
+    {
+      "kind": "paragraph",
+      "text": "One may propose a control law of the following form:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where 𝒒d denotes the desired joint angular position, 𝑲 and 𝑫 are the control parameters, and 𝑴̂, 𝒄̂, 𝒈̂, and 𝒉̂ are the internal model of the corresponding mechanical terms."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Inserting (2) into (1) gives an equation of the closed-loop system (controlled robot):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "𝑲(𝒒d−𝒒)+𝑫(𝒒˙d−𝒒˙)+𝑴(𝒒)(𝒒¨d−𝒒¨)=𝝉ext."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let 𝒆=𝒒d−𝒒, one obtains"
+    },
+    {
+      "kind": "paragraph",
+      "text": "𝑲𝒆+𝑫𝒆˙+𝑴𝒆¨=𝝉ext"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Since the matrices 𝑲 and 𝑫 have the units of stiffness and damping, they are commonly referred to as stiffness and damping matrix, respectively. Clearly, the controlled robot is essentially a multi-dimensional mechanical impedance (mass-spring-damper) to the environment, which is addressed by 𝝉ext."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Task space"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The same principle also applies to task space. An uncontrolled robot has the following task-space representation in Lagrangian formulation:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "ℱ=𝜦(𝒒)𝒙¨+𝝁(𝒙,𝒙˙)+𝜸(𝒒)+𝜼(𝒒,𝒒˙)+ℱext,"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where 𝒒 denotes joint angular position, 𝒙 task-space position, 𝜦 the symmetric and positive-definite task-space inertia matrix. The terms 𝝁, 𝜸, 𝜼, and ℱext are the generalized force of the Coriolis and centrifugal term, the gravitation, further nonlinear terms, and environmental contacts. Note that this representation only applies to robots with redundant kinematics. The generalized force ℱ on the left side corresponds to the input torque of the robot."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Analogously, one may propose the following control law:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "ℱ=𝑲x(𝒙d−𝒙)+𝑫x(𝒙˙d−𝒙˙)+𝜦̂(𝒒)𝒙¨d+𝝁̂(𝒒,𝒒˙)+𝜸̂(𝒒)+𝜼̂(𝒒,𝒒˙),"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where 𝒙d denotes the desired task-space position, 𝑲x and 𝑫x are the task-space stiffness and damping matrices, and 𝜦̂, 𝝁̂, 𝜸̂, and 𝜼̂ are the internal model of the corresponding mechanical terms."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Similarly, one has"
+    },
+    {
+      "kind": "paragraph",
+      "text": "𝒆x=𝒙d−𝒙,"
+    },
+    {
+      "kind": "paragraph",
+      "text": "as the closed-loop system, which is essentially a multi-dimensional mechanical impedance to the environment (ℱext) as well. Thus, one can choose desired impedance (mainly stiffness) in the task space. For example, one may want to make the controlled robot act very stiff along one direction while relatively compliant along others by setting"
+    },
+    {
+      "kind": "paragraph",
+      "text": "𝑲x=(100010001000)N/m,"
+    },
+    {
+      "kind": "paragraph",
+      "text": "assuming the task space is a three-dimensional Euclidean space. The damping matrix 𝑫x is usually chosen such that the closed-loop system (3) is stable."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Applications"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Impedance control is used in applications such as robotics as a general strategy to send commands to a robotics arm and end effector that takes into account the non-linear kinematics and dynamics of the object being manipulated."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    }
+  ]
+}

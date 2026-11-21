@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Lemniscate of Gerono (\"Parametrization\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Lemniscate_of_Gerono",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:28.549Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Lemniscate_of_Gerono"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "In algebraic geometry, the lemniscate of Gerono, or lemniscate of Huygens, or figure-eight curve, is a plane algebraic curve of degree four and genus zero and is a lemniscate curve shaped like an ∞ symbol, or figure eight. It has equation"
+    },
+    {
+      "kind": "paragraph",
+      "text": "It was studied by Camille-Christophe Gerono."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Parameterization"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Because the curve is of genus zero, it can be parametrized by rational functions; one means of doing that is"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another representation is"
+    },
+    {
+      "kind": "paragraph",
+      "text": "which reveals that this lemniscate is a special case of a Lissajous figure."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Dual curve"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The dual curve (see Plücker formula), pictured below, has therefore a somewhat different character. Its equation is"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "J. Dennis Lawrence (1972). A catalog of special plane curves. Dover Publications. p. 124. ISBN 0-486-60288-5."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "O'Connor, John J.; Robertson, Edmund F., \"Figure Eight Curve\", MacTutor History of Mathematics Archive, University of St Andrews"
+      ]
+    }
+  ]
+}

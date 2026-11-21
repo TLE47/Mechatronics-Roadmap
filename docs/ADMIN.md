@@ -71,7 +71,7 @@ open this page.
 | :--- | :--- | :--- |
 | Overview | — | Version and the capability list. Aggregate only; no learner data. |
 | Announcement | `mechalab_site_settings` key `announcement` | Public read, ≤280 characters, shown at the top of every page. Clearing it removes the row and the built-in default (no banner) applies. |
-| Feature flags | `mechalab_site_settings` key `feature_flags` | Fixed names only (`guided_tour` today). A flag that has never been written is **on**, so a fresh project behaves like the build before settings existed. |
+| Feature flags | `mechalab_site_settings` key `feature_flags` | Fixed names only (`guided_tour`, `resource_workspace`). A flag that has never been written is **on**, so a fresh project behaves like the build before settings existed. |
 | Roles | `mechalab_roles` | Paste a user id and choose `admin` or `learner`. Written through `admin-action`, audited. |
 | Audit log | `mechalab_audit` | Read through `admin-action` only. Each entry: time, actor id, action, JSON detail. |
 | Curriculum | GitHub | Opens a branch, one commit and a pull request. Merge is a person, after CI. |
@@ -127,8 +127,10 @@ Run these against staging before inviting anyone:
    it on the next sign-in.
 5. Announcement set → visible signed out on a fresh browser; cleared → gone.
 6. `guided_tour` set to `false` → the tour bar is absent on a simulator tab; cleared → back.
-7. Curriculum PR → a PR appears, its own CI run starts, and it cannot merge on a red suite.
-8. The admin page never shows a learner's draft, note or code, even when a row is named in a URL or the
+7. `resource_workspace` set to `false` → **Study here** is absent and an open split closes; cleared → it
+   returns. The resolver's frame path is not changed by the flag; the surface is.
+8. Curriculum PR → a PR appears, its own CI run starts, and it cannot merge on a red suite.
+9. The admin page never shows a learner's draft, note or code, even when a row is named in a URL or the
    console.
 
 Incident notes: rotate the App private key and re-deploy `curriculum-pr` if it is ever exposed; suspending

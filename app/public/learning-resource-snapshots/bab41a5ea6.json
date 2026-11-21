@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Ground loop (\"Ground currents on signal cables\" & \"Solutions\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Ground_loop_%28electricity%29",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:19.323Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Ground_loop_%28electricity%29"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "In an electrical system, a ground loop or earth loop occurs when two points of a circuit are intended to have the same ground reference potential but instead have a different potential between them. This is typically caused when enough current is flowing in the connection between the two ground points to produce a voltage drop and cause the two points to be at different potentials. Current may be produced in a ground loop by electromagnetic induction."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ground loops are a major cause of noise, hum, and interference in audio, video, and computer systems. Wiring practices that protect against ground loops include ensuring that all vulnerable signal circuits are referenced to one point as ground. The use of differential signaling can provide rejection of ground-induced interference. The removal of ground connections to equipment in an effort to eliminate ground loops will also eliminate the protection the safety ground connection is intended to provide."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Description"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A ground loop is caused by the interconnection of electrical devices that results in multiple paths to ground, thereby forming closed conductive loops through the ground connections. A common example is two electrical devices, each connected to a mains power outlet by a three-conductor cable and plug containing a safety ground. When signal cables are connected between both devices, the shield of the signal cable is typically connected to the grounded chassis of both devices. This forms a closed loop through the ground conductors of the power cords, which are connected through the building wiring."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the vicinity of electric power wiring, there will always be stray magnetic fields, particularly from utility lines oscillating at line frequency (50 or 60 hertz). These ambient magnetic fields passing through the ground loop will induce a current in the loop by electromagnetic induction. The ground loop acts as a single-turn secondary winding of a transformer, the primary being the summation of all current-carrying conductors nearby. The amount of current induced will depend on the magnitude and proximity of nearby currents. The presence of high-power equipment, such as industrial motors or transformers can increase the interference. Since the conductors comprising the ground loop usually have very low resistance, often below one ohm, even weak magnetic fields can induce significant currents."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Since the ground conductor of the signal cable linking the two devices is part of the signal path of the cable, the alternating ground current flowing through the cable can introduce electrical interference in the signal. The induced alternating current flowing through the resistance of the cable ground conductor will cause a small AC voltage drop across the cable ground. This is added to the signal applied to the input of the next stage. In audio equipment, the line frequency interference may be heard as a hum in the speakers. In a video system it may cause distortion or synchronization problems. In computer data connections, it can cause slowdowns or failures of data transfer."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ground loops can also exist within the internal circuits of electronic equipment, as design flaws."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The addition of signal interconnection cables to a system where equipment enclosures are already required to be bonded to ground can create ground loops. Proper design of such a system will satisfy both safety grounding requirements and signal integrity. For this reason, in some large professional installations such as recording studios, it is sometimes the practice to provide two completely separate ground connections to equipment bays. One is the normal safety ground that connects to exposed metalwork, the other is a technical ground for cable screens and the like."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Representative circuit"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The circuit diagram illustrates a simple ground loop. Circuit 1 (left) and circuit 2 (right) share a common path to ground of resistance RG. Ideally, this ground conductor would have no resistance (RG=0), yielding no voltage drop across it (VG=0), keeping the connection point between the circuits at a constant ground potential. In that case, the output of circuit 2 is simply Vout=V2."
+    },
+    {
+      "kind": "paragraph",
+      "text": "However, if this ground conductor has some resistance (RG>0), then it forms a voltage divider with R1. As a result, if a current (I1) is flowing through RG from circuit 1, then a voltage drop across RG of VG=I1RG occurs, causing the shared ground connection to no longer be at the actual ground potential. This voltage across the ground conductor is applied to circuit 2 and added to its output:Vout=V2−VG=V2−RGRG+R1V1."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Thus, the two circuits are no longer isolated, and circuit 1 can introduce interference into the output of circuit 2. If circuit 2 is an audio system and circuit 1 has large AC currents flowing in it, the interference may be heard as a 50 or 60 Hz hum in the speakers. Also, both circuits have voltage VG on their grounded parts that may be exposed to contact, possibly presenting a shock hazard. This is true even if circuit 2 is turned off."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Although ground loops occur most often in the ground conductors of electrical equipment, similar loops can occur wherever two or more circuits share a common current path. If enough current flows, similar problems occur in these conditions.[user-generated source?]"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Common ground loops"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A common type of ground loop is due to faulty interconnections between electronic components, such as laboratory or recording studio equipment, or home component audio, video, and computer systems. This can create inadvertent closed loops in the ground wiring circuit, which can allow stray line frequency AC current to be induced and flow through the ground conductors of signal cables. The voltage drops in the ground system caused by these currents are added to the signal path, introducing noise and hum into the output. The loops can include the building's utility wiring ground system when more than one component is grounded through the protective earth (third wire) in their power cords."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Ground currents on signal cables"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The symptoms of a ground loop, ground noise and hum in electrical equipment are caused by current flowing in the ground or shield conductor of a cable. Fig. 1 shows a signal cable S linking two electronic components, including the typical line driver and receiver amplifiers (triangles). The cable has a ground or shield conductor which is connected to the chassis ground of each component. The driver amplifier in component 1 (left) applies signal V1 between the signal and ground conductors of the cable. At the destination end (right), the signal and ground conductors are connected to a differential amplifier. This produces the signal input to component 2 by subtracting the shield voltage from the signal voltage to eliminate common-mode noise picked up by the cable V2=VS2−VG2"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If a current I from a separate source is flowing through the ground conductor, the resistance R of the conductor will create a voltage drop along the cable ground of IR, so the destination end of the ground conductor will be at a different potential than the source end VG2=VG1−IR Since the differential amplifier has high impedance, little current flows in the signal wire, therefore there is no voltage drop across it: VS2=VS1 The ground voltage appears to be in series with the signal voltage V1 and adds to it V2=VS1−(VG1−IR) V2=V1+IR"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If I is an AC current, this can result in noise added to the signal path in component 2."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Sources of ground current"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The diagrams in this section show a typical ground loop caused by a signal cable S connecting two grounded electronic components C1 and C2. The loop consists of the signal cable's ground conductor, which is connected through the components' metal chassis to the ground wires P in their power cords, which are plugged into outlet grounds that are connected through the building's utility ground wire system G."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Such loops in the ground path can cause currents in signal cable grounds by two main mechanisms:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Ground loop currents can be induced by stray time-varying magnetic fields (B, green) which are always present around AC electrical wiring. The ground loop constitutes a conductive wire loop. According to Faraday's law of induction, any time-varying magnetic flux passing through the loop induces an electromotive force (EMF) in the loop, causing a time-varying current to flow. The loop, therefore, acts like a short circuited single-turn transformer winding; any AC magnetic flux from nearby transformers, electric motors, or adjacent power wiring, will induce AC currents in the loop by induction. The larger the area spanned by the loop and the larger the magnetic flux through it, the larger the induced currents will be. Since its resistance is typically very low, often less than 1 ohm, the induced currents can be large.",
+        "Another less common source of ground loop currents, found particularly in high-power equipment, is current leaking from the hot side of the power line into the ground system. In addition to resistive leakage, current can also be induced through low impedance capacitive or inductive coupling. The ground potential at different outlets may differ by as much as 10 to 20 volts due to voltage drops from these currents. The diagram shows leakage current from an appliance such as an electric motor A flowing through the building's ground system G to the neutral wire at the utility ground bonding point at the service panel. The ground loop between components C1 and C2 creates a second parallel path for the current. The current divides, with some passing through component C1, the signal cable S ground conductor, C2 and back through the outlet into the ground system G. The AC voltage drop across the cable's ground conductor from this current introduces hum or interference into component C2."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Solutions"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The solution to ground loop noise is to break the ground loop or otherwise prevent the current from flowing. Several approaches are available."
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Group the cables involved in the ground loop into a bundle or snake. The ground loop still exists, but the two sides of the loop are close together, so stray magnetic fields induce equal currents in both sides, which cancel out.",
+        "Create a break in the signal cable shield conductor. The break should be at the load end. This is often called ground lifting. It is the simplest solution; it leaves the ground currents to flow through the other arm of the loop. Some sound system components have ground lift switches at inputs, which disconnect the ground. One problem with this solution is if the other ground path to the component is removed, it will leave the component ungrounded and stray leakage currents may cause a very loud hum in the output, possibly damaging speakers.",
+        "Put a small resistor of about 10 Ω in the cable shield conductor, at the load end. This is large enough to reduce magnetic-field-induced currents but small enough to keep the component grounded if the other ground path is removed. In high-frequency systems, this solution leads to impedance mismatch and leakage of the signal onto the shield, where it can radiate to create radio-frequency interference, or, symmetrically through the same mechanism, external signals or noise can be received by the shield and mixed into the desired signal.",
+        "Use a ground loop isolation transformer in the cable. This breaks the DC connection between components while passing the differential signal on the line. Even if one or both components are ungrounded, no noise will be introduced. Better isolation transformers have grounded shields between the two sets of windings. A transformer generally introduces some harmonic distortion and alters frequency response. A transformer designed specifically for the relevant frequency range must be used. Optoisolators can perform the same task for digital lines but introduce signal delay.",
+        "In circuits producing high-frequency noise, such as computer peripherals, ferrite beads are placed around cables just before the termination to the next appliance (e.g., the computer). These present a high impedance only at high frequency, so they will effectively stop radio frequency and digital noise, but will have little effect on line frequency noise.",
+        "Reinforce the shield of the signal cable connecting C1 and C2 by connecting a thick copper conductor in parallel to the shield. This reduces the resistance of the shield and thus the amplitude of the unwanted signal.",
+        "A technique used in recording studios is to interconnect all the metal chassis with heavy conductors like copper strips, then connect to the building ground wire system at one point; this is referred to as star grounding or single-point grounding.",
+        "Battery-powering one or more of the circuits can avoid a ground loop, because the entire device may be disconnected from mains power."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "A hazardous technique sometimes used by amateurs is to break the safety ground conductor P in one of the component's power cords, by removing the ground pin on the plug, or using a cheater plug. This creates an electric shock hazard by leaving one of the components ungrounded."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Balanced lines"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A more comprehensive solution is to use equipment that employs differential signaling. Ground noise can only get into the signal path in single-ended signaling, in which the ground or shield conductor serves as one side of the signal path. When the signal is sent as a differential signal along a pair of wires, neither of which is connected to ground, any noise from the ground system induced in the signal lines is a common-mode signal, identical in both wires. Since the line receiver at the destination end only responds to differential signals, a difference in voltage between the two lines, the common-mode noise is canceled out. Thus these systems are very immune to electrical noise, including ground noise. Professional and scientific equipment often uses differential signaling with balanced lines."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In low-frequency audio and instrumentation systems"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A domestic HiFi system may have multiple separately-powered components interconnected with unbalanced analog connections. A safety ground forms a clear ground loop, but even without safety grounds (as is common practice for domestic AV equipment), there are several ways a ground loop can form through parasitic capacitance, inductance, and transformer effects. The resulting difference in ground voltage between components creates a current through the grounds of the analog interconnect and a corresponding voltage drop along the signal ground return. This is directly additive to the wanted signal and may result in objectionable hum."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In a more complex situation, such as sound reinforcement systems, public address systems, music instrument amplifiers, recording studio and broadcast studio equipment, there are many signal sources in mains-powered equipment feeding many inputs on other equipment and interconnection may result in hum problems. Attempting to cure these problems by removing the safety ground creates a shock hazard. Solving hum problems must be done in the signal interconnections, and this is done in two main ways, which may be combined."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Isolation"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Isolation is the quickest, quietest and most foolproof method of resolving hum problems. The signal is isolated by a small transformer, such that the source and destination equipment each retain their own safety ground connections, but there is no signal ground connecting one to the other. By transformer isolating all unbalanced connections, the unbalanced connections are converted to balanced connections.[citation needed] In analog applications such as audio, the physical limitations of the transformers limit bandwidth and introduce some distortion."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Balanced interconnection"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Balanced connections see the spurious noise due to ground loop current as common-mode interference while the signal is differential, enabling them to be separated at the destination by circuits having a high common-mode rejection ratio. This rejection can be accomplished with transformers or semiconductor output drivers and line receivers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "With the increasing trend towards digital processing and transmission of audio signals, the full range of isolation by small pulse transformers, optocouplers or fiber optics become more useful. Standard protocols such as S/PDIF, AES3 or TOSLINK are available in relatively inexpensive equipment and allow full isolation, so ground loops need not arise, especially when connecting between audio systems and computers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In instrumentation systems, the use of differential inputs with high common-mode rejection ratio, to minimize the effects of induced AC signals on the parameter to be measured, is widespread. It may also be possible to introduce narrow notch filters at the power frequency and its lower harmonics; however, this can not be done in audio systems due to the objectionable audible effects on the wanted signal."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In analog video systems"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In analog video, mains hum can be seen as hum bars (bands of slightly different brightness) scrolling vertically up the screen. These are frequently seen with video projectors where the display device has its case grounded via a 3-prong plug, and the other components have a floating ground connected to the CATV coax. In this situation the video cable is grounded at the projector end to the home electrical system, and at the other end to the cable TV's ground, inducing a current through the cable which distorts the picture. The problem is best solved with an isolation transformer in the CATV RF feed, a feature included in some CATV box designs."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ground loop issues with television coaxial cable can affect any connected audio device such as a receiver. Even if all of the audio and video equipment in, for example, a home theatre system is plugged into the same power outlet, and thus all share the same ground, the coaxial cable entering the TV may be grounded by the cable company to a different point than that of the house's electrical ground creating a ground loop, and causing undesirable mains hum in the system's speakers."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In digital and RF systems"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In digital systems, which commonly transmit data serially (RS-232, RS-485, USB, FireWire, DVI, HDMI etc.) the signal voltage is often much larger than induced power frequency AC on the connecting cable screens. Of those protocols listed, only RS-232 is single-ended with ground return, but it is a large signal, typically + and - 12V, all the others being differential."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Differential signaling must use a balanced line to ensure that the signal does not radiate and that induced noise from a ground loop is a common-mode signal and can be removed at the differential receiver."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Many data communications systems such as Ethernet 10BASE-T, 100BASE-TX and 1000BASE-T, use DC-balanced encoding such as Manchester code. The ground loop(s) which would occur in most installations are avoided by using signal-isolating transformers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Other systems break the ground loop at data frequencies by fitting small ferrite beads around the connecting cables near each end or just inside the equipment boundary. These form a common-mode choke which inhibits unbalanced current flow, without affecting the differential signal."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Coaxial cables used at radio frequencies may be wound several times through a ferrite bead to add a useful amount of common-mode inductance. This limits the flow of unwanted high-frequency common-mode current along the cable shield."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Where no power need be transmitted, only digital data, the use of fiber optics can remove many ground loop problems, and sometimes safety problems too. Optical isolators or optocouplers are frequently used to provide ground loop isolation, and often safety isolation and can help prevent fault propagation."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Internal ground loops in equipment"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Generally, the analog and digital parts of the circuit are in separate areas of the PCB, with their own ground planes to obtain the necessary low inductance grounding and avoid ground bounce. These are tied together at a carefully chosen star point. Where analog-to-digital converters (ADCs) are in use, the star point may have to be at or very close to the ground terminals of the ADC(s). Phase lock loop circuits are particularly vulnerable because the VCO loop filter circuit is working with sub-microvolt signals when the loop is locked, and any disturbance will cause frequency jitter and possible loss of lock."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In circuit design"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Grounding and the potential for ground loops are also important considerations in circuit design. In many circuits, large currents may exist through the ground plane, leading to voltage differences of the ground reference in different parts of the circuit, which can lead to hum and other problems. Techniques exist to avoid ground loops, and otherwise, guarantee good grounding:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "The external shield, and the shields of all connectors, should be connected together. If the power supply in the design is not isolated, this external chassis ground should be connected to the ground plane of the PCB at a single point; this single-point connection avoids large currents through the ground plane of the PCB. If the design uses an isolated power supply, this external ground should be connected to the ground plane of the PCB via a high voltage capacitor, such as 2200 pF at 2 kV. If the connectors are mounted on the PCB, the outer perimeter of the PCB should contain a strip of copper connecting to the shields of the connectors. There should be a break in copper between this strip, and the main ground plane of the circuit. The two should be connected at only one point. This way, if there is a large current between connector shields, it will not pass through the ground plane of the circuit.",
+        "A star topology should be used for ground distribution, avoiding loops.",
+        "High-power devices should be placed closest to the power supply, while low-power devices can be placed farther from it.",
+        "Signals, wherever possible, should be differential.",
+        "Isolated power supplies require careful consideration of parasitic, component, or internal PCB power plane capacitance that can allow AC present on input power or connectors to pass into the ground plane, or to any other internal signal. The AC may find a path back to its source via an I/O signal."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Electronics portal"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Notes"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Whitlock, Bill. \"Signal Purity\". Sound & Video Contractor. Archived from the original on 17 September 2004."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "This article incorporates public domain material from Federal Standard 1037C. General Services Administration. Archived from the original on 2022-01-22."
+    }
+  ]
+}

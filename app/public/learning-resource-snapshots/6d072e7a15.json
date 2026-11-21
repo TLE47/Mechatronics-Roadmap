@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "title": "Åström & Murray — Feedback Systems (fbsbook.org)",
+  "sourceTitle": "",
+  "sourceUrl": "https://www.fbsbook.org/",
+  "provider": "Feedback Systems",
+  "providerKey": "feedback-systems",
+  "retrievedAt": "2026-11-21T02:10:41.025Z",
+  "license": {
+    "id": "CC-BY-NC-SA-4.0 (wiki); linked book PDF excluded",
+    "url": "https://www.fbsbook.org/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "non-commercial",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Feedback Systems (FBSwiki) contributors",
+    "originalUrl": "https://www.fbsbook.org/"
+  },
+  "notice": "Text-only snapshot of Feedback Systems (FBSwiki) contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Non-commercial use only. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "This is the main page for the Feedback Systems wiki (FBSwiki). The following resources are maintained here:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "FBS: Feedback Systems (second edition)",
+        "BFS: Biomolecular Feedback Systems",
+        "LST: Linear Systems Theory (supplement)",
+        "OBC: Optimization-Based Control (supplement)",
+        "NCS: Networked Control Systems (supplement)"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you are looking for the first edition of FBS, you can find it here."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "News"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "16 Nov 2024: Python figure sources updated for python-control v0.10.1",
+        "12 Mar 2023: A new version of the Optimization-Based Control (OBC) supplement is now complete and posted",
+        "28 Aug 2021: Links to first edition supplemental information added to chapter pages",
+        "30 Oct 2020: Notes on Linear Systems Theory updated (release 0.2.2)",
+        "24 Jul 2020: Copyedited version of FBS2e now available for download"
+      ]
+    }
+  ]
+}

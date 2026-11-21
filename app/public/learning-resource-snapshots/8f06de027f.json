@@ -1,0 +1,372 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Pointer (computer programming) (\"C and C++\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Pointer_(computer_programming)",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:24.731Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Pointer_(computer_programming)"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "quote",
+      "text": "I do consider assignment statements and pointer variables to be among computer science's \"most valuable treasures.\""
+    },
+    {
+      "kind": "paragraph",
+      "text": "In computer science, a pointer is an object in many programming languages that stores a memory address. This can be that of another value located in computer memory, or in some cases, that of memory-mapped computer hardware. A pointer references a location in memory, and obtaining the value stored at that location is known as dereferencing the pointer. As an analogy, a page number in a book's index could be considered a pointer to the corresponding page; dereferencing such a pointer would be done by flipping to the page with the given page number and reading the text found on that page. The actual format and content of a pointer variable is dependent on the underlying computer architecture."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using pointers significantly improves performance for repetitive operations, like traversing iterable data structures (e.g. strings, lookup tables, control tables, linked lists, and tree structures). In particular, it is often much cheaper in time and space to copy and dereference pointers than it is to copy and access the data to which the pointers point."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers are also used to hold the addresses of entry points for called subroutines in procedural programming and for run-time linking to dynamic link libraries (DLLs). In object-oriented programming, pointers to functions are used for binding methods, often using virtual method tables."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A pointer is a simple, more concrete implementation of the more abstract reference data type. Several languages, especially low-level languages, support some type of pointer, although some have more restrictions on their use than others. While \"pointer\" has been used to refer to references in general, it more properly applies to data structures whose interface explicitly allows the pointer to be manipulated (arithmetically via pointer arithmetic) as a memory address, as opposed to a magic cookie or capability which does not allow such.[citation needed] Because pointers allow both protected and unprotected access to memory addresses, there are risks associated with using them, particularly in the latter case. Primitive pointers are often stored in a format similar to an integer; however, attempting to dereference or \"look up\" such a pointer whose value is not a valid memory address could cause a program to crash (or contain invalid data). To alleviate this potential problem, as a matter of type safety, pointers are considered a separate type parameterized by the type of data they point to, even if the underlying representation is an integer. Other measures may also be taken (such as validation and bounds checking), to verify that the pointer variable contains a value that is both a valid memory address and within the numerical range that the processor is capable of addressing."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "History"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In 1955, Soviet Ukrainian computer scientist Kateryna Yushchenko created the Address programming language that made possible indirect addressing and addresses of the highest rank – analogous to pointers. This language was widely used on the Soviet computers. However, it was unknown outside the Soviet Union and usually Harold Lawson is credited with the invention, in 1964, of the pointer. In 2000, Lawson was presented the Computer Pioneer Award by the IEEE \"[f]or inventing the pointer variable and introducing this concept into PL/I, thus providing for the first time, the capability to flexibly treat linked lists in a general-purpose high-level language\". His seminal paper on the concepts appeared in the June 1967 issue of CACM entitled: PL/I List Processing. According to the Oxford English Dictionary, the word pointer first appeared in print as a stack pointer in a technical memorandum by the System Development Corporation."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Formal description"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In computer science, a pointer is a kind of reference."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A data primitive (or just primitive) is any datum that can be read from or written to computer memory using one memory access (for instance, both a byte and a word are primitives)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A data aggregate (or just aggregate) is a group of primitives that are logically contiguous in memory and that are viewed collectively as one datum (for instance, an aggregate could be 3 logically contiguous bytes, the values of which represent the 3 coordinates of a point in space). When an aggregate is entirely composed of the same type of primitive, the aggregate may be called an array; in a sense, a multi-byte word primitive is an array of bytes, and some programs use words in this way."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the context of these definitions, a byte is the smallest primitive; each memory address specifies a different byte. The memory address of the initial byte of a datum is considered the memory address (or base memory address) of the entire datum."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A memory pointer (or just pointer) is a primitive, the value of which is intended to be used as a memory address; it is said that a pointer points to a memory address. It is also said that a pointer points to a datum [in memory] when the pointer's value is the datum's memory address."
+    },
+    {
+      "kind": "paragraph",
+      "text": "More generally, a pointer is a kind of reference, and it is said that a pointer references a datum stored somewhere in memory; to obtain that datum is to dereference the pointer. The feature that separates pointers from other kinds of reference is that a pointer's value is meant to be interpreted as a memory address, which is a rather low-level concept."
+    },
+    {
+      "kind": "paragraph",
+      "text": "References serve as a level of indirection: A pointer's value determines which memory address (that is, which datum) is to be used in a calculation. Because indirection is a fundamental aspect of algorithms, pointers are often expressed as a fundamental data type in programming languages; in statically (or strongly) typed programming languages, the type of a pointer determines the type of the datum to which the pointer points."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Architectural roots"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers are a very thin abstraction on top of the addressing capabilities provided by most modern architectures. In the simplest scheme, an address, or a numeric index, is assigned to each unit of memory in the system, where the unit is typically either a byte or a word – depending on whether the architecture is byte-addressable or word-addressable – effectively transforming all of memory into a very large array. The system would then also provide an operation to retrieve the value stored in the memory unit at a given address (usually utilizing the machine's general-purpose registers)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the usual case, a pointer is large enough to hold more addresses than there are units of memory in the system. This introduces the possibility that a program may attempt to access an address which corresponds to no unit of memory, either because not enough memory is installed (i.e. beyond the range of available memory) or the architecture does not support such addresses. The first case may, in certain platforms such as the Intel x86 architecture, be called a segmentation fault (segfault). The second case is possible in the current implementation of AMD64, where pointers are 64 bit long and addresses only extend to 48 bits. Pointers must conform to certain rules (canonical addresses), so if a non-canonical pointer is dereferenced, the processor raises a general protection fault."
+    },
+    {
+      "kind": "paragraph",
+      "text": "On the other hand, some systems have more units of memory than there are addresses. In this case, a more complex scheme such as memory segmentation or paging is employed to use different parts of the memory at different times. The last incarnations of the x86 architecture support up to 36 bits of physical memory addresses, which were mapped to the 32-bit linear address space through the PAE paging mechanism. Thus, only 1/16 of the possible total memory may be accessed at a time. Another example in the same computer family was the 16-bit protected mode of the 80286 processor, which, though supporting only 16 MB of physical memory, could access up to 1 GB of virtual memory, but the combination of 16-bit address and segment registers made accessing more than 64 KB in one data structure cumbersome."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In order to provide a consistent interface, some architectures provide memory-mapped I/O, which allows some addresses to refer to units of memory while others refer to device registers of other devices in the computer. There are analogous concepts such as file offsets, array indices, and remote object references that serve some of the same purposes as addresses for other types of objects."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Uses"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers are directly supported without restrictions in languages such as PL/I, C, C++, Pascal, FreeBASIC, and implicitly in most assembly languages. They are used mainly to construct references, which in turn are fundamental to construct nearly all data structures, and to pass data between different parts of a program."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In functional programming languages that rely heavily on lists, data references are managed abstractly by using primitive constructs like cons and the corresponding elements car and cdr, which can be thought of as specialised pointers to the first and second components of a cons-cell. This gives rise to some of the idiomatic \"flavour\" of functional programming. By structuring data in such cons-lists, these languages facilitate recursive means for building and processing data—for example, by recursively accessing the head and tail elements of lists of lists; e.g. \"taking the car of the cdr of the cdr\". By contrast, memory management based on pointer dereferencing in some approximation of an array of memory addresses facilitates treating variables as slots into which data can be assigned imperatively."
+    },
+    {
+      "kind": "paragraph",
+      "text": "When dealing with arrays, the critical lookup operation typically involves a stage called address calculation which involves constructing a pointer to the desired data element in the array. In other data structures, such as linked lists, pointers are used as references to explicitly tie one piece of the structure to another."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers are used to pass parameters by reference. This is useful if the programmer wants a function's modifications to a parameter to be visible to the function's caller. This is also useful for returning multiple values from a function."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers can also be used to allocate and deallocate dynamic variables and arrays in memory. Since a variable will often become redundant after it has served its purpose, it is a waste of memory to keep it, and therefore it is good practice to deallocate it (using the original pointer reference) when it is no longer needed. Failure to do so may result in a memory leak (where available free memory gradually, or in severe cases rapidly, diminishes because of an accumulation of numerous redundant memory blocks)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "C pointers"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C, the basic syntax to define a pointer is:"
+    },
+    {
+      "kind": "code",
+      "text": "int *ptr;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This declares a variable ptr that stores a pointer to an object of type int. Other types can be used in place of int; for example, bool *ptr would declare a pointer to an object of type bool."
+    },
+    {
+      "kind": "paragraph",
+      "text": "After a pointer has been declared, it can be assigned an address. In C, the address of a variable can be retrieved with the & unary operator:"
+    },
+    {
+      "kind": "code",
+      "text": "// Declare a variable for a pointer to int\nint *ptr;\n// Declare a variable for an int\nint a = 5;\n// Assign the address of a to the pointer variable\nptr = &a;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "To dereference the pointer, yielding the object it points to, an asterisk (*) can be used:"
+    },
+    {
+      "kind": "code",
+      "text": "printf(\"%d\\n\", *ptr);\n// Prints: 5"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are two styles of declarations of a pointer-to-int named ptr:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "int *ptr;, which emphasises that the expression *ptr has type int.",
+        "int* ptr;, which emphasises that ptr has type int*. This style is more prevalent in C++ than C."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Both int *x, y; and int* x, y; declare x to be a pointer to int, but declare y to be an int. This is because the * applies only to the variable immediately following it."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The asterisk can also be used on the left-hand side of an assignment to change the object a without having to be in the same scope."
+    },
+    {
+      "kind": "code",
+      "text": "*ptr = 8;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If a is accessed later, its new value will be 8."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Because the C language does not specify an implicit initialization for objects of automatic storage duration, pointer variables can sometimes point to unexpected locations, causing undefined behavior. To combat this, pointers are sometimes initialized with a null pointer value, represented in C by the NULL macro; in C23 and later, nullptr is also available as an alternative, which is of type nullptr_t."
+    },
+    {
+      "kind": "code",
+      "text": "int *ptr = NULL;\nint *ptr = nullptr; // since C23"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Dereferencing a null pointer produces undefined behavior, which can result in unpredictable bugs and results."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This example may be clearer if memory is examined directly. Assume that a is located at address 0x8130 in memory and ptr at 0x8134; also assume this is a 32-bit machine such that an int is 32-bits wide. The following is what would be in memory after the following code snippet is executed:"
+    },
+    {
+      "kind": "code",
+      "text": "int a = 5;\nint *ptr = NULL;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "(The null pointer shown here is 0x00000000.) By assigning the address of a to ptr:"
+    },
+    {
+      "kind": "code",
+      "text": "ptr = &a;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "yields the following memory values:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Then by dereferencing ptr by coding:"
+    },
+    {
+      "kind": "code",
+      "text": "*ptr = 8;"
+    },
+    {
+      "kind": "paragraph",
+      "text": "the computer will take the contents of ptr (which is 0x8130), 'locate' that address, and assign 8 to that location yielding the following memory:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Clearly, accessing a will yield the value of 8 because the previous instruction modified the contents of a by way of the pointer ptr."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Use in data structures"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When setting up data structures like lists, queues and trees, it is necessary to have pointers to help manage how the structure is implemented and controlled. Typical examples of pointers are start pointers, end pointers, and stack pointers. These pointers can either be absolute (the actual physical address or a virtual address in virtual memory) or relative (an offset from an absolute start address (\"base\") that typically uses fewer bits than a full address, but will usually require one additional arithmetic operation to resolve)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Relative addresses are a form of manual memory segmentation, and share many of its advantages and disadvantages. A two-byte offset, containing a 16-bit, unsigned integer, can be used to provide relative addressing for up to 64 KiB (216 bytes) of a data structure. This can easily be extended to 128, 256 or 512 KiB if the address pointed to is forced to be aligned on a half-word, word or double-word boundary (but, requiring an additional \"shift left\" bitwise operation—by 1, 2 or 3 bits—in order to adjust the offset by a factor of 2, 4 or 8, before its addition to the base address). Generally, though, such schemes are a lot of trouble, and for convenience to the programmer absolute addresses (and underlying that, a flat address space) is preferred."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A one byte offset, such as the hexadecimal ASCII value of a character (e.g. X'29') can be used to point to an alternative integer value (or index) in an array (e.g., X'01'). In this way, characters can be very efficiently translated from 'raw data' to a usable sequential index and then to an absolute address without a lookup table."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "C arrays"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C, array indexing is formally defined in terms of pointer arithmetic; that is, the language specification requires that a[i] be equivalent to *(a + i), because, if a is the name of an array, in most contexts the expression a evaluates to a pointer to the first element of a, so the syntax for accessing arrays is identical for that which can be used to dereference pointers. For example, an array a can be declared and used in the following manner:"
+    },
+    {
+      "kind": "code",
+      "text": "int a[5]; // Declares 5 contiguous integers\nint *ptr = a; // Array names in expressions evaluate to pointers in most cases\nptr[0] = 1; // Pointers can be indexed with array syntax\n*(a + 1) = 2; // Arrays can be indexed with pointer syntax\n*(1 + a) = 2; // Pointer addition is commutative\n2[a] = 4; // Subscript operator is commutative (perhaps unusual)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This allocates a block of five integers and names the block a; the expression a evaluates, in most contexts, as a pointer to the first element of the block. Another common use of pointers is to point to dynamically allocated memory from malloc which returns a consecutive block of memory of no less than the requested size that can be used as an array. The form i[a] (where i is the index) is declared obsolescent as of C29, in favour of the more common form a[i]."
+    },
+    {
+      "kind": "paragraph",
+      "text": "While, when used as an operand for most operators, an array evaluates as a pointer to the first element of the array, this is not the case for the sizeof operator. In this example, sizeof(a) will evaluate to 5 * sizeof(int) (the size of the array), while sizeof(ptr) will evaluate to sizeof(int *), the size of the pointer itself."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Default values of an array can be declared like:"
+    },
+    {
+      "kind": "code",
+      "text": "int a[5] = {2, 4, 3, 1, 5};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If a is located in memory starting at address 0x1000 on a 32-bit little-endian machine then memory will contain the following (values are in hexadecimal, like the addresses):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Represented here are five integers: 2, 4, 3, 1, and 5. These five integers occupy 32 bits (4 bytes) each with the least-significant byte stored first (this is a little-endian CPU architecture) and are stored consecutively starting at address 0x1000."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The syntax for C with pointers is:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "a means 0x1000;",
+        "a + 1 means 0x1004: the \"+ 1\" means to add the size of 1 int, which is 4 bytes;",
+        "*a means to dereference the contents of a. Considering the contents as a memory address (0x1000), look up the value at that location (0x0002);",
+        "a[i] means element number i, 0-based, of a which is translated into *(a + i)."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The last example is how to access the contents of a. Breaking it down:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "a + i is the memory location of the ith element of a, starting at i = 0;",
+        "*(a + i) takes that memory address and dereferences it to access the value."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "C linked list"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Below is an example definition of a linked list in C."
+    },
+    {
+      "kind": "code",
+      "text": "struct LinkedList {\n    void *data; // data of this link\n    struct LinkedList *next; // next link; NULL if there is none\n};"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This pointer-recursive definition is essentially the same as the reference-recursive definition from the language Haskell:"
+    },
+    {
+      "kind": "code",
+      "text": "data LinkedList a\n    = Nil\n    | Cons a (LinkedList a)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where Nil is the empty list, and Cons a (LinkedList a) is a cons cell of type a with another link also of type a."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The definition with references, however, is type-checked and does not use potentially confusing signal values. For this reason, data structures in C are usually dealt with via wrapper functions, which are carefully checked for correctness."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Pass-by-address using pointers"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Pointers can be used to pass variables by their address, allowing their value to be changed. For example, consider the following C code:"
+    },
+    {
+      "kind": "code",
+      "text": "// a copy of the int n can be changed within the function without affecting the calling code\nvoid passByValue(int n) {\n    n = 12;\n}\n\n// a pointer m is passed instead. No copy of the value pointed to by m is created\nvoid passByAddress(int *m) {\n    *m = 14;\n}\n\nint main(void) {\n    int x = 3;\n\n    // pass a copy of x's value as the argument\n    passByValue(x);\n    // the value was changed inside the function, but x is still 3 from here on\n\n    // pass x's address as the argument\n    passByAddress(&x);\n    // x was actually changed by the function and is now equal to 14 here\n\n    return 0;\n}"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Dynamic memory allocation"
+    }
+  ]
+}

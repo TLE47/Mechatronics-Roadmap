@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Integral windup (\"Occurrence\" & \"Solutions\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Integral_windup",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:25.292Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Integral_windup"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "Integral windup, also known as integrator windup or reset windup, refers to the situation in a PID controller where a large change in setpoint occurs (say a positive change) and the integral term accumulates a significant error during the rise (windup), thus overshooting and continuing to increase as this accumulated error is unwound (offset by errors in the other direction)."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Solutions"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This problem can be addressed by"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Initializing the controller integral to a desired value, for instance to the value before the problem[citation needed]",
+        "Increasing the setpoint in a suitable ramp",
+        "Conditional integration: disabling the integral function until the to-be-controlled process variable (PV) has entered the controllable region",
+        "Preventing the integral term from accumulating above or below pre-determined bounds",
+        "Back-calculating the integral term to constrain the process output within feasible bounds.",
+        "Clegg integrator: Zeroing the integral value every time the error is equal to, or crosses zero. This avoids having the controller attempt to drive the system to have the same error integral in the opposite direction as was caused by a perturbation, but induces oscillation if a non-zero control value is required to maintain the process at setpoint."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Occurrence"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Integral windup particularly occurs as a limitation of physical systems, compared with ideal systems, due to the ideal output being physically impossible (process saturation: the output of the process being limited at the top or bottom of its scale, making the error constant). For example, the position of a valve cannot be any more open than fully open and also cannot be closed any more than fully closed."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Integral windup was more of a problem in analog controllers. Within modern distributed control systems and programmable logic controllers, it is much easier to prevent integral windup by either limiting the controller output, limiting the integral to produce feasible output, or by using external reset feedback, which is a means of feeding back the selected output to the integral circuit of all controllers in the selection scheme so that a closed loop is maintained."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    }
+  ]
+}

@@ -10,9 +10,10 @@ scraping the rendered page. This script turns those blocks into one generated re
     app/src/data/learningResourceIndex.ts   the small id -> count map the reader imports
 
 The Markdown remains authoritative. The registry is deterministic, checked into the repository, and
-`--check` fails when either output would change. It never fetches a URL: link and embedding verdicts
-are a separate, cached sweep (`scripts/check_links.py`), and the reader only opens resources in a new
-tab because the document is cross-origin isolated with `COEP: require-corp` for `SharedArrayBuffer`.
+`--check` fails when either output would change. It never fetches a URL: framing compatibility is a
+separate, cached probe (`scripts/verify_resource_embeds.py`), and the policy in
+`app/src/data/learningResourceProviders.json` turns that evidence into a presentation. An unknown
+host remains an external link; the document keeps `COEP: require-corp` for `SharedArrayBuffer`.
 
 Usage
     python3 scripts/generate_learning_resources.py            # write both files
@@ -33,6 +34,10 @@ from urllib.parse import urldefrag, urlparse
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_JSON = os.path.join(ROOT, "app", "public", "learning-resources.json")
 OUT_INDEX = os.path.join(ROOT, "app", "src", "data", "learningResourceIndex.ts")
+PROVIDER_POLICY = os.path.join(ROOT, "app", "src", "data", "learningResourceProviders.json")
+EMBED_REPORT = os.path.join(ROOT, "docs", "learning-resources-embeds.json")
+SNAPSHOT_DIR = os.path.join(ROOT, "app", "public", "learning-resource-snapshots")
+SNAPSHOT_PATH_PREFIX = "learning-resource-snapshots"
 
 # The same page set the link checker treats as the curriculum. READMEs and reference tables are
 # deliberately out of scope: they are citation lists, not the lesson resource blocks this registry
@@ -66,6 +71,9 @@ ANNOTATION = re.compile(r"`\[(?:HTTP\s+\d{3}[^`]*|verify in-app)\]`", re.I)
 # Friendly names for the small resource surface. An unknown host is still rendered by its host name;
 # it is never an embed decision. The allowlist for anything richer than an outbound link lives in the
 # app, not here.
+# Display names are only a fallback for a host the policy has not named. Presentation decisions and
+# provider metadata come from the explicit allowlist in the app's data directory; an unknown host is
+# rendered by its host name and is always external-only.
 PROVIDERS = {
     "futurecoder.io": "futurecoder",
     "cs50.harvard.edu": "Harvard CS50P",
@@ -84,6 +92,102 @@ PROVIDERS = {
     "www.fbsbook.org": "Feedback Systems",
     "betterexplained.com": "Better Explained",
 }
+
+
+def _load_policy() -> tuple[list[dict], dict[str, dict]]:
+    with open(PROVIDER_POLICY, encoding="utf-8") as handle:
+        policy = json.load(handle)
+    by_host: dict[str, dict] = {}
+    for provider in policy.get("providers", []):
+        for host in provider.get("hosts", []):
+            by_host[host.lower()] = provider
+    return policy.get("providers", []), by_host
+
+
+def _load_embed_report() -> dict[str, dict]:
+    if not os.path.exists(EMBED_REPORT):
+        return {}
+    with open(EMBED_REPORT, encoding="utf-8") as handle:
+        report = json.load(handle)
+    hosts = report.get("hosts", {})
+    return hosts if isinstance(hosts, dict) else {}
+
+
+def policy_for(url: str, by_host: dict[str, dict]) -> dict | None:
+    host = urlparse(url).netloc.lower()
+    return by_host.get(host) or by_host.get(host.removeprefix("www.")) or by_host.get(f"www.{host}")
+
+
+def embed_for(url: str, embeds: dict[str, dict]) -> dict:
+    host = urlparse(url).netloc.lower()
+    entry = embeds.get(host) or embeds.get(host.removeprefix("www.")) or embeds.get(f"www.{host}")
+    if not entry:
+        return {
+            "status": "unknown",
+            "method": None,
+            "evidence": "this host is not in the build-time embed report",
+            "checkedAt": "",
+        }
+    status = entry.get("status")
+    method = entry.get("method")
+    return {
+        "status": status if status in {"embeddable", "blocked", "unknown"} else "unknown",
+        "method": method if method in {"corp", "credentialless"} else None,
+        "evidence": str(entry.get("evidence") or ""),
+        "checkedAt": str(entry.get("checkedAt") or ""),
+    }
+
+
+def snapshot_for(record: dict) -> dict | None:
+    """Attach the checked-in snapshot only when its facts still match this authored record.
+
+    A licence-cleared resource without a snapshot is a build error rather than a silent downgrade:
+    the user asked for Reader Mode on every source that permits it, and a missing file is how that
+    promise would quietly become a link. Non-allowed resources never receive a snapshot path, even if
+    a stray file exists. The reader itself validates the block shape again at fetch time.
+    """
+    license_record = record.get("license")
+    if record.get("kind") != "external" or not license_record or license_record.get("reuse") != "allowed":
+        return None
+    key = str(record.get("resourceKey") or "")
+    if not re.fullmatch(r"[0-9a-f]{10}", key):
+        raise ValueError(f"{record.get('id')}: invalid resourceKey for a snapshot")
+    path = os.path.join(SNAPSHOT_DIR, f"{key}.json")
+    if not os.path.exists(path):
+        raise ValueError(
+            f"{record.get('url')}: licence-cleared resource has no snapshot; run "
+            "node scripts/build_learning_resource_snapshots.mjs"
+        )
+    with open(path, encoding="utf-8") as handle:
+        snapshot = json.load(handle)
+    if snapshot.get("version") != 1:
+        raise ValueError(f"{os.path.relpath(path, ROOT)}: unsupported snapshot version")
+    if urldefrag(str(snapshot.get("sourceUrl") or ""))[0] != urldefrag(str(record["url"]))[0]:
+        raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot source URL does not match the authored URL")
+    if snapshot.get("license") != license_record:
+        raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot licence does not match the provider policy")
+    blocks = snapshot.get("blocks")
+    if not isinstance(blocks, list) or not blocks:
+        raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot has no readable blocks")
+    for block in blocks:
+        if not isinstance(block, dict) or block.get("kind") not in {
+            "heading",
+            "paragraph",
+            "list",
+            "code",
+            "quote",
+        }:
+            raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot has an unknown block")
+        if block["kind"] == "heading":
+            if block.get("level") not in {1, 2, 3, 4} or not isinstance(block.get("text"), str):
+                raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot has an invalid heading")
+        elif block["kind"] == "list":
+            items = block.get("items")
+            if not isinstance(items, list) or not items or not all(isinstance(item, str) for item in items):
+                raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot has an invalid list")
+        elif not isinstance(block.get("text"), str):
+            raise ValueError(f"{os.path.relpath(path, ROOT)}: snapshot has an invalid text block")
+    return {"path": f"{SNAPSHOT_PATH_PREFIX}/{key}.json"}
 
 
 def lesson_files() -> list[str]:
@@ -258,6 +362,8 @@ def build_registry() -> dict:
     grouped: dict[str, dict] = {}
     errors: list[str] = []
     used_ids: set[str] = set()
+    _, providers_by_host = _load_policy()
+    embeds = _load_embed_report()
 
     for path in lesson_files():
         relative = os.path.relpath(path, ROOT)
@@ -293,14 +399,49 @@ def build_registry() -> dict:
                 inline = clean(line[end:next_start])
                 guide = guide_after(lines, index, inline)
                 external = url.startswith(("http://", "https://"))
+                provider = policy_for(url, providers_by_host) if external else None
+                normalized_url = urldefrag(url)[0] if external else url
                 record = {
                     "id": resource_id(lesson_id, role, url, used_ids),
+                    "resourceKey": hashlib.sha1(normalized_url.encode("utf-8")).hexdigest()[:10],
                     "role": role,
                     "idea": dict(idea),
                     "title": link_title or provider_for(url) if external else link_title or "MechaLab resource",
                     "url": url,
-                    "provider": provider_for(url) if external else "MechaLab",
+                    "provider": (
+                        str(provider.get("publisher"))
+                        if provider and provider.get("publisher")
+                        else provider_for(url)
+                        if external
+                        else "MechaLab"
+                    ),
+                    "providerKey": str(provider.get("key")) if provider else ("unknown" if external else "mechalab"),
                     "kind": "external" if external else "local",
+                    "resourceKind": (
+                        str(provider.get("kind"))
+                        if provider and provider.get("kind")
+                        else "article"
+                        if external
+                        else "local"
+                    ),
+                    "attribution": {
+                        "publisher": (
+                            str(provider.get("publisher"))
+                            if provider and provider.get("publisher")
+                            else provider_for(url)
+                            if external
+                            else "MechaLab"
+                        ),
+                        "originalUrl": url,
+                    },
+                    "embed": embed_for(url, embeds) if external else {
+                        "status": "unknown",
+                        "method": None,
+                        "evidence": "a local link is not an external embed",
+                        "checkedAt": "",
+                    },
+                    "license": provider.get("license") if provider else None,
+                    "presentation": "auto",
                     "headings": bold_terms(guide["read"]),
                     "guide": guide,
                     "sourceLine": index + 1,
@@ -312,6 +453,9 @@ def build_registry() -> dict:
                         else "unverified"
                     ),
                 }
+                snapshot = snapshot_for(record)
+                if snapshot:
+                    record["snapshot"] = snapshot
                 records.append(record)
                 lesson_group["resources"].append(record)
         if lesson_has_resource:
@@ -331,13 +475,15 @@ def build_registry() -> dict:
         key: grouped[key]
         for key in sorted(grouped)
     }
+    snapshot_count = sum(1 for record in records if record.get("snapshot"))
     return {
-        "version": 1,
+        "version": 2,
         "generatedFrom": sorted(set(generated_from)),
         "lessonCount": len(lessons),
         "lineCount": line_count,
         "resourceCount": external_count,
         "localResourceCount": local_count,
+        "snapshotCount": snapshot_count,
         "lessons": lessons,
     }
 
@@ -376,7 +522,8 @@ def main() -> int:
     if args.stats:
         print(
             f"{registry['lessonCount']} lessons, {registry['lineCount']} resource lines, "
-            f"{registry['resourceCount']} external resources, {registry['localResourceCount']} local links"
+            f"{registry['resourceCount']} external resources, {registry['localResourceCount']} local links, "
+            f"{registry['snapshotCount']} reader snapshots"
         )
         return 0
 

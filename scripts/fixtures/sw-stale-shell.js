@@ -85,6 +85,10 @@ if (typeof window === 'undefined') {
     headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
     headers.set('Cross-Origin-Opener-Policy', 'same-origin');
     headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    headers.set(
+      'Content-Security-Policy',
+      "frame-src 'self' https://futurecoder.io https://docs.python.org https://www.youtube-nocookie.com https://www.youtube.com"
+    );
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,

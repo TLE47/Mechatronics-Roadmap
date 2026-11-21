@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "4.13.0",
+  "version": "4.14.0",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py && python3 scripts/generate_learning_resources.py",
@@ -12,7 +12,7 @@
     "check:lessons": "python3 scripts/generate_python_lessons_data.py --check",
     "generate:resources": "python3 scripts/generate_learning_resources.py",
     "check:resources": "python3 scripts/generate_learning_resources.py --check",
-    "test:resources": "python3 scripts/generate_learning_resources.py --check && python3 -m unittest tests.test_learning_resources && node --experimental-strip-types scripts/test_learning_resources.mjs",
+    "test:resources": "python3 scripts/generate_learning_resources.py --check && python3 -m unittest tests.test_learning_resources tests.test_resource_embeds && node --experimental-strip-types scripts/test_learning_resources.mjs && node --experimental-strip-types scripts/test_resource_workspace.mjs",
     "build:content": "python3 scripts/build_content.py",
     "check:content": "python3 scripts/build_content.py --check",
     "test:content": "node --experimental-strip-types scripts/test_content.mjs",
@@ -190,7 +190,11 @@
     "test:primitives": "node scripts/test_primitive_contract.mjs",
     "check:animations": "node scripts/check_animation_budget.mjs",
     "test:study-tips": "node scripts/test_study_tips.mjs",
-    "test:bridge-visuals": "node --experimental-strip-types scripts/test_bridge_visuals.mjs"
+    "test:bridge-visuals": "node --experimental-strip-types scripts/test_bridge_visuals.mjs",
+    "check:embeds": "python3 scripts/verify_resource_embeds.py --check",
+    "test:embeds": "python3 -m unittest tests.test_resource_embeds && python3 scripts/verify_resource_embeds.py --check",
+    "test:workspace": "node --experimental-strip-types scripts/test_resource_workspace.mjs",
+    "test:e2e:resources": "node scripts/e2e_resource_workspace.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

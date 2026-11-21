@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "futurecoder.io — “The Shell” and “Variables”",
+  "sourceTitle": "",
+  "sourceUrl": "https://futurecoder.io/course/#toc",
+  "provider": "futurecoder",
+  "providerKey": "futurecoder",
+  "retrievedAt": "2026-11-21T02:10:31.354Z",
+  "license": {
+    "id": "MIT (repository software and course content)",
+    "url": "https://github.com/alexmojaki/futurecoder/blob/main/LICENSE.txt",
+    "reuse": "allowed",
+    "conditions": [
+      "notice",
+      "no-trademark",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "futurecoder contributors",
+    "originalUrl": "https://futurecoder.io/course/#toc"
+  },
+  "notice": "Text-only snapshot of futurecoder contributors; images, tables, scripts and navigation are omitted. The source licence notice is shown below. No provider logo or trademark is used. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 1,
+      "text": "futurecoder"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Below are links to different pages in the course. You can start anywhere and go in any order, and your progress on each page will be recorded."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you're completely new to programming, or you have doubts, just start at the beginning and click Next as you finish each page."
+    },
+    {
+      "kind": "heading",
+      "level": 1,
+      "text": "Table of Contents"
+    },
+    {
+      "kind": "list",
+      "ordered": true,
+      "items": [
+        "The ShellIntroducing The Shell (current)Navigating Shell History",
+        "String BasicsIntroducing StringsAdding Strings",
+        "VariablesIntroducing VariablesUsing Variables and print()Writing ProgramsStoring Calculations In Variables",
+        "For LoopsIntroducing For LoopsIndentationBasic For Loop ExercisesBuilding Up StringsBuilding Up Strings ExercisesBasic Terminology",
+        "If StatementsIntroducing If StatementsCombining Compound StatementsUnderstanding Programs With snoopif and elseThe Equality OperatorIntroducing elifOther Comparison Operators",
+        "ListsIntroducing ListsBuilding New ListsUsing break to end a loop earlyGetting elements at a position, range(), and len()Exercises with range() and len()Terminology: Calling functions and methodsFunctions and Methods for ListsMore List Functions and MethodsString Methods and ImmutabilityHow to Find Information with Google, and moreUnderstanding Programs With Python Tutor== vs is, and Having Multiple Names for One ValueModifying While Iterating",
+        "A Bit More About StringsSingle and Double Quotes in Stringsf-strings",
+        "Nested LoopsIntroducing Nested LoopsUnderstanding Programs with birdseyeIntroducing Nested ListsLooping Over Nested Lists",
+        "FunctionsDefining FunctionsCalling Functions Within FunctionsReturning Values From FunctionsTesting Functionsreturn ends the function call",
+        "Boolean OperatorsIntroducing orIntroducing andMulti-line statementsCombining and and orIntroducing not",
+        "Tic Tac Toe ProjectChecking the board for winnersThe newline character, format_boardTypesInteractive Programs with input()Nested List Assignment: Playing Moves on the BoardMaking the BoardThe Full Tic-Tac-Toe Game",
+        "DictionariesIntroducing DictionariesUsing Dictionaries in PracticeIterating over Dictionary KeysCreating Key-Value Pairs"
+      ]
+    }
+  ]
+}

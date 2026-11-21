@@ -19,10 +19,8 @@
  */
 
 import { json, preflight, requireAdmin, audit } from '../_shared/http.ts';
+import { SETTING_KEYS, validateSetting } from '../_shared/siteSettings.ts';
 
-const SETTING_KEYS = ['announcement', 'feature_flags'] as const;
-const FLAG_NAMES = ['guided_tour'] as const;
-const MAX_ANNOUNCEMENT = 280;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface RequestBody {
@@ -32,23 +30,6 @@ interface RequestBody {
   userId?: string;
   role?: string;
   limit?: number;
-}
-
-function validateSetting(key: string, value: unknown): string | null {
-  if (key === 'announcement') {
-    if (typeof value !== 'string') return 'The announcement must be a string.';
-    if (value.trim().length > MAX_ANNOUNCEMENT) return `Keep the announcement under ${MAX_ANNOUNCEMENT} characters.`;
-    return null;
-  }
-  if (key === 'feature_flags') {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return 'Feature flags must be an object.';
-    for (const [name, flag] of Object.entries(value as Record<string, unknown>)) {
-      if (!(FLAG_NAMES as readonly string[]).includes(name)) return `Unknown flag: ${name}.`;
-      if (typeof flag !== 'boolean') return `Flag ${name} must be true or false.`;
-    }
-    return null;
-  }
-  return `Unknown setting: ${key}.`;
 }
 
 Deno.serve(async (req: Request) => {

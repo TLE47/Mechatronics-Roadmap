@@ -1,0 +1,233 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Volatile (computer programming)",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Volatile_%28computer_programming%29",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:23.271Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Volatile_%28computer_programming%29"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "In computer programming, a variable is said to be volatile if its value can be read or modified asynchronously by something other than the current thread of execution. The value of a volatile variable may spontaneously change for reasons such as: sharing values with other threads; sharing values with asynchronous signal handlers; accessing hardware devices via memory-mapped I/O (where messages from peripheral devices can be received and sent by reading from and writing to memory). Support for these use cases varies considerably among the programming languages that have the volatile keyword. Volatility can have implications regarding function calling conventions and how variables are stored, accessed and cached."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In C and C++"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C and C++, volatile is a type qualifier, like const, and is a part of a type (e.g. the type of a variable or field)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The behavior of the volatile keyword in C and C++ is sometimes given in terms of suppressing optimizations of an optimizing compiler: 1- don't remove existing volatile reads and writes, 2- don't add new volatile reads and writes, and 3- don't reorder volatile reads and writes. However, this definition is only an approximation for the benefit of new learners, and this approximate definition should not be relied upon to write real production code."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C, and consequently C++, the volatile keyword was intended to:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Allow access to memory-mapped I/O devices.",
+        "Allow preserving values across a longjmp.",
+        "Allow sharing values between signal handlers and the rest of the program in volatile sig_atomic_t objects."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The C and C++ standards allow writing portable code that shares values across a longjmp in volatile objects, and the standards allow writing portable code that shares values between signal handlers and the rest of the code in volatile sig_atomic_t objects. Any other use of volatile keyword in C and C++ is inherently non-portable or incorrect. In particular, writing code with the volatile keyword for memory-mapped I/O devices is inherently non-portable and always requires deep knowledge of the specific target C/C++ implementation and platform."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Multi-threading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "It is a common misconception that the volatile keyword is useful in portable multi-threading code in C and C++. The volatile keyword in C and C++ has never functioned as a useful, portable tool for any multi-threading scenario. Unlike the Java and C# programming languages, operations on volatile variables in C and C++ are not atomic, and operations on volatile variables do not have sufficient memory ordering guarantees (i.e. memory barriers). Most C and C++ compilers, linkers, and runtimes simply do not provide the necessary memory ordering guarantees to make the volatile keyword useful for any multi-threading scenario. Before the C11 and C++11 standards, programmers were forced to rely on guarantees from the individual implementations and platforms (e.g. POSIX and WIN32) to write multi-threading code. With the modern C11 and C++11 standards, programmers can write portable multi-threading code using new portable constructs such as the std::atomic<T> templates."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Example of memory-mapped I/O in C"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In this example, the code sets the value stored in foo to 0. It then starts to poll that value repeatedly until it changes to 255:"
+    },
+    {
+      "kind": "code",
+      "text": "static int foo;\n\nvoid bar(void) {\n    foo = 0;\n\n    while (foo != 255) {}\n}"
+    },
+    {
+      "kind": "paragraph",
+      "text": "An optimizing compiler will notice that no other code can possibly change the value stored in foo, and will assume that it will remain equal to 0 at all times. The compiler will therefore replace the function body with an infinite loop similar to this:"
+    },
+    {
+      "kind": "code",
+      "text": "void bar_optimized(void) {\n    foo = 0;\n\n    while (true) {}\n}"
+    },
+    {
+      "kind": "paragraph",
+      "text": "However, the programmer may make foo refer to another element of the computer system such as a hardware register of a device connected to the CPU which may change the value of foo while this code is running. (This example does not include the details on how to make foo refer to a hardware register of a device connected to the CPU.) Without the volatile keyword, an optimizing compiler will likely convert the code from the first sample with the read in the loop to the second sample without the read in the loop as part of the common loop-invariant code-motion optimization, and thus the code will likely never notice the change that it is waiting for."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To prevent the compiler from doing this optimization, the volatile keyword can be used:"
+    },
+    {
+      "kind": "code",
+      "text": "static volatile int foo;\n\nvoid bar(void) {\n    foo = 0;\n\n    while (foo != 255) {}\n}"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The volatile keyword prevents the compiler from moving the read out of the loop, and thus the code will notice the expected change to the variable foo."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Optimization comparison in C"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The following C programs, and accompanying assembler language excerpts, demonstrate how the volatile keyword affects the compiler's output. The compiler in this case was GCC."
+    },
+    {
+      "kind": "paragraph",
+      "text": "While observing the assembly code, it is clearly visible that the code generated with volatile objects is more verbose, making it longer so the nature of volatile objects can be fulfilled. The volatile keyword prevents the compiler from performing optimization on code involving volatile objects, thus ensuring that each volatile variable assignment and read has a corresponding memory access. Without the volatile keyword, the compiler knows a variable does not need to be reread from memory at each use, because there should not be any writes to its memory location from any other thread or process."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Compiler defects"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Unlike other language features of C and C++, the volatile keyword is not well supported by most C/C++ implementations – even for portable uses according to the C and C++ standards. Most C/C++ implementations are buggy regarding the behavior of the volatile keyword. Programmers should take great care whenever using the volatile keyword in C and C++."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In Java"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In all modern versions of the Java programming language, the volatile keyword gives the following guarantees:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "volatile reads and writes are atomic. In particular, reads and writes to long and double fields will not tear. (The atomic guarantee applies only to the volatile primitive value or the volatile reference value, and not to any Object value.)",
+        "There is a single global ordering of all volatile reads and writes. In other words, a volatile read will read the current value (and not a past or future value), and all volatile reads will agree on a single global order of volatile writes.",
+        "volatile reads and writes have \"acquire\" and \"release\" memory barrier semantics (known in the Java standard as happens-before). In other words, volatile provides guarantees about the relative order of volatile and non-volatile reads and writes. In other words, volatile basically provides the same memory visibility guarantees as a Java synchronized block (but without the mutual exclusion guarantees of a synchronized block)."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Together, these guarantees make volatile into a useful multi-threading construct in Java. In particular, the typical double-checked locking algorithm with volatile works correctly in Java."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Early versions of Java"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Before Java version 5, the Java standard did not guarantee the relative ordering of volatile and non-volatile reads and writes. In other words, volatile did not have \"acquire\" and \"release\" memory barrier semantics. This greatly limited its use as a multi-threading construct. In particular, the typical double-checked locking algorithm with volatile did not work correctly."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In C#"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In C#, volatile ensures that code accessing the field is not subject to some thread-unsafe optimizations that may be performed by the compiler, the CLR, or by hardware. When a field is marked volatile, the compiler is instructed to generate a \"memory barrier\" or \"fence\" around it, which prevents instruction reordering or caching tied to the field. When reading a volatile field, the compiler generates an acquire-fence, which prevents other reads and writes to the field from being moved before the fence. When writing to a volatile field, the compiler generates a release-fence; this fence prevents other reads and writes to the field from being moved after the fence."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Only the following types can be marked volatile: all reference types, Single, Boolean, Byte, SByte, Int16, UInt16, Int32, UInt32, Char, and all enumerated types with an underlying type of Byte, SByte, Int16, UInt16, Int32, or UInt32. (This excludes value structs, as well as the primitive types Double, Int64, UInt64 and Decimal.)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using the volatile keyword does not support fields that are passed by reference or captured local variables; in these cases, Thread.VolatileRead and Thread.VolatileWrite must be used instead."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In effect, these methods disable some optimizations usually performed by the C# compiler, the JIT compiler, or the CPU itself. The guarantees provided by Thread.VolatileRead and Thread.VolatileWrite are a superset of the guarantees provided by the volatile keyword: instead of generating a \"half fence\" (ie an acquire-fence only prevents instruction reordering and caching that comes before it), VolatileRead and VolatileWrite generate a \"full fence\" which prevent instruction reordering and caching of that field in both directions. These methods work as follows:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "The Thread.VolatileWrite method forces the value in the field to be written to at the point of the call. In addition, any earlier program-order loads and stores must occur before the call to VolatileWrite and any later program-order loads and stores must occur after the call.",
+        "The Thread.VolatileRead method forces the value in the field to be read from at the point of the call. In addition, any earlier program-order loads and stores must occur before the call to VolatileRead and any later program-order loads and stores must occur after the call."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The Thread.VolatileRead and Thread.VolatileWrite methods generate a full fence by calling the Thread.MemoryBarrier method, which constructs a memory barrier that works in both directions. In addition to the motivations for using a full fence given above, one potential problem with the volatile keyword that is solved by using a full fence generated by Thread.MemoryBarrier is as follows: due to the asymmetric nature of half fences, a volatile field with a write instruction followed by a read instruction may still have the execution order swapped by the compiler. Because full fences are symmetric, this is not a problem when using Thread.MemoryBarrier."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "In Fortran"
+    },
+    {
+      "kind": "paragraph",
+      "text": "VOLATILE is part of the Fortran 2003 standard, although earlier version supported it as an extension. Making all variables volatile in a function is also useful finding aliasing related bugs."
+    },
+    {
+      "kind": "code",
+      "text": "integer, volatile :: i ! When not defined volatile the following two lines of code are identical\nwrite(*,*) i**2  ! Loads the variable i once from memory and multiplies that value times itself\nwrite(*,*) i*i   ! Loads the variable i twice from memory and multiplies those values"
+    },
+    {
+      "kind": "paragraph",
+      "text": "By always \"drilling down\" to memory of a VOLATILE, the Fortran compiler is precluded from reordering reads or writes to volatiles. This makes visible to other threads actions done in this thread, and vice versa."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Use of VOLATILE reduces and can even prevent optimization."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Ada Reference Manual C.6: Shared Variable Control",
+        "Linux kernel: volatile-considered-harmful"
+      ]
+    }
+  ]
+}

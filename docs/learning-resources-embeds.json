@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "checkedAt": "2026-11-20T23:32:17Z",
+  "policy": "The app is served with COEP: require-corp for SharedArrayBuffer. corp means an ordinary sandboxed frame is permitted; credentialless means the frame must use the credentialless attribute; blocked and unknown never embed.",
+  "hosts": {
+    "betterexplained.com": {
+      "status": "blocked",
+      "method": null,
+      "evidence": "X-Frame-Options: SAMEORIGIN",
+      "httpStatus": 200,
+      "finalUrl": "https://betterexplained.com/articles/intuitive-guide-to-angles-degrees-and-radians/",
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": null,
+      "corp": "cross-origin",
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "cs50.harvard.edu": {
+      "status": "blocked",
+      "method": null,
+      "evidence": "X-Frame-Options: SAMEORIGIN",
+      "httpStatus": 200,
+      "finalUrl": "https://cs50.harvard.edu/python/notes/0/",
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self'",
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "docs.python.org": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://docs.python.org/3/library/math.html",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "docs.wokwi.com": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://docs.wokwi.com/parts/wokwi-arduino-uno",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "en.wikipedia.org": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://en.wikipedia.org/wiki/Damping",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "futurecoder.io": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://futurecoder.io/course/#toc",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "hades.mech.northwestern.edu": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://hades.mech.northwestern.edu/index.php/Modern_Robotics",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "hyperphysics.phy-astr.gsu.edu": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "http://hyperphysics.phy-astr.gsu.edu/hbase/work.html",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "learn.sparkfun.com": {
+      "status": "blocked",
+      "method": null,
+      "evidence": "X-Frame-Options: deny",
+      "httpStatus": 200,
+      "finalUrl": "https://learn.sparkfun.com/tutorials/capacitors",
+      "xFrameOptions": "deny",
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "phet.colorado.edu": {
+      "status": "blocked",
+      "method": null,
+      "evidence": "X-Frame-Options: SAMEORIGIN",
+      "httpStatus": 200,
+      "finalUrl": "https://phet.colorado.edu/en/simulations/masses-and-springs-basics",
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self' openstax.org *.openstax.org",
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "www.dynapar.com": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://www.dynapar.com/knowledge/encoder-basics/encoder-output/quadrature-encoders/",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "www.falstad.com": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://www.falstad.com/circuit/circuitjs.html",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "www.fbsbook.org": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://fbswiki.org/wiki/index.php/Main_Page",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:16Z"
+    },
+    "www.mathsisfun.com": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://www.mathsisfun.com/physics/power.html",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "www.myphysicslab.com": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://www.myphysicslab.com/springs/single-spring-en.html",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:15Z"
+    },
+    "www.physicsclassroom.com": {
+      "status": "embeddable",
+      "method": "credentialless",
+      "evidence": "no framing denial and no CORP; a credentialless iframe is required under COEP",
+      "httpStatus": 200,
+      "finalUrl": "https://www.physicsclassroom.com/tutorial/work-and-energy/forms-of-energy/power",
+      "xFrameOptions": null,
+      "frameAncestors": null,
+      "corp": null,
+      "checkedAt": "2026-11-20T23:32:17Z"
+    }
+  }
+}

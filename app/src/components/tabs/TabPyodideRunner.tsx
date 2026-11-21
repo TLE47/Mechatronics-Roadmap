@@ -2844,6 +2844,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             {layoutShows(shownLayout, 'lesson') && (
               <LessonReader
                 lessonId={selectedId}
+                lessonTitle={currentLesson.title}
                 // The registry's own page for this entry: a lesson's Markdown, or the module that
                 // set an exercise. '' means the entry has no prose page, and the pane says so.
                 path={currentLesson.readerPath}

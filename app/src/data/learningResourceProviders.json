@@ -1,0 +1,267 @@
+{
+  "version": 1,
+  "_why": "The explicit provider allowlist for the resource layer. A host that is not here is external-only: no provider is inferred from a URL, and no iframe is built from a URL the policy has not named. `mechanism` is the presentation the provider is allowed to use, not a promise that its headers still permit it; the build-time embed report and the resolver both have to agree. `sandbox` and `allow` are copied verbatim into the frame for that provider, so a permissive token is a reviewed decision rather than a default. `license.reuse` is the permission verdict; `license.conditions` names the obligations a Reader Mode snapshot must carry (notice, attribution, share-alike, non-commercial, ...). An `allowed` verdict is not a claim that those obligations are already met.",
+  "providers": [
+    {
+      "key": "futurecoder",
+      "publisher": "futurecoder",
+      "hosts": ["futurecoder.io"],
+      "kind": "interactive",
+      "mechanism": "iframe",
+      "approved": true,
+      "sandbox": "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads",
+      "allow": "fullscreen",
+      "license": {
+        "id": "MIT (repository software and course content)",
+        "url": "https://github.com/alexmojaki/futurecoder/blob/main/LICENSE.txt",
+        "reuse": "allowed",
+        "conditions": ["notice", "no-trademark", "per-asset-check"]
+      },
+      "evidence": "No X-Frame-Options or frame-ancestors denial. It sends no CORP, so the frame is loaded credentialless: the app keeps COEP require-corp for SharedArrayBuffer, and the embedded course gets no credentials or shared storage. The root LICENSE.txt is MIT and covers the course chapters; text/code snapshots are clear with its notice, while images and linked videos need a per-asset check."
+    },
+    {
+      "key": "python-docs",
+      "publisher": "Python documentation",
+      "hosts": ["docs.python.org"],
+      "kind": "documentation",
+      "mechanism": "iframe",
+      "approved": true,
+      "sandbox": "allow-scripts allow-same-origin allow-popups",
+      "allow": "fullscreen",
+      "license": {
+        "id": "PSF-2.0",
+        "url": "https://docs.python.org/3/license.html",
+        "reuse": "allowed",
+        "conditions": ["notice", "indicate-changes", "no-trademark", "per-asset-check"]
+      },
+      "evidence": "No X-Frame-Options or frame-ancestors denial. It sends no CORP, so the frame is loaded credentialless; PSF-2.0 covers the documentation and permits reproduction with its licence and copyright notice plus a change summary. Examples and recipes are also 0BSD; no snapshot is stored."
+    },
+    {
+      "key": "youtube",
+      "publisher": "YouTube",
+      "hosts": ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com", "youtube-nocookie.com"],
+      "kind": "video",
+      "mechanism": "native",
+      "approved": true,
+      "sandbox": "allow-scripts allow-same-origin allow-presentation allow-popups",
+      "allow": "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen",
+      "license": {
+        "id": "YouTube Terms of Service (official player only)",
+        "url": "https://www.youtube.com/t/terms",
+        "reuse": "no",
+        "conditions": ["no-download"]
+      },
+      "evidence": "Only the official privacy-enhanced player is used, after a click. The watch page is never framed."
+    },
+    {
+      "key": "cs50p",
+      "publisher": "Harvard CS50P",
+      "hosts": ["cs50.harvard.edu"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "CC-BY-NC-SA-4.0",
+        "url": "https://cs50.harvard.edu/python/license/",
+        "reuse": "allowed",
+        "conditions": ["attribution", "share-alike", "non-commercial", "indicate-changes", "per-asset-check"]
+      },
+      "evidence": "Sends X-Frame-Options: SAMEORIGIN and frame-ancestors 'self'; it is link-only for framing. CC BY-NC-SA 4.0 permits a text snapshot for non-commercial use with attribution, share-alike and change notices; no snapshot is stored."
+    },
+    {
+      "key": "sparkfun",
+      "publisher": "SparkFun",
+      "hosts": ["learn.sparkfun.com"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "reuse": "allowed",
+        "conditions": ["attribution", "share-alike", "indicate-changes", "per-asset-check"]
+      },
+      "evidence": "Sends X-Frame-Options: DENY; it is link-only for framing. Tutorial text is CC BY-SA 4.0, code is MIT, and images may be CC BY-NC-SA; a text snapshot needs attribution, share-alike and a per-asset check."
+    },
+    {
+      "key": "wikipedia",
+      "publisher": "Wikipedia",
+      "hosts": ["en.wikipedia.org"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+        "reuse": "allowed",
+        "conditions": ["attribution", "share-alike", "indicate-changes", "per-asset-check"]
+      },
+      "evidence": "Framing is not explicitly denied, but the provider is kept link-only until its terms review approves an embedded reader. Article text is CC BY-SA 4.0; images have separate licences."
+    },
+    {
+      "key": "physics-classroom",
+      "publisher": "The Physics Classroom",
+      "hosts": ["www.physicsclassroom.com"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Copyright; no reuse permission",
+        "url": "https://www.physicsclassroom.com/About",
+        "reuse": "no",
+        "conditions": ["permission-required"]
+      },
+      "evidence": "No CORP; kept link-only. Its usage policy prohibits downloading and use of text or images in other projects, including non-profit ones."
+    },
+    {
+      "key": "mathsisfun",
+      "publisher": "MathsIsFun",
+      "hosts": ["www.mathsisfun.com"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Copyright © Rod Pierce; no reuse licence found",
+        "url": "https://www.mathsisfun.com/link-to-us.html",
+        "reuse": "no",
+        "conditions": ["permission-required"]
+      },
+      "evidence": "No CORP; kept link-only. The site carries a copyright notice and no reuse licence."
+    },
+    {
+      "key": "hyperphysics",
+      "publisher": "HyperPhysics",
+      "hosts": ["hyperphysics.phy-astr.gsu.edu"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Copyright © C.R. Nave; no copying/mirroring without authorization",
+        "url": "https://hyperphysics.gsu.edu/",
+        "reuse": "no",
+        "conditions": ["permission-required"]
+      },
+      "evidence": "TLS certificate mismatch in the Phase 0 probe; unknown and never embedded. Its policy permits personal/classroom use but forbids copying or mirroring without authorization; a public snapshot needs permission."
+    },
+    {
+      "key": "wokwi-docs",
+      "publisher": "Wokwi docs",
+      "hosts": ["docs.wokwi.com"],
+      "kind": "documentation",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Wokwi Terms of Service; content licence not stated",
+        "url": "https://wokwi.com/legal/terms",
+        "reuse": "unknown",
+        "conditions": ["permission-required"]
+      },
+      "evidence": "Documentation is link-only; project pages require authentication. No content reuse licence was found."
+    },
+    {
+      "key": "phet",
+      "publisher": "PhET",
+      "hosts": ["phet.colorado.edu"],
+      "kind": "simulator",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "CC-BY-NC-4.0 (simulation files); page text separate",
+        "url": "https://phet.colorado.edu/en/licensing",
+        "reuse": "unknown",
+        "conditions": ["attribution", "non-commercial", "per-asset-check"]
+      },
+      "evidence": "Sends X-Frame-Options: SAMEORIGIN and frame-ancestors 'self'; link-only. The simulation files are CC BY-NC 4.0, but the page text is separate and not cleared for Reader Mode."
+    },
+    {
+      "key": "falstad",
+      "publisher": "Falstad",
+      "hosts": ["www.falstad.com"],
+      "kind": "simulator",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Falstad non-commercial applet permission; page text unstated",
+        "url": "https://www.falstad.com/licensing.html",
+        "reuse": "unknown",
+        "conditions": ["attribution", "non-commercial", "per-asset-check"]
+      },
+      "evidence": "No CORP; link-only. Applet modification/redistribution is permitted for non-commercial use with credit and a link; the page text is not separately licensed."
+    },
+    {
+      "key": "modern-robotics",
+      "publisher": "Modern Robotics",
+      "hosts": ["hades.mech.northwestern.edu"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Cambridge University Press copyright; free preprint not open-licensed",
+        "url": "https://hades.mech.northwestern.edu/index.php/Modern_Robotics",
+        "reuse": "no",
+        "conditions": ["permission-required"]
+      },
+      "evidence": "Textbook; no reproduction or framing permission recorded. The free preprint is not an open licence, and the wiki page states no content licence."
+    },
+    {
+      "key": "dynapar",
+      "publisher": "Dynapar",
+      "hosts": ["www.dynapar.com"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Copyright; no reuse licence found",
+        "url": "https://www.dynapar.com/",
+        "reuse": "no",
+        "conditions": ["permission-required"]
+      },
+      "evidence": "Reference article; link-only. No reuse licence was found."
+    },
+    {
+      "key": "myphysicslab",
+      "publisher": "MyPhysicsLab",
+      "hosts": ["www.myphysicslab.com"],
+      "kind": "simulator",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "Apache-2.0 (software); website prose licence unstated",
+        "url": "https://www.myphysicslab.com/develop/docs/Building.html",
+        "reuse": "unknown",
+        "conditions": ["code-only", "per-asset-check"]
+      },
+      "evidence": "No CORP; link-only. The software is Apache-2.0, but the site's math explanations have no separate prose licence."
+    },
+    {
+      "key": "feedback-systems",
+      "publisher": "Feedback Systems",
+      "hosts": ["www.fbsbook.org"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "CC-BY-NC-SA-4.0 (wiki); linked book PDF excluded",
+        "url": "https://www.fbsbook.org/",
+        "reuse": "allowed",
+        "conditions": ["attribution", "share-alike", "non-commercial", "indicate-changes", "per-asset-check"]
+      },
+      "evidence": "Textbook; no reproduction or framing permission recorded. The FBSwiki pages are CC BY-NC-SA 4.0, but the book PDF is Princeton copyright and personal use only."
+    },
+    {
+      "key": "betterexplained",
+      "publisher": "Better Explained",
+      "hosts": ["betterexplained.com"],
+      "kind": "article",
+      "mechanism": "external",
+      "approved": false,
+      "license": {
+        "id": "CC-BY-NC-SA-3.0-US",
+        "url": "https://betterexplained.com/about/",
+        "reuse": "allowed",
+        "conditions": ["attribution", "share-alike", "non-commercial", "indicate-changes", "per-asset-check"]
+      },
+      "evidence": "Sends X-Frame-Options: SAMEORIGIN; link-only. The about page permits excerpting and modifying under CC BY-NC-SA 3.0 US; commercial use needs the author's permission."
+    }
+  ]
+}

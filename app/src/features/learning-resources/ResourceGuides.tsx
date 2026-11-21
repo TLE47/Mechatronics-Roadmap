@@ -1,21 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { BookOpen, Loader2, X } from 'lucide-react';
+import React, { Suspense, useEffect, useState } from 'react';
+import { BookOpen, Loader2, PanelsTopLeft, X } from 'lucide-react';
 import { InlineMarkdown as Inline } from '../../components/InlineMarkdown';
-import { PYTHON_LESSONS } from '../../data/pythonLessonsData';
+import { Sheet } from '../../components/Sheet';
 import {
   loadLearningResources,
   type LessonResource,
 } from './registry';
-import { resolveResource } from './resolver';
+import { readerRightsFor, resolveResource } from './resolver';
+import { LESSON_ID_BY_PATH } from './lessonPaths';
 
-// The authoritative path map: a relative Markdown link is only a lesson if this build actually
-// lists that page. Building it once keeps the resolver pure and testable without the lesson dataset.
-const LESSON_ID_BY_PATH = new Map<string, string>();
-for (const lesson of PYTHON_LESSONS) {
-  for (const path of [lesson.path, lesson.readerPath]) {
-    if (path) LESSON_ID_BY_PATH.set(path, lesson.id);
-  }
-}
+// The reader surface lives in the lazy workspace chunk; importing it statically would put the frame
+// and snapshot renderer in the initial bundle. A direct Reader action loads it only when pressed.
+const LazyReaderSurface = React.lazy(() =>
+  import('./ResourceView').then((module) => ({ default: module.ReaderSurface }))
+);
 
 type LoadState =
   | { status: 'loading' }
@@ -34,8 +32,21 @@ function GuideLine({ label, text }: { label: string; text: string }) {
   );
 }
 
-function ResourceCard({ resource, sourcePath }: { resource: LessonResource; sourcePath: string }) {
+function ResourceCard({
+  resource,
+  sourcePath,
+  resources,
+  onOpenWorkspace,
+  onOpenReader,
+}: {
+  resource: LessonResource;
+  sourcePath: string;
+  resources: LessonResource[];
+  onOpenWorkspace?: (resource: LessonResource, resources: LessonResource[], sourcePath: string) => void;
+  onOpenReader?: (resource: LessonResource) => void;
+}) {
   const resolved = resolveResource(resource, { sourcePath, lessonByPath: LESSON_ID_BY_PATH });
+  const readerAvailable = Boolean(readerRightsFor(resource) && resource.snapshot?.path);
   const idea =
     resource.idea.number === null ? resource.idea.title : `Idea ${resource.idea.number} · ${resource.idea.title}`;
   return (
@@ -65,28 +76,53 @@ function ResourceCard({ resource, sourcePath }: { resource: LessonResource; sour
         <GuideLine label="Skip" text={resource.guide.skip} />
         <GuideLine label="Key takeaway" text={resource.guide.takeaway} />
       </div>
-      {resolved.kind !== 'unavailable' ? (
-        <a
-          href={resolved.url}
-          {...(resolved.kind === 'external' ? { target: '_blank', rel: 'noreferrer' } : {})}
-          data-testid="resource-open"
-          data-resource-kind={resolved.kind}
-          aria-label={
-            resolved.kind === 'external'
-              ? `Open ${resource.title} in a new tab`
-              : `Open lesson ${resolved.lessonId} in MechaLab`
-          }
-          title={resolved.kind === 'external' ? resolved.url : undefined}
-          className="mt-2 inline-flex items-center gap-1 font-mono text-[12px] text-accent underline underline-offset-2 hover:text-accent-strong"
-        >
-          {resolved.kind === 'external' ? 'Open resource' : `Open lesson ${resolved.lessonId}`}{' '}
-          <span aria-hidden="true">{resolved.kind === 'external' ? '↗' : '→'}</span>
-        </a>
-      ) : (
-        <p data-testid="resource-unavailable" className="mt-2 font-mono text-[12px] leading-snug text-amber">
-          Cannot open here. {resolved.reason}
-        </p>
-      )}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {resolved.kind !== 'unavailable' ? (
+          <a
+            href={resolved.url}
+            {...(resolved.kind === 'external' ? { target: '_blank', rel: 'noreferrer' } : {})}
+            data-testid="resource-open"
+            data-resource-kind={resolved.kind}
+            aria-label={
+              resolved.kind === 'external'
+                ? `Open ${resource.title} in a new tab`
+                : `Open lesson ${resolved.lessonId} in MechaLab`
+            }
+            title={resolved.kind === 'external' ? resolved.url : undefined}
+            className="inline-flex items-center gap-1 font-mono text-[12px] text-accent underline underline-offset-2 hover:text-accent-strong"
+          >
+            {resolved.kind === 'external' ? 'Open resource' : `Open lesson ${resolved.lessonId}`}{' '}
+            <span aria-hidden="true">{resolved.kind === 'external' ? '↗' : '→'}</span>
+          </a>
+        ) : (
+          <p data-testid="resource-unavailable" className="font-mono text-[12px] leading-snug text-amber">
+            Cannot open here. {resolved.reason}
+          </p>
+        )}
+        {onOpenReader && readerAvailable && resource.snapshot?.path && (
+          <button
+            type="button"
+            onClick={() => onOpenReader(resource)}
+            data-testid="btn-resource-reader"
+            data-resource-id={resource.id}
+            title="Read the licence-cleared text snapshot here"
+            className="inline-flex min-h-7 items-center gap-1 rounded border border-accent/40 bg-accent/10 px-2 font-mono text-[11px] text-accent hover:border-accent/70"
+          >
+            <BookOpen className="h-3 w-3" aria-hidden="true" /> Reader
+          </button>
+        )}
+        {onOpenWorkspace && (
+          <button
+            type="button"
+            onClick={() => onOpenWorkspace(resource, resources, sourcePath)}
+            data-testid="btn-resource-workspace"
+            title="Open this resource in the split learning workspace"
+            className="inline-flex min-h-7 items-center gap-1 rounded border border-line-soft bg-canvas px-2 font-mono text-[11px] text-muted hover:border-accent/60 hover:text-accent"
+          >
+            <PanelsTopLeft className="h-3 w-3" aria-hidden="true" /> Study here
+          </button>
+        )}
+      </div>
     </li>
   );
 }
@@ -94,14 +130,25 @@ function ResourceCard({ resource, sourcePath }: { resource: LessonResource; sour
 /**
  * The authored guides for one lesson (`app/src/features/learning-resources/ResourceGuides.tsx`).
  *
- * It is a panel inside the reader, not a second page and not a split view: the lesson stays where it
- * is. External resources open in a new tab; a local link to another lesson uses that lesson's
- * `?lesson=` route. The isolation policy is unchanged, and the authored guide stays visible even
- * when a local file cannot be opened from the app.
+ * It is the panel opened by the reader's Resources button; Study here hands one card to the split
+ * workspace, while the lesson itself stays where it is. A licence-cleared card's direct Reader
+ * action opens the same text surface in a sheet, without the workspace, and keeps the external
+ * link. External resources open in a new tab; a local link to another lesson uses that lesson's
+ * `?lesson=` route. The isolation policy is unchanged, and the authored guide stays visible even when
+ * a local file cannot be opened from the app.
  */
-export function ResourceGuides({ lessonId, onClose }: { lessonId: string; onClose: () => void }) {
+export function ResourceGuides({
+  lessonId,
+  onClose,
+  onOpenWorkspace,
+}: {
+  lessonId: string;
+  onClose: () => void;
+  onOpenWorkspace?: (resource: LessonResource, resources: LessonResource[], sourcePath: string) => void;
+}) {
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
+  const [readerResource, setReaderResource] = useState<LessonResource | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,8 +188,9 @@ export function ResourceGuides({ lessonId, onClose }: { lessonId: string; onClos
           <div className="min-w-0">
             <p className="eyebrow">Learning resources</p>
             <p className="mt-0.5 text-[12px] leading-snug text-muted">
-              Authored guides for this lesson. External resources open in a new tab; lesson links stay
-              in MechaLab. MechaLab does not copy or host external content.
+              Authored guides for this lesson. Licence-cleared sources can open as an attributed text
+              snapshot from the card or in the workspace; every other resource opens in a new tab.
+              MechaLab does not rehost unlicensed content.
             </p>
           </div>
         </div>
@@ -184,11 +232,46 @@ export function ResourceGuides({ lessonId, onClose }: { lessonId: string; onClos
         {state.status === 'ready' && state.resources.length > 0 && (
           <ol className="space-y-2">
             {state.resources.map((resource) => (
-              <ResourceCard key={resource.id} resource={resource} sourcePath={state.sourcePath} />
+              <ResourceCard
+                key={resource.id}
+                resource={resource}
+                resources={state.resources}
+                sourcePath={state.sourcePath}
+                onOpenWorkspace={onOpenWorkspace}
+                onOpenReader={setReaderResource}
+              />
             ))}
           </ol>
         )}
       </div>
+
+      <Sheet
+        open={readerResource !== null}
+        onClose={() => setReaderResource(null)}
+        title={readerResource ? `Reader Mode — ${readerResource.title}` : 'Reader Mode'}
+        testId="resource-reader-sheet"
+        size="lg"
+        titleLines={2}
+      >
+        {readerResource && readerResource.snapshot?.path && (
+          <div className="p-3">
+            <Suspense
+              fallback={
+                <p role="status" className="flex items-center gap-1.5 p-3 font-mono text-[12px] text-muted">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" aria-hidden="true" />
+                  Loading the text snapshot…
+                </p>
+              }
+            >
+              <LazyReaderSurface
+                resource={readerResource}
+                snapshotPath={readerResource.snapshot.path}
+                fallbackUrl={readerResource.url}
+              />
+            </Suspense>
+          </div>
+        )}
+      </Sheet>
     </section>
   );
 }

@@ -263,13 +263,43 @@ reads these lines, and nothing else on the page becomes a resource.
   it becomes an in-app `?lesson=` route only when it names a lesson in the build. Any other local file
   stays visible with its guide and an explicit reason it cannot be opened here — never dropped, and
   never copied into the app.
-- **Link out, never rehost.** "Free to read" is not permission to reproduce: no excerpts, snapshots
-  or local copies, and no `iframe`. The document is cross-origin isolated with `COEP: require-corp`
-  for `SharedArrayBuffer`, so the side-by-side mechanism is the browser's own split view. The
-  provider and licensing evidence is in
-  [`docs/learning-resources-audit.md`](learning-resources-audit.md).
-- **The panel is read-only.** Opening a resource writes no progress, note, check or lesson state, and
-  a provider page is never cached by the service worker.
+- **A snapshot only with permission; otherwise link out.** "Free to read" is not permission to
+  reproduce. A source with `license.reuse === 'allowed'` may render a checked-in, text-only Reader
+  Mode snapshot with its attribution, licence, change notice and an original link; the build refuses
+  a permitted resource with no snapshot, a snapshot whose licence or source URL has drifted, or a
+  snapshot carrying a condition the reader cannot meet. A `reuse: no` or `unknown` source stores no
+  excerpt, snapshot or local copy and stays an external card. Every card keeps an external link, and
+  a frame is never the only way to reach a provider. The document stays cross-origin isolated with
+  `COEP: require-corp` for `SharedArrayBuffer`.
+- **A frame needs four independent yeses.** The provider must be on the explicit allowlist in
+  [`app/src/data/learningResourceProviders.json`](../app/src/data/learningResourceProviders.json) with
+  `mechanism: iframe` and `approved: true`; the build-time header report must say `embeddable` and be
+  no older than 45 days; its method must be `corp` or `credentialless`; and the URL must be https. A
+  host that is not on the list, a blocked provider, an unknown probe and a stale report all render the
+  external card with the reason — no guessed frame, no silent empty box. Futurecoder and the Python
+  docs are the reviewed iframe providers; YouTube uses its official privacy-enhanced player behind a
+  click; CS50P, SparkFun, PhET and BetterExplained refuse framing. If the host sends no CORP, the
+  iframe gets the `credentialless` content attribute (set before `src` is assigned) so the top page
+  remains isolated. The evidence and licences live in
+  [`docs/learning-resources-audit.md`](learning-resources-audit.md) and
+  [`docs/learning-resources-embeds.json`](learning-resources-embeds.json).
+- **The workspace is a layout, not a state writer.** **Study here** opens the reader's split: the
+  lesson prose on the left, the authored reading guide and the chosen renderer on the right. A card
+  with   a checked-in snapshot also has a direct **Reader** action: it opens the same text surface in a
+  focus-trapped sheet without opening the workspace, while the card keeps its **Open resource** link.
+  At phone widths the sheet's title may use two lines, the footer URL wraps, and long unbroken
+  formulas in the snapshot body wrap rather than forcing horizontal overflow.
+  Expand,
+  the drag/keyboard divider and the phone Lesson/Resource toggle are CSS changes around one mounted
+  iframe, so a half-finished interactive exercise is not reloaded by resizing. The arrangement is
+  browser-local (`mechalab_resource_workspace_v1`) and never rides in progress or a backup. A public
+  `resource_workspace` feature flag is the kill switch; when it is off, the panel still opens links.
+  The frame surface is bounded by the `frame-src` CSP allowlist in the dev server, the service worker
+  and the built-bundle server.
+- **The panel is read-only.** Opening a resource, expanding the workspace or switching panes writes no
+  progress, note, check or lesson state, and a provider page is never cached by the service worker.
 - **Generated, then checked.** `npm run generate:resources` writes the registry and the index;
-  `npm run check:resources` fails when either is stale; `npm run test:resources` adds the generator and
-  resolver suites. A page that edits a guide without regenerating is a red build, not a stale panel.
+  `npm run check:resources` fails when either is stale; `npm run test:resources` adds the generator,
+  embed-report, resolver and workspace suites. `npm run check:embeds` verifies the report's coverage
+  and freshness, and the weekly `embeds.yml` re-probes every host without writing. A page that edits
+  a guide without regenerating is a red build, not a stale panel.

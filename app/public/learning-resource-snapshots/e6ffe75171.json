@@ -1,0 +1,380 @@
+{
+  "version": 1,
+  "title": "BetterExplained — Intuitive Guide to Angles, Degrees and Radians",
+  "sourceTitle": "",
+  "sourceUrl": "https://betterexplained.com/articles/intuitive-guide-to-angles-degrees-and-radians/",
+  "provider": "Better Explained",
+  "providerKey": "betterexplained",
+  "retrievedAt": "2026-11-21T02:10:29.852Z",
+  "license": {
+    "id": "CC-BY-NC-SA-3.0-US",
+    "url": "https://betterexplained.com/about/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "non-commercial",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Better Explained (Kalid Azad)",
+    "originalUrl": "https://betterexplained.com/articles/intuitive-guide-to-angles-degrees-and-radians/"
+  },
+  "notice": "Text-only snapshot of Better Explained (Kalid Azad); images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Non-commercial use only. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "It’s an obvious fact that circles should have 360 degrees. Right?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Wrong. Most of us have no idea why there’s 360 degrees in a circle. We memorize a magic number as the “size of a circle” and set ourselves up for confusion when studying advanced math or physics, with their so called “radians”."
+    },
+    {
+      "kind": "paragraph",
+      "text": "“Radians make math easier!” the experts say, without a simple reason why (discussions involving Taylor series are not simple). Today we’ll uncover what radians really are, and the intuitive reason they make math easier."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Where Do Degrees Come From?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Before numbers and language we had the stars. Ancient civilizations used astronomy to mark the seasons, predict the future, and appease the gods (when making human sacrifices, they’d better be on time)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "How is this relevant to angles? Well, bub, riddle me this: isn’t it strange that a circle has 360 degrees and a year has 365 days? And isn’t it weird that constellations just happen to circle the sky during the course of a year?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Unlike a pirate, I bet you landlubbers can’t determine the seasons by the night sky. Here’s the Big Dipper (Great Bear) as seen from New York City in 2008 (try any city):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Constellations make a circle every day (video). If you look at the same time every day (midnight), they will also make a circle throughout the year. Here’s a theory about how degrees came to pass:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Humans noticed that constellations moved in a full circle every year",
+        "Every day, they were off by a tiny bit (“a degree”)",
+        "Since a year has about 360 days, a circle had 360 degrees"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "But, but… why not 365 degrees in a circle?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Cut ‘em some slack: they had sundials and didn’t know a year should have a convenient 365.242199 degrees like you do."
+    },
+    {
+      "kind": "paragraph",
+      "text": "360 is close enough for government work. It fits nicely into the Babylonian base-60 number system, and divides well (by 2, 3, 4, 6, 10, 12, 15, 30, 45, 90… you get the idea)."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Basing Mathematics on the Sun Seems Perfectly Reasonable"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Earth lucked out: ~360 is a great number of days to have in a year. But it does seem arbitrary: on Mars we’d have roughly ~680 degrees in a circle, for the longer Martian year. And in parts of Europe they’ve used gradians, where you divide a circle into 400 pieces."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Many explanations stop here saying, “Well, the degree is arbitrary but we need to pick some number.” Not here: we’ll see that the entire premise of the degree is backwards."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Radians Rule, Degrees Drool"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A degree is the amount I, an observer, need to tilt my head to see you, the mover. It’s a tad self-centered, don’t you think?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Suppose you saw a friend go running on a large track:"
+    },
+    {
+      "kind": "quote",
+      "text": "“Hey Bill, how far did you go?” “Well, I had a really good pace, I think I went 6 or 7 mile–” “Shuddup. How far did I turn my head to see you move?” “What?” “I’ll use small words for you. Me in middle of track. You ran around. How…much…did…I…turn…my…head?” “Jerk.”"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Selfish, right? That’s how we do math! We write equations in terms of “Hey, how far did I turn my head see that planet/pendulum/wheel move?”. I bet you’ve never bothered to think about the pendulum’s feelings, hopes and dreams."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Do you think the equations of physics should be made simple for the mover or observer?"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Radians: The Unselfish Choice"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Much of physics (and life!) involves leaving your reference frame and seeing things from another’s viewpoint. Instead of wondering how far we tilted our heads, consider how far the other person moved."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Degrees measure angles by how far we tilted our heads. Radians measure angles by distance traveled."
+    },
+    {
+      "kind": "paragraph",
+      "text": "But absolute distance isn’t that useful, since going 10 miles is a different number of laps depending on the track. So we divide by radius to get a normalized angle:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You’ll often see this as"
+    },
+    {
+      "kind": "paragraph",
+      "text": "or angle in radians (theta) is arc length (s) divided by radius (r)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A circle has 360 degrees or 2pi radians — going all the way around is 2 * pi * r / r. So a radian is about 360 /(2 * pi) or 57.3 degrees."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now don’t be like me, memorizing this thinking “Great, another unit. 57.3 degrees is so weird.” Because it is weird when you’re still thinking about you!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Moving 1 radian (unit) is a perfectly normal distance to travel. Put another way, our idea of a “clean, 90 degree angle” means the mover goes a very unclean pi/2 units. Think about it — “Hey Bill, can you run 90 degrees for me? What’s that? Oh, yeah, that’d be pi/2 miles from your point of view.” The strangeness goes both ways."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Radians are the empathetic way to do math — a shift from away from head tilting and towards the mover’s perspective."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "What’s in a name?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Radians are a count of distance in terms of “radius units”, and I think of “radian” as shorthand for that concept."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Strictly speaking, radians are just a number like 1.5 or 73, and don’t have any units (in the calculation “radians = distance traveled / radius”, we see length is divided by length, so any units would cancel)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "But practically speaking, we’re not math robots, and it helps to think of radians as “distance” traveled on a unit circle."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Using Radians"
+    },
+    {
+      "kind": "paragraph",
+      "text": "I’m still getting used to thinking in radians. But we encounter the concept of “mover’s distance” quite a bit:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "We use “rotations per minute” not “degrees per second” when measuring certain rotational speeds. This is a shift towards the mover’s reference point (“How many laps has it gone?”) and away from an arbitrary degree measure.",
+        "When a satellite orbits the Earth, we understand its speed in “miles per hour”, not “degrees per hour”. Now divide by the distance to the satellite and you get the orbital speed in radians per hour.",
+        "Sine, that wonderful function, is defined in terms of radians as"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "This formula only works when x is in radians! Why? Well, sine is fundamentally related to distance moved, not head-tilting. But we’ll save that discussion for another day."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Radian Example 1: Wheels of the Bus"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let’s try a real example: you have a bus with wheels of radius 2 meters (it’s a monster truck bus). I’ll say how fast the wheels are turning and you say how fast the bus is moving. Ready?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "“The wheels are turning 2000 degrees per second”. You’d think:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Ok, the wheels are going 2000 degrees per second. That means it’s turning 2000/360 or 5 and 5/9ths rotations per second. Circumference = 2 * pi * r, so it’s moving, um, 2 * 3.14 * 5 and 5/9ths… where’s my calculator…"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ok. Now imagine a car with wheels of radius 2 meters (also a monster). “The car wheels are turning 6 radians per second”. You’d think:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Radians are distance along a unit circle — we just scale by the real radius to see how far we’ve gone. 6 * 2 = 12 meters per second. Next question."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Wow -- the car was easier to figure out than the bus! No crazy formulas, no pi floating around — just multiply to convert rotational speed to linear speed. All because radians speak in terms of the mover."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The reverse is easy too. Suppose you’re cruising 90 feet per second on the highway (60 miles per hour) on your 24″ inch rims (radius 1 foot). How fast are the wheels turning?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Well, 90 feet per second / 1 foot radius = 90 radians per second."
+    },
+    {
+      "kind": "paragraph",
+      "text": "That was easy. I suspect rappers sing about 24″ rims for this very reason."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Radian Example 2: sin(x)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Time for a beefier example. Calculus is about many things, and one is what happens when numbers get really big or really small."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Choose a number of degrees (x), and put sin(x) into your calculator:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When you make x small, like.01, sin(x) gets small as well. And the ratio of sin(x)/x seems to be about.017 — what does that mean? Even stranger, what does it mean to multiply or divide by a degree? Can you have square or cubic degrees?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Radians to the rescue! Knowing they refer to distance traveled (they’re not just a ratio!), we can interpret the equation this way:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "x is how far you traveled along a circle",
+        "sin(x) is how high on the circle you are"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "So sin(x)/x is the ratio of how high you are to how far you’ve gone: the amount of energy that went in an “upward” direction. If you move vertically, that ratio is 100%. If you move horizontally, that ratio is 0%."
+    },
+    {
+      "kind": "paragraph",
+      "text": "When something moves a tiny amount, such as 0 to 1 degree from our perspective, it’s basically going straight up. If you go an even smaller amount, from 0 to.00001 degrees, it’s really going straight up. The distance traveled (x) is very close to the height (sin(x))."
+    },
+    {
+      "kind": "paragraph",
+      "text": "As x shrinks, the ratio gets closer to 100% — more motion is straight up. Radians help us see, intuitively, why sin(x)/x approaches 1 as x gets tiny. We’re just nudging along a tiny amount in a vertical direction. By the way, this also explains why sin(x) ~ x for small numbers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Sure, you can rigorously prove this using calculus, but the radian intuition helps you understand it."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Remember, these relationships only work when measuring angles with radians. With degrees, you’re comparing your height on a circle (sin(x)) with how far some observer tilted their head (x degrees), and it gets ugly fast."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "So What’s the Point?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Degrees have their place: in our own lives, we’re the focal point and want to see how things affect us. How much do I tilt my telescope, spin my snowboard, or turn my steering wheel?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "With natural laws, we’re an observer describing the motion of others. Radians are about them, not us. It took me many years to realize that:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Degrees are arbitrary because they’re based on the sun (365 days ~ 360 degrees), but they are backwards because they are from the observer’s perspective.",
+        "Because radians are in terms of the mover, equations “click into place”. Converting rotational to linear speed is easy, and ideas like sin(x)/x make sense."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Even angles can be seen from more than one viewpoint, and understanding radians makes math and physics equations more intuitive. Happy math."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Other Posts In This Series"
+    },
+    {
+      "kind": "list",
+      "ordered": true,
+      "items": [
+        "A Visual, Intuitive Guide to Imaginary Numbers",
+        "Intuitive Arithmetic With Complex Numbers",
+        "Understanding Why Complex Multiplication Works",
+        "Intuitive Guide to Angles, Degrees and Radians",
+        "Intuitive Understanding Of Euler's Formula",
+        "An Interactive Guide To The Fourier Transform",
+        "Intuitive Guide to Convolution",
+        "Intuitive Understanding of Sine Waves",
+        "An Intuitive Guide to Linear Algebra",
+        "A Programmer's Intuition for Matrix Multiplication",
+        "Imaginary Multiplication vs. Imaginary Exponents",
+        "Intuitive Guide to Hyperbolic Functions"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Topic Reference"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Radian"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Math",
+        "Popular"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Join 450k Monthly Readers"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Share with",
+        "Facebook",
+        "Twitter",
+        "LinkedIn",
+        "Email",
+        "Print"
+      ]
+    }
+  ]
+}

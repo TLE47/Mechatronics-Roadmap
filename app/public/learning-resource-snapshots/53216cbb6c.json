@@ -1,0 +1,374 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Three-phase electric power (\"Principle\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Three-phase_electric_power",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:22.522Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Three-phase_electric_power"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "Three-phase electric power (abbreviated 3ϕ) is the most widely used form of alternating current (AC) for electricity generation, transmission, and distribution. It is a type of polyphase system that uses three live wires, and no neutral wire in long transmission lines, thus being most economical and the standard method by which electrical grids deliver power around the world."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Due to the time shift between phases, each live wire current is always cancelled out to zero by the sum of the other two, thus a common neutral wire does not carry any current if the loads are properly balanced, e.g. when a generator powers a motor locally, or in case of large transmissions grids, in which loads can be balanced closely enough. In most 3-phase cables used eg. within buildings, a fourth wire is used as a neutral return for imbalanced loads, and a fifth as protective earth."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In a three-phase system, each of the three phases is offset by 120 degrees of phase shift relative to the others. This arrangement produces a more constant flow of power compared with single-phase systems, making it especially efficient for transmitting electricity over long distances and for powering heavy loads such as industrial machinery. Because it is an AC system, voltages can be easily increased or decreased with transformers, allowing high-voltage transmission and low-voltage distribution with minimal loss."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Three-phase circuits are also more economical: a three-wire system can transmit more power than a two-wire single-phase system of the same phase-to-phase voltage while using less conductor material. Beyond transmission, three-phase power is commonly used to run large induction motors, other electric motors, and heavy industrial loads, while smaller devices and household equipment often rely on single-phase circuits derived from the same network."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Three-phase electrical power was first developed in the 1880s by several inventors and has remained the backbone of modern electrical systems ever since, apart from an increasing amount of high-voltage direct current (HVDC) transmission systems being preferred for very long interconnectors recently."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Terminology"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The conductors between a voltage source and a load, excluding those serving neutral, mid-point and protective functions, are called line conductors."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The voltage between any two line conductors is called line-to-line voltage, while the voltage measured between any line conductor and a neutral conductor is called line-to-neutral voltage, per section 195 of IEC 60050. Other sections define variations of these terms, with section 601 having phase to phase voltage and phase to neutral voltage, and section 141 having polyphase line-to-line voltage and polyphase line-to-neutral voltage. Some electrical textbooks contain the terms line voltage (equivalent to line-to-line) and phase voltage (equivalent to line-to-neutral)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "System voltage is often expressed in the form X/Y, as found in IEC 60038, with X being line-to-neutral voltage, and Y being line-to-line voltage. For example, in countries with nominal 230 V power (line-to-neutral), where line-to-line voltage is 400 V, this may be expressed as 230/400 V."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Transformer windings consist of either delta (often symbolised as 'Δ') or star (often symbolised as 'Y') configurations, per IEC 60050 terminology. The star arrangement is more commonly known as wye in the US."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "History"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Polyphase power systems were independently invented by Galileo Ferraris, Mikhail Dolivo-Dobrovolsky, Jonas Wenström, John Hopkinson, William Stanley Jr., and Nikola Tesla in the late 1880s."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Three phase power evolved out of electric motor development. In 1885, Galileo Ferraris was doing research on rotating magnetic fields. Ferraris experimented with different types of asynchronous electric motors. The research and his studies resulted in the development of an alternator, which may be thought of as an alternating-current motor operating in reverse, so as to convert mechanical (rotating) power into electric power (as alternating current). On 11 March 1888, Ferraris published his research in a paper to the Royal Academy of Sciences in Turin. Ferraris' motor, the first to have a rotating magnetic field, was a two-phase design, with alternating-current electromagnets generating fields 90° apart."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Two months later Nikola Tesla gained U.S. patent 381,968 for a three-phase electric motor design, application filed October 12, 1887. Figure 13 of this patent shows that Tesla envisaged his three-phase motor being powered from the generator via six wires."
+    },
+    {
+      "kind": "paragraph",
+      "text": "These alternators operated by creating systems of alternating currents displaced from one another in phase by definite amounts, and depended on rotating magnetic fields for their operation. The resulting source of polyphase power soon found widespread acceptance. The invention of the polyphase alternator is key in the history of electrification, as is the power transformer. These inventions enabled power to be transmitted by wires economically over considerable distances. Polyphase power enabled the use of water-power (via hydroelectric generating plants in large dams) in remote places, thereby allowing the mechanical energy of the falling water to be converted to electricity, which then could be fed to an electric motor at any location where mechanical work needed to be done. This versatility sparked the growth of power-transmission network grids on continents around the globe."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Working for German AEG, Mikhail Dolivo-Dobrovolsky developed a three-phase electrical generator and a three-phase electric motor in 1888 and studied star and delta connections. A three-phase three-wire transmission system was displayed in 1891 in Germany at the International Electrotechnical Exhibition with machinery from AEG and Maschinenfabrik Oerlikon that transmitted 221 kW of electric power with 15 kV at the distance of 176 km (110 miles) with 75% efficiency to power a fountain and lights. This demonstration also used a three-phase transformer and short-circuited (squirrel-cage) induction motor as well as the world's first three-phase hydroelectric power plant at Lauffen am Neckar."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Inventor Jonas Wenström received in 1890 a Swedish patent on a similar three-phase system. The possibility of transferring electrical power from a waterfall at a distance was explored at the Grängesberg mine. A 45 m fall at Hällsjön, Smedjebackens kommun, where a small iron work had been located, was selected. In 1893, a three-phase 9.5 kV system was used to transfer 400 horsepower (300 kW) a distance of 15 km (10 miles), becoming the first commercial application."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Principle"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In a symmetric three-phase power supply system, three conductors each carry an alternating current of the same frequency and voltage amplitude relative to a common reference, but with a phase difference of one third of a cycle (i.e., 120 degrees out of phase) between each. The common reference is usually connected to ground and often to a current-carrying conductor called the neutral. Due to the phase difference, the voltage on any conductor reaches its peak at one third of a cycle after one of the other conductors and one third of a cycle before the remaining conductor. This phase delay gives constant power transfer to a balanced linear load. It also makes it possible to produce a rotating magnetic field in an electric motor and generate other phase arrangements using transformers (for instance, a two-phase system using a Scott-T transformer). The amplitude of the voltage difference between two phases is 3=1.732… times the amplitude of the voltage of the individual phases."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The symmetric three-phase systems described here are simply referred to as three-phase systems because, although it is possible to design and implement asymmetric three-phase power systems (i.e., with unequal voltages or phase shifts), they are not used in practice because they lack the most important advantages of symmetric systems."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In a three-phase system feeding a balanced and linear load, the sum of the instantaneous currents of the three conductors is zero. In other words, the current in each conductor is equal in magnitude to the sum of the currents in the other two, but with the opposite sign. The return path for the current in any phase conductor is the other two phase conductors."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Constant power transfer is possible with any number of phases greater than one. However, two-phase systems do not have neutral-current cancellation and thus use conductors less efficiently, and more than three phases complicates infrastructure unnecessarily. Additionally, in some practical generators and motors, two phases can result in a less smooth (pulsating) torque."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Three-phase systems may have a fourth wire, common in low-voltage distribution. This is the combined ground and neutral wire. The neutral allows three separate single-phase supplies to be provided at a constant voltage and is commonly used for supplying multiple single-phase loads. The connections are arranged so that, as far as possible in each group, equal power is drawn from each phase. Further up the distribution system, the currents are usually well balanced. Transformers may be wired to have a four-wire secondary and a three-wire primary, while allowing unbalanced loads and the associated secondary-side neutral currents."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Phase sequence"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Wiring for three phases is typically identified by colors that vary by country and voltage. The phases must be connected in the correct order to achieve the intended direction of rotation of three-phase motors. For example, pumps and fans do not work as intended in reverse. Maintaining the identity of phases is required if two sources could be connected at the same time. A direct connection between two different phases is a short circuit and leads to flow of unbalanced current."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Advantages and disadvantages"
+    },
+    {
+      "kind": "paragraph",
+      "text": "As compared to a single-phase AC power supply that uses two current-carrying conductors with no neutral, a three-phase supply with no neutral and the same phase-to-phase voltage can transmit the same power by using just 0.75 times as much conductor material."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Three-phase supplies have properties that make them desirable in electric power distribution systems:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "The phase currents tend to cancel out one another, summing to zero in the case of a linear balanced load, which allows a reduction of the size of the neutral conductor because it carries little or no current. With a balanced load, all the phase conductors carry the same current and so can have the same size.",
+        "Power transfer into a linear balanced load is constant, which, in motor/generator applications, helps to reduce vibrations.",
+        "Three-phase systems can produce a rotating magnetic field with a specified direction and constant magnitude, which simplifies the design of electric motors, as no starting circuit is required."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "However, most loads are single-phase. In North America, single-family houses and individual apartments are supplied one phase from the power grid and use a split-phase system to the panelboard from which most branch circuits will carry 120 V. Circuits designed for higher powered devices such as stoves, dryers, or outlets for electric vehicles carry 240 V."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In Europe, three-phase power is normally delivered to the panelboard and further to higher powered devices."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Generation and distribution"
+    },
+    {
+      "kind": "paragraph",
+      "text": "At the power station, an electrical generator converts mechanical power into a set of three AC electric currents, one from each coil (or winding) of the generator. The windings are arranged such that the currents are at the same frequency but with the peaks and troughs of their wave forms offset to provide three complementary currents with a phase separation of one-third cycle (120° or 2π⁄3 radians). The generator frequency is typically 50 or 60 Hz, depending on the country."
+    },
+    {
+      "kind": "paragraph",
+      "text": "At the power station, transformers change the voltage from generators to a level suitable for transmission in order to minimize losses."
+    },
+    {
+      "kind": "paragraph",
+      "text": "After further voltage conversions in the transmission network, the voltage is finally transformed to the standard utilization before power is supplied to customers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Most automotive alternators generate three-phase AC and rectify it to DC with a diode bridge."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Transformer connections"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A delta-configured transformer winding connects phases of a three-phase system directly from one to another. A star-configured transformer connects each phase winding to a common central (neutral) point."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A single three-phase transformer can be used, or three single-phase transformers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In an \"open delta\" or \"V\" system, only two transformers are used. A closed delta made of three single-phase transformers can operate as an open delta if one of the transformers has failed or needs to be removed. In open delta, each transformer must carry current for its respective phases as well as current for the third phase, therefore capacity is reduced to 87%. With one of three transformers missing and the remaining two at 87% efficiency, the capacity is 58% (2⁄3 of 87%)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Where a delta-fed system must be grounded for detection of stray current to ground or protection from surge voltages, a grounding transformer (usually a zigzag transformer) may be connected to allow ground fault currents to return from any phase to ground. Another variation is a \"corner grounded\" delta system, which is a closed delta that is grounded at one of the junctions of transformers."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Three-wire and four-wire circuits"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are two basic three-phase configurations: Star (also called Y) and delta. As shown in the diagram, a delta configuration requires only three wires for transmission, but a star configuration may have a fourth wire. The fourth wire, if present, is provided as a neutral and is normally grounded. The three-wire and four-wire designations do not count the ground wire present above many transmission lines, which is solely for fault protection and does not carry current under normal use."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A four-wire system with symmetrical voltages between phase and neutral is obtained when the neutral is connected to the \"common star point\" of all supply windings. In such a system, all three phases will have the same magnitude of voltage relative to the neutral. Other non-symmetrical systems have been used."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The four-wire star system is used when a mixture of single-phase and three-phase loads is to be served, such as mixed lighting and motor loads. An example of application is local distribution in Europe (and elsewhere), where each customer may be only fed from one phase and the neutral (which is common to the three phases). When a group of customers sharing the neutral draw unequal phase currents, the common neutral wire carries the currents resulting from these imbalances. Electrical engineers try to design the three-phase power system for any one location so that the power drawn from each of three phases is the same, as far as possible at that site. Electrical engineers also try to arrange the distribution network so the loads are balanced as much as possible, since the same principles that apply to individual premises also apply to the wide-scale distribution system power. Hence, every effort is made by supply authorities to distribute the power drawn on each of the three phases over a large number of premises so that, on average, as nearly as possible a balanced load is seen at the point of supply."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For domestic use, some countries such as the UK may supply one phase and neutral at a high current (up to 100 A) to one property, while others such as Germany may supply three phases and neutral to each customer, but at a lower fuse rating, typically 40–63 A per phase, and \"rotated\" to avoid the effect that more load tends to be put on the first phase."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Based on star and delta connection. Generally, there are four different types of three-phase transformer winding connections for transmission and distribution purposes:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Star – Star, used for small current and high voltage,",
+        "Delta – Delta, used for large currents and low voltages,",
+        "Delta – Star, used for step-up transformers, i.e., at generating stations,",
+        "Star – Delta, used for step-down transformers, i.e., at the end of the transmission."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "In North America, a high-leg delta supply is sometimes used where one winding of a delta-connected transformer feeding the load is center-tapped and that center tap is grounded and connected as a neutral as shown in the second diagram. This setup produces three different voltages: If the voltage between the center tap (neutral) and each of the top and bottom taps (phase and anti-phase) is 120 V (100%), the voltage across the phase and anti-phase lines is 240 V (200%), and the neutral to \"high leg\" voltage is ≈ 208 V (173%)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The reason for providing the delta connected supply is usually to power large motors requiring a rotating field. However, the premises concerned will also require the \"normal\" North American 120 V supplies, two of which are derived (180 degrees \"out of phase\") between the \"neutral\" and either of the center-tapped phase points."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Balanced circuits"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the perfectly balanced case all three lines share equivalent loads. Examining the circuits, we can derive relationships between line-to-line voltage and current, and load voltage and current for star- and delta-connected loads."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In a balanced system each line will produce equal voltage magnitudes at phase angles equally spaced from each other. With V1 as our reference and V3 lagging V2 lagging V1, using angle notation, and VLN the line-to-neutral voltage we have:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "These voltages feed into either a star- or delta-connected load."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Star"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The voltage seen by the load will depend on the load connection; for the star case, connecting each load to a line-to-neutral voltage gives"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where Ztotal is the sum of line and load impedances (Ztotal = ZLN + ZY), and θ is the phase of the total impedance (Ztotal)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The phase angle difference between voltage and current of each phase is not necessarily 0 and depends on the type of load impedance, Zy. Inductive and capacitive loads will cause current to either lag or lead the voltage. However, the relative phase angle between each pair of lines (1 to 2, 2 to 3, and 3 to 1) will still be −120°."
+    },
+    {
+      "kind": "paragraph",
+      "text": "By applying Kirchhoff's current law (KCL) to the neutral node, the three phase currents sum to the total current in the neutral line. In the balanced case:"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Delta"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the delta circuit, loads are connected across the lines, and so loads see line-to-line voltages:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "(Φv1 is the phase shift for the first voltage, commonly taken to be 0°; in this case, Φv2 = −120° and Φv3 = −240° or 120°.)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Further:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where θ is the phase of delta impedance (ZΔ)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Relative angles are preserved, so I31 lags I23 lags I12 by 120°. Calculating line currents by using KCL at each delta node gives"
+    },
+    {
+      "kind": "paragraph",
+      "text": "and similarly for each other line:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where, again, θ is the phase of delta impedance (ZΔ)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Inspection of a phasor diagram, or conversion from phasor notation to complex notation, illuminates how the difference between two line-to-neutral voltages yields a line-to-line voltage that is greater by a factor of √3. As a delta configuration connects a load across phases of a transformer, it delivers the line-to-line voltage difference, which is √3 times greater than the line-to-neutral voltage delivered to a load in the star configuration. As the power transferred is V2/Z, the impedance in the delta configuration must be 3 times what it would be in a star configuration for the same power to be transferred."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Single-phase loads"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Except in a high-leg delta system and a corner-grounded delta system, single-phase loads may be connected across any two phases, or a load can be connected from phase to neutral. Distributing single-phase loads among the phases of a three-phase system balances the load and makes most economical use of conductors and transformers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In a symmetrical three-phase four-wire star system, the three phase conductors have the same voltage to the system neutral. The line-to-line voltage is √3 times the line-to-neutral voltage:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The currents returning from the customers' premises to the supply transformer all share the neutral wire. If the loads are evenly distributed on all three phases, the sum of the returning currents in the neutral wire is approximately zero. Any unbalanced phase loading on the secondary side of the transformer will use the transformer capacity inefficiently."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If the supply neutral is broken, line-to-neutral voltage is no longer maintained. Phases with higher relative loading will experience reduced voltage, and phases with lower relative loading will experience elevated voltage, up to the line-to-line voltage."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A high-leg delta provides phase-to-neutral relationship of VLL = 2 VLN, however, LN load is imposed on one phase. A transformer manufacturer's page suggests that LN loading not exceed 5% of transformer capacity."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Since √3 ≈ 1.73, defining VLN as 100% gives VLL ≈ 100% × 1.73 = 173%. If VLL was set as 100%, then VLN ≈ 57.7%."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Unbalanced loads"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When the currents on the three live wires of a three-phase system are not equal or are not at an exact 120° phase angle, the power loss is greater than for a perfectly balanced system. The method of symmetrical components is used to analyze unbalanced systems."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Non-linear loads"
+    },
+    {
+      "kind": "paragraph",
+      "text": "With linear loads, the neutral only carries the current due to imbalance between the phases. Gas-discharge lamps and devices that utilize rectifier-capacitor front-end such as switch-mode power supplies, computers, office equipment and such produce third-order harmonics that are in-phase on all the supply phases. Consequently, such harmonic currents add in the neutral in a star system (or in the grounded (zigzag) transformer in a delta system), which can cause the neutral current to exceed the phase current."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Three-phase loads"
+    }
+  ]
+}

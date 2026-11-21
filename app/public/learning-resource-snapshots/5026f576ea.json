@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Frequency response (\"Measurement and plotting\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Frequency_response",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:28.504Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Frequency_response"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "In signal processing, electronics and mechanical vibration, the frequency response of a system is the quantitative measure of the magnitude and phase of the output as a function of input frequency. The frequency response is widely used in the design and analysis of systems, such as audio equipment and control systems, where they simplify mathematical analysis by converting governing differential equations into algebraic equations. In an audio system, it may be used to minimize audible distortion by designing components (such as microphones, amplifiers and loudspeakers) so that the overall response is as flat (uniform) as possible across the system's bandwidth. In control systems, such as a vehicle's cruise control, it may be used to assess system stability, often through the use of Bode plots. Systems with a specific frequency response can be designed using analog and digital filters."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The frequency response characterizes systems in the frequency domain, just as the impulse response characterizes systems in the time domain. In linear systems (or as an approximation to a real system, neglecting second-order non-linear properties), either response completely describes the system, and thus there is a one-to-one correspondence: the frequency response is the Fourier transform of the impulse response. The frequency response allows simpler analysis of cascaded systems such as multistage amplifiers, as the response of the overall system can be found through multiplication of the individual stages' frequency responses (as opposed to convolution of the impulse response in the time domain). The frequency response is closely related to the transfer function in linear systems, which is the Laplace transform of the impulse response. They are equivalent when the real part σ of the transfer function's complex variable s=σ+jω is zero."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the context of mechanical vibration, the frequency response of a system is usually referred to as the frequency response function (FRF), with the (complex) ratio of harmonic displacement to force input referred to as receptance, and acceleration and velocity FRFs referred to respectively as mobility and accelerance."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Measurement and plotting"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Measuring the frequency response typically involves exciting the system with an input signal and measuring the resulting output signal, calculating the frequency spectra of the two signals (for example, using the fast Fourier transform for discrete signals), and comparing the spectra to isolate the effect of the system. In linear systems, the frequency range of the input signal should cover the frequency range of interest."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Several methods using different input signals may be used to measure the frequency response of a system, including:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Applying constant amplitude sinusoids stepped through a range of frequencies and comparing the amplitude and phase shift of the output relative to the input. The frequency sweep must be slow enough for the system to reach its steady-state at each point of interest",
+        "Applying an impulse signal and taking the Fourier transform of the system's response",
+        "Applying a wide-sense stationary white noise signal over a long period of time and taking the Fourier transform of the system's response. With this method, the cross-spectral density (rather than the power spectral density) should be used if phase information is required"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The frequency response is characterized by the magnitude, typically in decibels (dB) or as a generic amplitude of the dependent variable, and the phase, in radians or degrees, measured against frequency, in radian/s, Hertz (Hz) or as a fraction of the sampling frequency."
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are three common ways of plotting response measurements:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Bode plots graph magnitude and phase against frequency on two rectangular plots",
+        "Nyquist plots graph magnitude and phase parametrically against frequency in polar form",
+        "Nichols plots graph magnitude and phase parametrically against frequency in rectangular form"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "For the design of control systems, any of the three types of plots may be used to infer closed-loop stability and stability margins from the open-loop frequency response. In many frequency domain applications, the phase response is relatively unimportant, and the magnitude response of the Bode plot may be all that is required. In digital systems (such as digital filters), the frequency response often contains a main lobe with multiple periodic sidelobes, due to spectral leakage caused by digital processes such as sampling and windowing."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Applications"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the audible range, frequency response is usually referred to in connection with electronic amplifiers, microphones and loudspeakers. Radio spectrum frequency response can refer to measurements of coaxial cable, twisted-pair cable, video switching equipment, Wireless communications devices, and antenna systems. Infrasonic frequency response measurements include earthquakes and electroencephalography (brain waves)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Frequency response curves are often used to indicate the accuracy of electronic components or systems. When a system or component reproduces all desired input signals with no emphasis or attenuation of a particular frequency band, the system or component is said to be \"flat\", or to have a flat frequency response curve. In other cases, 3D-form of frequency response graphs are sometimes used."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Frequency response requirements differ depending on the application. In high fidelity audio, an amplifier requires a flat frequency response of at least 20–20,000 Hz, with a tolerance as tight as ±0.1 dB in the mid-range frequencies around 1000 Hz; however, in telephony, a frequency response of 400–4,000 Hz, with a tolerance of ±1 dB is sufficient for intelligibility of speech."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Once a frequency response has been measured (e.g., as an impulse response), provided the system is linear and time-invariant, its characteristic can be approximated with arbitrary accuracy by a digital filter. Similarly, if a system is demonstrated to have a poor frequency response, a digital or analog filter can be applied to the signals prior to their reproduction to compensate for these deficiencies."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The form of a frequency response curve is very important for anti-jamming protection of radars, communications and other systems."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Frequency response analysis can also be applied to biological domains, such as the detection of hormesis in repeated behaviors with opponent process dynamics, or in the optimization of drug treatment regimens."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Audio system measurements",
+        "Bandwidth (signal processing)",
+        "Bode plot",
+        "Impulse response",
+        "Spectral sensitivity",
+        "Steady state (electronics)",
+        "Transient response",
+        "Universal dielectric response"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Luther, Arch C.; Inglis, Andrew F. Video engineering, McGraw-Hill, 1999. ISBN 0-07-135017-9",
+        "Stark, Scott Hunter. Live Sound Reinforcement, Vallejo, California, Artistpro.com, 1996–2002. ISBN 0-918371-07-4",
+        "L. R. Rabiner and B. Gold. Theory and Application of Digital Signal Processing. – Englewood Cliffs, NJ: Prentice-Hall, 1975. – 720 pp"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "University of Michigan: Frequency Response Analysis and Design Tutorial Archived 2012-10-17 at the Wayback Machine",
+        "Smith, Julius O. III: Introduction to Digital Filters with Audio Applications has a nice chapter on Frequency Response"
+      ]
+    }
+  ]
+}

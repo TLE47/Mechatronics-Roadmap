@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.13.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.14.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,54 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-21] — Reader Mode for permission-cleared sources, links for everything else
+
+A resource whose provider policy says `license.reuse: allowed` can now open as a **Reader Mode**
+text snapshot in the learning workspace. The build ships 70 unique snapshots (95 authored occurrences)
+for futurecoder, the Python docs, Wikipedia, SparkFun, CS50P, BetterExplained and FBSwiki under
+`app/public/learning-resource-snapshots/`; every source with `reuse: no` or `unknown` keeps the
+external card and its original link. A maintainer-only builder
+(`scripts/build_learning_resource_snapshots.mjs`) extracts headings, paragraphs, lists, code and
+quotations with the existing headless browser and deliberately removes images, tables, forms,
+navigation and scripts. The generator refuses a permitted record with no snapshot, a snapshot whose
+source URL or licence has drifted, or a condition the reader cannot meet; the resolver still requires
+`readerEnabled`, an allowed licence, a snapshot path and every recorded condition in
+`readerRights.satisfied`. The reader shows the publisher, original URL, licence link, condition list,
+retrieval date and change notice, and never injects HTML. A permitted card has a direct **Reader**
+action that opens the same surface in a focus-trapped sheet without the workspace, while keeping its
+**Open resource** link; a permitted interactive provider also offers a Reader toggle beside its frame,
+and a frame-blocked provider opens its snapshot directly. This is the
+product decision for a non-commercial app, not legal advice; counsel review remains prudent before a
+commercial change. `npm run test:resources` now checks all 95 paths, the 70 files, licence/source
+matching, the no-snapshot rule for non-permitted sources, rights construction and snapshot loading;
+`npm run test:e2e:resources` proves the futurecoder toggle, CS50P's attributed non-commercial reader
+and Physics Classroom's link-only card. The direct reader was then checked at 1440 px and 390 px:
+the sheet title may use two lines, the footer source URL wraps instead of clipping, and long
+unbroken formulas in the snapshot body wrap instead of creating horizontal overflow. The browser
+suite now pins the 05.1 long-URL and 06.1 formula cases at phone width.
+
+## [2026-11-20] — Learning resources open beside the lesson, without giving up isolation
+
+A resource card now has **Study here**: the reader splits its own prose, keeping the lesson on the
+left and the authored reading guide plus the chosen presentation on the right. Expand, the divider
+and the phone Lesson/Resource toggle are layout changes around one mounted frame, so a half-finished
+interactive exercise survives a resize; the split is remembered in `localStorage`, never in progress
+or a backup. The provider policy is explicit and the build-time header report is the evidence:
+futurecoder and the Python docs are framed with the `credentialless` content attribute (no cookies
+or shared storage) while the top document keeps `COEP: require-corp` for `SharedArrayBuffer`; CS50P,
+SparkFun, PhET and BetterExplained refuse framing and stay external cards; YouTube uses its official
+privacy-enhanced player behind a click. An unknown host, a blocked provider and a stale report all
+take the external fallback rather than an empty frame. The frame is mounted only after the attribute
+is set — React drops it from a normal render — and a `frame-src` CSP names only the approved
+providers on the dev server, the service worker and the built-bundle server. `resource_workspace` is
+a public kill switch. Reader Mode was deferred at that point: no snapshot was copied or served until
+each provider's licence answered that question; it shipped on 2026-11-21 for the seven permitted
+providers. `npm run test:resources` now covers the embed classifier
+and report freshness plus the split arithmetic; `npm run test:e2e:resources` proves the mounted frame
+survives Expand, the divider and the phone toggle, and that CS50P gets no frame. The weekly
+`.github/workflows/embeds.yml` re-probes every host and fails without rewriting the report when a
+verdict moves.
 
 ## [2026-11-20] — The authored reading guides get a panel, and the walkthrough opens what it points at
 

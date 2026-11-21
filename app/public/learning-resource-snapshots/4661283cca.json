@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "title": "SparkFun — Voltage Dividers",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/voltage-dividers",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:40.584Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/voltage-dividers"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Introduction"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A voltage divider is a simple circuit which turns a large voltage into a smaller one. Using just two series resistors and an input voltage, we can create an output voltage that is a fraction of the input. Voltage dividers are one of the most fundamental circuits in electronics. If learning Ohm's law was like being introduced to the ABC's, learning about voltage dividers would be like learning how to spell cat."
+    },
+    {
+      "kind": "paragraph",
+      "text": "These are examples of potentiometers - variable resistors which can be used to create an adjustable voltage divider. We'll learn more about these soon."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Covered in this Tutorial"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "What a voltage divider circuit looks like.",
+        "How the output voltage depends on the input voltage and divider resistors.",
+        "How voltage dividers behave in the real-world.",
+        "Real-life voltage divider applications."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This tutorial builds on basic electronics knowledge. If you haven't already, consider reading these tutorials:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "What is a circuit?",
+        "Series and Parallel Circuits",
+        "Voltage, Current, Resistance, and Ohm's Law",
+        "Analog vs Digital",
+        "How to Use a Multimeter",
+        "How to Use a Breadboard",
+        "Analog-to-Digital Conversion"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Ideal Voltage Divider"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are two important parts to the voltage divider: the circuit and the equation."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "The Circuit"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A voltage divider involves applying a voltage source across a series of two resistors. You may see it drawn a few different ways, but they should always essentially be the same circuit."
+    },
+    {
+      "kind": "paragraph",
+      "text": "We'll call the resistor closest to the input voltage (Vin) R1, and the resistor closest to ground R2. The voltage drop across R2 is called Vout, that's the divided voltage our circuit exists to make."
+    },
+    {
+      "kind": "paragraph",
+      "text": "That's all there is to the circuit! Vout is our divided voltage. That's what'll end up being a fraction of the input voltage."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "The Equation"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The voltage divider equation assumes that you know three values of the above circuit: the input voltage (Vin), and both resistor values (R1 and R2). Given those values, we can use this equation to find the output voltage (Vout):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This equation states that the output voltage is directly proportional to the input voltage and the ratio of R1 and R2. If you'd like to find out where this comes from, check out this section where the equation is derived. But for now, just write it down and remember it!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Calculator"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Have some fun experimenting with inputs and outputs to the voltage divider equation! Below, you can plug in numbers for Vin and both resistors and see what kind of output voltage they produce."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Or, if you adjust Vout, you'll see what resistance value at R2 is required (given a Vin and R1)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Simplifications"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are a few generalizations that are good to keep in mind when using voltage dividers. These are simplifications that make evaluating a voltage dividing circuit just a little easier."
+    },
+    {
+      "kind": "paragraph",
+      "text": "First, if R2 and R1 are equal then the output voltage is half that of the input. This is true regardless of the resistors' values."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If R2 is much larger (at least an order of magnitude) than R1, then the output voltage will be very close to the input. There will be very little voltage across R1."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Conversely, if R2 is much smaller than R1, the output voltage will be tiny compared to the input. Most of the input voltage will be across R1"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Applications"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Voltage dividers have tons of applications, they are among the most common of circuits electrical engineers use. Here are just a few of the many places you'll find voltage dividers."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Potentiometers"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A potentiometer is a variable resistor which can be used to create an adjustable voltage divider."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Internal to the pot is a single resistor and a wiper, which cuts the resistor in two and moves to adjust the ratio between both halves. Externally there are usually three pins: two pins connect to each end of the resistor, while the third connects to the pot's wiper."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If the outside pins connect to a voltage source (one to ground, the other to Vin), the output (Vout at the middle pin will mimic a voltage divider. Turn the pot all the way in one direction, and the voltage may be zero; turned to the other side the output voltage approaches the input; a wiper in the middle position means the output voltage will be half of the input."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Potentiometers come in a variety of packages, and have many applications of their own. They may be used to create a reference voltage, adjust radio stations, measure position on a joystick, or in tons of other applications which require a variable input voltage."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Reading Resistive Sensors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Many sensors in the real world are simple resistive devices. A photocell is a variable resistor, which produces a resistance proportional to the amount of light it senses. Other devices like flex sensors, force-sensitive resistors, and thermistors, are also variable resistors."
+    },
+    {
+      "kind": "paragraph",
+      "text": "It turns out voltage is really easy for microcontrollers (those with analog-to-digital converters - ADC’s - at least) to measure. Resistance? Not so much. But, by adding another resistor to the resistive sensors, we can create a voltage divider. Once the output of the voltage divider is known, we can go back and calculate the resistance of the sensor."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For example, the photocell's resistance varies between 1kΩ in the light and about 10kΩ in the dark. If we combine that with a static resistance somewhere in the middle - say 5.6kΩ, we can get a wide range out of the voltage divider they create."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A swing of about 2.45V from light to dark. Plenty of resolution for most ADCs!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Level Shifting"
+    },
+    {
+      "kind": "paragraph",
+      "text": "More complicated sensors may transmit their readings using heavier serial interfaces, like a UART, SPI, or I2C. Many of those sensors operate at a relatively low voltage, in order to conserve power. Unfortunately, it's not uncommon that those low-voltage sensors are ultimately interfacing with a microcontroller operating at a higher system voltage. This leads to a problem of level shifting, which has a number of solutions including voltage dividing."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For example, an ADXL345 accelerometer allows for a maximum input voltage of 3.3V, so if you try to interface it with an Arduino (assume operating at 5V), something will need to be done to step down that 5V signal to 3.3V. Voltage divider! All that's needed is a couple resistors whose ratio will divide a 5V signal to about 3.3V. Resistors in the 1kΩ-10kΩ range are usually best for such an application; let's"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Keep in mind, this solution only works in one direction. A voltage divider alone will never be able to step a lower voltage up to a higher one."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Application Dont's"
+    },
+    {
+      "kind": "paragraph",
+      "text": "As tempting as it may be to use a voltage divider to step down, say, a 12V power supply to 5V, voltage dividers should not be used to supply power to a load."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Any current that the load requires is also going to have to run through R1. The current and voltage across R1 produce power, which is dissipated in the form of heat. If that power exceeds the rating of the resistor (usually between ⅛W and 1W), the heat begins to become a major problem, potentially melting the poor resistor."
+    },
+    {
+      "kind": "paragraph",
+      "text": "That doesn't even mention how inefficient a voltage-divider-power-supply would be. Basically, don't use a voltage divider as a voltage supply for anything that requires even a modest amount of power. If you need to drop down a voltage to use it as a power supply, look into voltage regulators or switching supplies."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Extra Credit: Proof"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you haven't yet gotten your fill of voltage dividers, in this section we'll evaluate how Ohm's law is applied to produce the voltage divider equation. This is a fun exercise, but not super-important to understanding what voltage dividers do. If you're interested, prepare for some fun times with Ohm's law and algebra."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Evaluating the circuit"
+    },
+    {
+      "kind": "paragraph",
+      "text": "So, what if you wanted to measure the voltage at Vout? How could Ohm's law be applied to create a formula to calculate the voltage there? Let's assume that we know the values of Vin, R1, and R2, so let's get our Vout equation in terms of those values."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let's start by drawing out the currents in the circuit--I1 and I2--which we'll call the currents across the respective resistors."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Our goal is to calculate Vout, what if we applied Ohm's law to that voltage? Easy enough, there's just one resistor and one current involved:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Sweet! We know R2's value, but what about I2? That's an unknown value, but we do know a little something about it. We can assume (and this turns out to be a big assumption) that I1 is equivalent to I2. Alright, but does that help us? Hold that thought. Our circuit now looks like this, where I equals both I1 and I2."
+    },
+    {
+      "kind": "paragraph",
+      "text": "What do we know about Vin? Well, Vin is the voltage across both resistors R1 and R2. Those resistors are in series. Series resistors add up to one value, so we could say:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "And, for a moment, we can simplify the circuit to:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ohm's law at its most basic! Vin = I * R. Which, if we turn that R back into R1 + R2, can also be written as:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "And since I is equivalent to I2, plug that into our Vout equation to get:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "And that, my friends, is the voltage divider equation! The output voltage is a fraction of the input voltage, and that fraction is R2 divided by the sum of R1 and R2."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Interested in learning more foundational topics?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "See our Engineering Essentials page for a full list of cornerstone topics surrounding electrical engineering."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Take me there!"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Resources and Going Further"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now that you've got the gist of one of the most common circuits in electronics, there's a world of new stuff to learn!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Would you like to learn how a microcontroller, like an Arduino, could read the analog voltage produced by a voltage divider?"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Analog-to-Digital Converters"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "With the power of the voltage divider and the ADC, you can accomplish a lot in the world of electronics. Check out these other great tutorials."
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Some varieties of accelerometers and gyroscopes have anlog outputs that must be read in on an ADC to get usable values.",
+        "Pulse-width Modulation (PWM) is like an analog output, which is the opposite of analog input.",
+        "The INA169 allows you to sense current using ADC.",
+        "Using a voltage divider and the ADC, you can read in all sorts of sensors and variable components such as trimpots, joysticks, sliders, and force sensitive resistors amongst many, many more.",
+        "The Arduino map() function",
+        "Arduino Analog Pins",
+        "The Uh-Oh Battery Indicator Hookup Guide uses a voltage divider to tell you if your battery is getting too low."
+      ]
+    }
+  ]
+}

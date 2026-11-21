@@ -23,7 +23,7 @@ flowchart LR
 | The README's Start here block and the workbench card | `app/src/data/startHere.json` (one file, read by both) | `python3.12 scripts/generate_start_here.py --check` |
 | The callout on every lesson and module page: where to run it, or that there is no entry | `app/src/data/pythonLessonsData.ts`, the workbench's own registry | `python3.12 scripts/generate_run_callouts.py --check` |
 | The searchable text of the 66 reading pages, which `⌘⇧F` fetches on demand | `scripts/route_model.py` (the page list) and the Markdown pages themselves | `python3.12 scripts/generate_prose_index.py --check` |
-| The reading guides the Resources panel shows: one card per authored `Primary`/`Alternative` line, with its read/skip/takeaway, its occurrence id and its external-or-local disposition | the same lesson pages, parsed by `scripts/generate_learning_resources.py`; the reader index it also writes decides whether the button appears | `npm run test:resources` (the `learning_resources` gate: registry and index in sync, plus the generator and resolver suites) |
+| The reading guides the Resources panel shows: one card per authored `Primary`/`Alternative` line, with its read/skip/takeaway, its occurrence id, its external-or-local disposition, and the workspace's presentation (iframe, native player, reader, external, internal or unavailable) | the same lesson pages, parsed by `scripts/generate_learning_resources.py`; the provider allowlist and the fresh header report decide framing; the reader index decides whether the button appears | `npm run test:resources` (the `learning_resources` gate: registry, index and embed report in sync, plus the generator, embed, resolver and workspace suites), `npm run test:e2e:resources` |
 | The try-it link under a marked code block, carrying that block's current text and the page's own entry | `app/src/tryLinks.ts`, encoding with the app's share codec from each page's `?lesson=` | `node --experimental-strip-types scripts/generate_try_links.mjs --check` |
 | The name of every tab, and no page or label referring to one by position | `app/src/data/workbenchTabs.json`, read by `App.tsx` and by the callout generator | `python3.12 scripts/check_tab_names.py` |
 | An arrow says what it carries — control flow, data, signal, power, mechanical or communication — stored with the diagram (control flow as an absent field, so a kind-less document is unchanged), drawn with its own stroke, dash and arrowhead, named by kind in Mermaid and Markdown, authored from the kind chip's styles palette, kept across a reload, and labelled by its own guard before its branch card's condition fallback | `app/src/workflow.ts` (`WORKFLOW_EDGE_TYPES`, `withEdgeType`, `edgeTypeOf`), `app/src/components/workflow/WorkflowEdges.tsx` (`EDGE_STYLE`) | `npm run test:workflow`, `npm run test:e2e` |
@@ -671,8 +671,8 @@ box. The card states the seam in its own words — the board runs elsewhere, it 
 nothing pasted there comes back — and the graded prediction is filed in the learning log as a run
 (`npm run test:board`, browser step 15).
 
-**The Resources panel is a guide, not a frame.** The lesson pages already author `Primary` and
-`Alternative resource` blocks; `scripts/generate_learning_resources.py` turns them into
+**The Resources panel is a guide first, and a reviewed frame second.** The lesson pages already author
+`Primary` and `Alternative resource` blocks; `scripts/generate_learning_resources.py` turns them into
 `app/public/learning-resources.json` (fetched only when a lesson asks for its guides) and the small
 `app/src/data/learningResourceIndex.ts` count map that decides whether the reader shows the button.
 Every authored occurrence is rendered — 160 across 51 lessons, 155 external and 5 local — and the
@@ -680,12 +680,29 @@ same URL twice in one lesson is two cards, because the instructions differ. An e
 a new tab; a local Markdown link is resolved against the page that wrote it and the authoritative
 lesson path map, so the four links that name lessons become same-tab `?lesson=` routes; the Falstad
 file `01.4` cites is not served by this build, so its card keeps the authored guide and says why it
-cannot be opened here instead of disappearing. The isolation policy is unchanged and the panel
-honours it: this is a link and not an `iframe`, no provider page is copied, snapshotted or cached, and
-the panel writes no progress, note or lesson state. `docs/QUALITY_SPEC.md` §8 is the authoring
-contract, `scripts/test_learning_resources.mjs` covers every record's disposition, and
-`npm run check:resources` is the drift gate — a page edited without regenerating fails before the
-panel can quote last week's instructions.
+cannot be opened here instead of disappearing. `Study here` opens the reader's split workspace: the
+prose stays on the left, the authored guide and renderer are on the right, and Expand, the divider and
+the phone pane toggle are layout changes around one mounted frame. A provider is framed only when the explicit allowlist, the fresh header report and the method all agree; a frame-blocked provider
+with a permission-cleared snapshot opens Reader Mode, and a source without reuse permission gets the
+external card and the original link. The current report covers 16 hosts, 12 embeddable (all with
+`credentialless`) and 4 blocked. The report is generated by `scripts/verify_resource_embeds.py`, whose
+`--check` gate enforces coverage and a 45-day freshness limit, and `--revalidate` is the weekly probe
+that fails when a provider's verdict moves. The isolation policy is unchanged: COEP `require-corp`
+stays, a frame without CORP gets the `credentialless` attribute before its URL is assigned, and the
+`frame-src` CSP names only the approved providers. No provider page is copied or cached; 70 text-only
+snapshots for the seven `reuse: allowed` providers are checked in under
+`app/public/learning-resource-snapshots/`, and a non-permitted page is never snapshotted. A
+permitted card's direct **Reader** action opens the same text surface in a focus-trapped sheet
+without the workspace, while the card keeps its external link. The workspace writes no progress,
+note or check state. `docs/QUALITY_SPEC.md` §8 is the authoring
+contract, `scripts/test_learning_resources.mjs` covers every record's disposition and snapshot loader,
+`scripts/test_resource_workspace.mjs` pins the split arithmetic, and `npm run test:resources` is the
+drift gate plus the generator, embed, resolver and workspace suites. `npm run test:e2e:resources` in a
+real browser opens P.1, opens Reader directly from a card and confirms its external link is still
+present, proves the credentialless frame survives Expand/divider/phone switching, switches futurecoder
+to its MIT snapshot and back, opens CS50P's non-commercial snapshot with no frame, shows Physics
+Classroom's link-only card with no snapshot, and checks that only the snapshot-bearing card on 00.1
+shows a direct Reader action.
 
 **The roadmap's cards fold the same way (Run 244; the offer left for Home in Run 257).** The trail and
 the Board card each grow once a learner has done something, and both carry the same toggle in the
@@ -747,6 +764,28 @@ than a dashboard-side reinterpretation.
 
 `npm run test:smoke` and `npm run test:e2e` need `npm ci` first; the browser suites find
 Chromium through Playwright or the documented fallback paths.
+
+### Browser gates on a Linux host without system Chromium libraries
+
+The browser gates launch Playwright's Chromium. On a Linux x86_64 host whose Chromium cannot start
+because `libnspr4.so` and the other distribution libraries are absent, and where `sudo` is unavailable,
+bootstrap a private sysroot outside the worktree:
+
+```bash
+npm ci
+npx playwright-core install chromium chromium-headless-shell
+bash scripts/setup_browser_deps.sh
+source "$HOME/.local/share/mechalab-browser-deps/env.sh"
+npm run check:all
+npx tsc -b
+```
+
+[`setup_browser_deps.sh`](../scripts/setup_browser_deps.sh) downloads the Ubuntu 24.04 runtime
+packages and fonts with `apt-get download`, extracts them under
+`${XDG_DATA_HOME:-$HOME/.local/share}/mechalab-browser-deps`, writes `env.sh`, and checks both
+Playwright Chromium binaries with `ldd`. It needs no root and writes nothing in the repository. Set
+`MECHALAB_BROWSER_DEPS` to another directory outside the worktree and source the `env.sh` it writes
+there. A workspace restore removes the home cache, so rerun the bootstrap before the browser gates.
 
 **`dist/` is rebuilt when it is older than its own sources.** Two gates read the bundle rather than the
 sources — `npm run check:weight` and the Pages sweep — and a `dist/` from an earlier checkout fits every

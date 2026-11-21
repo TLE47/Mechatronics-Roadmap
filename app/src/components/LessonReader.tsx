@@ -62,7 +62,18 @@ import { markQuotes, unlocatedQuotes } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 import { LEARNING_RESOURCE_COUNTS } from '../data/learningResourceIndex';
+import { loadPublicSettings } from '../siteSettings';
+import { flagOn } from '../siteSettingsModel';
 import { ResourceGuides } from '../features/learning-resources/ResourceGuides';
+import type { LessonResource } from '../features/learning-resources/registry';
+import {
+  readResourceWorkspace,
+  resourceRatioAfterKey,
+  resourceRatioAt,
+  resourceRatioPercent,
+  writeResourceWorkspace,
+  type ResourceMobilePane,
+} from '../features/learning-resources/resourceWorkspace';
 import { StudyClockReminder } from './StudyClockReminder';
 import StickyNoteEditor, { type StickyNoteEditorHandle } from './StickyNoteEditor';
 import { LazyPending } from './LazyPending';
@@ -77,6 +88,14 @@ const ReaderFigure = lazy(() => import('../visuals/ReaderFigure'));
 // micro focus pays no picture code.
 const MicroVisual = lazy(() =>
   import('./micro/MicroVisual').then((module) => ({ default: module.MicroVisual }))
+);
+// The split workspace, its reading guide and its renderer arrive only when a learner presses Study
+// here. The card list keeps its existing path; this keeps the framed surface and its provider metadata
+// out of the first visit's entry chunk.
+const ResourceWorkspace = lazy(() =>
+  import('../features/learning-resources/ResourceWorkspace').then((module) => ({
+    default: module.ResourceWorkspace,
+  }))
 );
 
 /**
@@ -184,6 +203,8 @@ interface LessonReaderProps {
   path: string;
   /** Read layout: the pane is the page, so it gets the window's height instead of a card's. */
   tall?: boolean;
+  /** The lesson's display title, for the resource workspace's context line. */
+  lessonTitle?: string;
   /** A term or prose row's phrase to land on; `nonce` makes the same phrase a fresh request. */
   focus?: { id: string; nonce: number; focus?: string; focusAnchor?: string } | null;
   /** Controls the runner draws in the header, after Top. */
@@ -350,6 +371,7 @@ export function LessonReader({
   lessonId,
   path,
   tall = false,
+  lessonTitle,
   focus = null,
   toolbar,
   panel,
@@ -366,6 +388,18 @@ export function LessonReader({
   /** The authored resource guides, when this lesson has any and the reader has opened the panel. */
   const [resourceGuidesOpen, setResourceGuidesOpen] = useState(false);
   const resourceCount = LEARNING_RESOURCE_COUNTS[lessonId] ?? 0;
+  /** The split workspace: the lesson prose and one resource side by side. */
+  const [workspace, setWorkspace] = useState<{
+    resources: LessonResource[];
+    sourcePath: string;
+    selectedId: string;
+  } | null>(null);
+  const [resourcePrefs, setResourcePrefs] = useState(() => readResourceWorkspace());
+  const [workspaceEnabled, setWorkspaceEnabled] = useState(true);
+  const workspaceSplitRef = useRef<HTMLDivElement | null>(null);
+  const workspaceDragRef = useRef<number | null>(null);
+  const [workspaceDragging, setWorkspaceDragging] = useState(false);
+  const readerScrollHeight = tall ? 'max-h-[calc(100vh-11rem)]' : 'max-h-[760px]';
   /** The lesson text can step out of the grid entirely; the hover tab is the way back. */
   const [collapsed, setCollapsed] = useState(false);
   const [page, setPage] = useState<LessonPage | null>(null);
@@ -430,9 +464,97 @@ export function LessonReader({
   const anchors = useMemo(() => headingAnchors(page?.blocks ?? []), [page]);
 
   useEffect(() => {
-    // A lesson change is a new page: the previous lesson's guides must not stay open over it.
+    // A lesson change is a new page: neither the previous lesson's guides nor its resource pane
+    // may stay open over it.
     setResourceGuidesOpen(false);
+    setWorkspace(null);
   }, [lessonId]);
+
+  useEffect(() => {
+    // The public feature flag is the kill switch for a surface that frames a third party. A build
+    // with no settings service keeps the default, which is on; only an explicit `false` removes it.
+    let live = true;
+    loadPublicSettings()
+      .then((settings) => {
+        if (live) setWorkspaceEnabled(flagOn(settings, 'resource_workspace'));
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!workspaceEnabled) setWorkspace(null);
+  }, [workspaceEnabled]);
+
+  const openResourceWorkspace = (
+    resource: LessonResource,
+    resources: LessonResource[],
+    sourcePath: string
+  ) => {
+    if (!workspaceEnabled) return;
+    setResourceGuidesOpen(false);
+    setWorkspace({ resources, sourcePath, selectedId: resource.id });
+    setResourcePrefs(readResourceWorkspace());
+  };
+
+  const closeResourceWorkspace = () => setWorkspace(null);
+
+  const backToResourceGuides = () => {
+    setWorkspace(null);
+    setResourceGuidesOpen(true);
+  };
+
+  const setResourceMobilePane = (mobilePane: ResourceMobilePane) => {
+    setResourcePrefs(writeResourceWorkspace({ mobilePane }));
+  };
+
+  const setWorkspaceExpanded = (expanded: boolean) => {
+    setResourcePrefs(writeResourceWorkspace({ expanded }));
+  };
+
+  const beginWorkspaceDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    workspaceDragRef.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setWorkspaceDragging(true);
+    event.preventDefault();
+  };
+
+  const moveWorkspaceDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (workspaceDragRef.current !== event.pointerId) return;
+    const container = workspaceSplitRef.current;
+    const box = container?.getBoundingClientRect();
+    if (!container || !box) return;
+    const next = resourceRatioAt(event.clientX, box.left, box.width - 8);
+    if (next !== null && next !== resourcePrefs.ratio) {
+      setResourcePrefs((current) => ({ ...current, ratio: next }));
+    }
+  };
+
+  const endWorkspaceDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (workspaceDragRef.current !== event.pointerId) return;
+    workspaceDragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setWorkspaceDragging(false);
+    const container = workspaceSplitRef.current;
+    const box = container?.getBoundingClientRect();
+    const released =
+      event.type === 'pointerup' && box
+        ? resourceRatioAt(event.clientX, box.left, box.width - 8)
+        : null;
+    setResourcePrefs(writeResourceWorkspace({ ratio: released ?? resourcePrefs.ratio }));
+  };
+
+  const resizeWorkspaceByKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const next = resourceRatioAfterKey(resourcePrefs.ratio, event.key, event.shiftKey);
+    if (next === null) return;
+    event.preventDefault();
+    setResourcePrefs(writeResourceWorkspace({ ratio: next }));
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1396,8 +1518,11 @@ export function LessonReader({
           {resourceCount > 0 && (
             <button
               type="button"
-              onClick={() => setResourceGuidesOpen((open) => !open)}
-              aria-expanded={resourceGuidesOpen}
+              onClick={() => {
+                setWorkspace(null);
+                setResourceGuidesOpen((open) => !open);
+              }}
+              aria-expanded={resourceGuidesOpen || workspace !== null}
               aria-controls="resource-guide-panel"
               data-testid="btn-resources"
               title="Open the authored reading guides for this lesson"
@@ -1408,6 +1533,40 @@ export function LessonReader({
                 {resourceCount}
               </span>
             </button>
+          )}
+          {workspace && (
+            <div
+              className="flex rounded border border-line-soft bg-canvas p-0.5 xl:hidden"
+              role="group"
+              aria-label="Choose the visible pane"
+            >
+              <button
+                type="button"
+                data-testid="workspace-pane-lesson"
+                aria-pressed={resourcePrefs.mobilePane === 'lesson'}
+                onClick={() => setResourceMobilePane('lesson')}
+                className={`min-h-7 rounded px-2 font-mono text-[10.5px] ${
+                  resourcePrefs.mobilePane === 'lesson'
+                    ? 'bg-accent/15 text-accent'
+                    : 'text-muted'
+                }`}
+              >
+                Lesson
+              </button>
+              <button
+                type="button"
+                data-testid="workspace-pane-resource"
+                aria-pressed={resourcePrefs.mobilePane === 'resource'}
+                onClick={() => setResourceMobilePane('resource')}
+                className={`min-h-7 rounded px-2 font-mono text-[10.5px] ${
+                  resourcePrefs.mobilePane === 'resource'
+                    ? 'bg-accent/15 text-accent'
+                    : 'text-muted'
+                }`}
+              >
+                Resource
+              </button>
+            </div>
           )}
           <button
             type="button"
@@ -1450,6 +1609,7 @@ export function LessonReader({
           key={lessonId}
           lessonId={lessonId}
           onClose={() => setResourceGuidesOpen(false)}
+          onOpenWorkspace={workspaceEnabled ? openResourceWorkspace : undefined}
         />
       )}
 
@@ -1473,11 +1633,28 @@ export function LessonReader({
       )}
 
       <div
+        ref={workspaceSplitRef}
+        data-testid="reader-resource-split"
+        data-workspace={workspace ? 'true' : 'false'}
+        data-expanded={workspace ? String(resourcePrefs.expanded) : 'false'}
+        style={
+          workspace
+            ? ({
+                '--lesson-share': `${resourcePrefs.ratio}fr`,
+                '--resource-share': `${1 - resourcePrefs.ratio}fr`,
+              } as React.CSSProperties)
+            : undefined
+        }
+        className="reader-resource-split min-w-0"
+      >
+      <div
         ref={scrollRef}
         onScroll={remember}
         data-testid="reader-scroll"
-        className={`relative min-w-0 overflow-y-auto px-4 py-4 sm:px-6 ${
-          tall ? 'max-h-[calc(100vh-11rem)]' : 'max-h-[760px]'
+        className={`relative min-w-0 overflow-y-auto px-4 py-4 sm:px-6 ${readerScrollHeight} ${
+          workspace && (resourcePrefs.expanded || resourcePrefs.mobilePane === 'resource')
+            ? 'hidden xl:block'
+            : ''
         }`}
       >
         {showClock && scope === 'study' && <StudyClockReminder lessonId={lessonId} />}
@@ -1534,6 +1711,56 @@ export function LessonReader({
             )}
           </article>
         )}
+      </div>
+
+      {workspace && !resourcePrefs.expanded && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize the lesson and resource panes"
+          aria-valuemin={30}
+          aria-valuemax={70}
+          aria-valuenow={resourceRatioPercent(resourcePrefs.ratio)}
+          aria-valuetext={`${resourceRatioPercent(resourcePrefs.ratio)} percent lesson, ${100 - resourceRatioPercent(resourcePrefs.ratio)} percent resource`}
+          tabIndex={0}
+          data-testid="workspace-divider"
+          onPointerDown={beginWorkspaceDrag}
+          onPointerMove={moveWorkspaceDrag}
+          onPointerUp={endWorkspaceDrag}
+          onPointerCancel={endWorkspaceDrag}
+          onKeyDown={resizeWorkspaceByKey}
+          className={`hidden w-2 shrink-0 touch-none cursor-col-resize items-center justify-center border-x border-line-soft bg-canvas transition-colors hover:bg-accent/15 focus-visible:bg-accent/15 focus-visible:outline-2 focus-visible:outline-accent xl:flex ${
+            workspaceDragging ? 'bg-accent/20' : ''
+          }`}
+        >
+          <span className="h-8 w-0.5 rounded-full bg-line-strong" aria-hidden="true" />
+        </div>
+      )}
+
+      {workspace && (
+        <div
+          className={`min-w-0 ${
+            !resourcePrefs.expanded && resourcePrefs.mobilePane === 'lesson' ? 'hidden xl:block' : ''
+          }`}
+        >
+          <Suspense fallback={<LazyPending what="resource-workspace" />}>
+            <ResourceWorkspace
+              lessonId={lessonId}
+              lessonTitle={lessonTitle ?? lessonId}
+              resources={workspace.resources}
+              sourcePath={workspace.sourcePath}
+              selectedId={workspace.selectedId}
+              onSelect={(selectedId) =>
+                setWorkspace((current) => (current ? { ...current, selectedId } : current))
+              }
+              onClose={closeResourceWorkspace}
+              onBackToGuides={backToResourceGuides}
+              expanded={resourcePrefs.expanded}
+              onExpandedChange={setWorkspaceExpanded}
+            />
+          </Suspense>
+        </div>
+      )}
       </div>
 
       {(continueAction || backAction) && (

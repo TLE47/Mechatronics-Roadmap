@@ -1,0 +1,383 @@
+{
+  "version": 1,
+  "title": "SparkFun — Light-Emitting Diodes (LEDs)",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/light-emitting-diodes-leds",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:42.482Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/light-emitting-diodes-leds"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Introduction"
+    },
+    {
+      "kind": "paragraph",
+      "text": "LEDs are all around us: In our phones, our cars and even our homes. Any time something electronic lights up, there's a good chance that an LED is behind it. They come in a huge variety of sizes, shapes, and colors, but no matter what they look like they have one thing in common: they're the bacon of electronics. They're widely purported to make any project better and they're often added to unlikely things (to everyone's delight)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Unlike bacon, however, they're no good once you've cooked them. This guide will help you avoid any accidental LED barbecues! First things first, though. What exactly is this LED thing everyone's talking about?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "LEDs (that's \"ell-ee-dees\") are a particular type of diode that convert electrical energy into light. In fact, LED stands for \"Light Emitting Diode.\" (It does what it says on the tin!) And this is reflected in the similarity between the diode and LED schematic symbols:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In short, LEDs are like tiny lightbulbs. However, LEDs require a lot less power to light up by comparison. They're also more energy efficient, so they don't tend to get hot like conventional lightbulbs do (unless you're really pumping power into them). This makes them ideal for mobile devices and other low-power applications. Don't count them out of the high-power game, though. High-intensity LEDs have found their way into accent lighting, spotlights and even automotive headlights!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Are you getting the craving yet? The craving to put LEDs on everything? Good, stick with us and we'll show you how!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here are some other topics that will be discussed in this tutorial. If you are unfamiliar with any of them, please have a look at the respective tutorial before you go any further."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "What is a Circuit?"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Voltage, Current, Resistance, and Ohm's Law"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "What is Electricity?"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Diodes"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Electric Power"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Polarity"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Metric Prefixes and SI Units"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Viewing"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "How to Use Them"
+    },
+    {
+      "kind": "paragraph",
+      "text": "So you've come to the sensible conclusion that you need to put LEDs on everything. We thought you'd come around."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let's go over the rule book:"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "1) Polarity Matters"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In electronics, polarity indicates whether a circuit component is symmetric or not. LEDs, being diodes, will only allow current to flow in one direction. And when there's no current-flow, there's no light. Luckily, this also means that you can't break an LED by plugging it in backwards. Rather, it just won't work."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The positive side of the LED is called the \"anode\" and is marked by having a longer \"lead,\" or leg. The other, negative side of the LED is called the \"cathode.\" Current flows from the anode to the cathode and never the opposite direction. A reversed LED can keep an entire circuit from operating properly by blocking current flow. So don't freak out if adding an LED breaks your circuit. Try flipping it around."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "2) Moar Current Equals Moar Light"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The brightness of an LED is directly dependent on how much current it draws. That means two things. The first being that super bright LEDs drain batteries more quickly, because the extra brightness comes from the extra power being used. The second is that you can control the brightness of an LED by controlling the amount of current through it. But, setting the mood isn't the only reason to cut back your current."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "3) There is Such a Thing as Too Much Power"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you connect an LED directly to a current source it will try to dissipate as much power as it's allowed to draw, and, like the tragic heroes of olde, it will destroy itself. That's why it's important to limit the amount of current flowing across the LED."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For this, we employ resistors. Resistors limit the flow of electrons in the circuit and protect the LED from trying to draw too much current. Don't worry, it only takes a little basic math to determine the best resistor value to use. You can find out all about it in the example applications of our resistor tutorial!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Resistors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Don't let all of this math scare you, it's actually pretty hard to mess things up too badly. In the next section, we'll go over how to make an LED circuit without getting your calculator."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "LEDs Without Math"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Before we talk about how to read a datasheet, let's hook up some LEDs. After all, this is an LED tutorial, not a reading tutorial."
+    },
+    {
+      "kind": "paragraph",
+      "text": "It's also not a math tutorial, so we'll give you a few rules of thumb for getting LEDs up and running. As you've probably put together from the info in the last section, you'll need a battery, a resistor, and an LED. We're using a battery as our power source, because they're easy to find and they can't supply a dangerous amount of current."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The basic template for an LED circuit is pretty simple, just connect your battery, resistor and LED in series. Like this:"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "330 Ohm Resistor"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A good resistor value for most LEDs is 330 Ohms ( orange - orange - brown ). You can use the information from the last section to help you determine the exact value you need, but this is LEDs without math... So, start by popping a 330 Ohm resistor into the above circuit and see what happens."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Trial and Error"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The interesting thing about resistors is that they'll dissipate extra power as heat, so if you have a resistor that's getting warm, you probably need to go with a smaller resistance. If your resistor is too small, however, you run the risk of burning out the LED! Given that you have a handful of LEDs and resistors to play with, here's a flow chart to help you design your LED circuit by trial and error:"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Throwies with a Coin Cell Battery"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another way to light up an LED is to just connect it to a coin cell battery! Since the coin cell can't source enough current to damage the LED, you can connect them directly together! Just push a CR2032 coin cell between the leads of the LED. The long leg of the LED should be touching the side of the battery marked with a \"+\". Now you can wrap some tape around the whole thing, add a magnet, and stick it to stuff! Yay for throwies!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Of course, if you're not getting great results with the trial and error approach, you can always get out your calculator and math it up. Don't worry, it's not hard to calculate the best resistor value for your circuit. But before you can figure out the optimal resistor value, you'll need to find the optimal current for your LED. For that we'll need to report to the datasheet..."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Get the Details"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Don't go plugging any strange LEDs into your circuits, that's just not healthy. Get to know them first. And how better than to read the datasheet."
+    },
+    {
+      "kind": "paragraph",
+      "text": "As an example we'll peruse the datasheet for our Basic Red 5mm LED."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "LED Current"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Starting at the top and making our way down, the first thing we encounter is this charming table:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ah, yes, but what does it all mean?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The first row in the table indicates how much current your LED will be able to handle continuously. In this case, you can give it 20mA or less, and it will shine its brightest at 20mA. The second row tells us what the maximum peak current should be for short bursts. This LED can handle short bumps to 30mA, but you don't want to sustain that current for too long. This datasheet is even helpful enough to suggest a stable current range (in the third row from the top) of 16-18mA. That's a good target number to help you make the resistor calculations we talked about."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The following few rows are of less importance for the purposes of this tutorial. The reverse voltage is a diode property that you shouldn't have to worry about in most cases. The power dissipation is the amount of power in milliWatts that the LED can use before taking damage. This should work itself out as long as you keep the LED within its suggested voltage and current ratings."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "LED Voltage"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let's see what other kinds of tables they've put in here... Ah!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This is a useful little table! The first row tells us what the forward voltage drop across the LED will be. Forward voltage is a term that will come up a lot when working with LEDs. This number will help you decide how much voltage your circuit will need to supply to the LED. If you have more than one LED connected to a single power source, these numbers are really important because the forward voltage of all of the LEDs added together can't exceed the supply voltage. We'll talk about this more in-depth later in the delving deeper section of this tutorial."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "LED Wavelength"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The second row on this table tells us the wavelength of the light. Wavelength is basically a very precise way of explaining what color the light is. There may be some variation in this number so the table gives us a minimum and a maximum. In this case it's 620 to 625nm, which is just at the lower red end of the spectrum (620 to 750nm). Again, we'll go over wavelength in more detail in the delving deeper section."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "LED Brightness"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The last row (labeled \"Luminous Intensity\") is a measure of how bright the LED can get. The unit mcd, or millicandela, is a standard unit for measuring the intensity of a light source. This LED has an maximum intensity of 200 mcd, which means it's just bright enough to get your attention but not quite flashlight bright. At 200 mcd, this LED would make a good indicator."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Viewing Angle"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Next, we've got this fan-shaped graph that represents the viewing angle of the LED. Different styles of LEDs will incorporate lenses and reflectors to either concentrate most of the light in one place or spread it as widely as possible. Some LEDs are like floodlights that pump out photons in every direction; Others are so directional that you can't tell they're on unless you're looking straight at them. To read the graph, imagine the LED is standing upright underneath it. The \"spokes\" on the graph represent the viewing angle. The circular lines represent the intensity by percent of maximum intensity. This LED has a pretty tight viewing angle. You can see that looking straight down at the LED is when it's at its brightest, because at 0 degrees the blue lines intersect with the outermost circle. To get the 50% viewing angle, the angle at which the light is half as intense, follow the 50% circle around the graph until it intersects the blue line, then follow the nearest spoke out to read the angle. For this LED, the 50% viewing angle is about 20 degrees."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Dimensions"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Finally, the mechanical drawing. This picture contains all of the measurements you'll need to actually mount the LED in an enclosure! Notice that, like most LEDs, this one has a small flange at the bottom. That comes in handy when you want to mount it in a panel. Simply drill a hole the perfect size for the body of the LED, and the flange will keep it from falling through!"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now that you know how to decipher the datasheet, let's see what kind of fancy LEDs you might encounter in the wild..."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Types of LEDs"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Congratulations, you know the basics! Maybe you've even gotten your hands on a few LEDs and started lighting stuff up, that's awesome! How would you like to step up your blinky game? Let's talk about makin' it fancy outside of your standard LED."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Types of LEDs"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here's the cast of other characters."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "RGB LEDs"
+    },
+    {
+      "kind": "paragraph",
+      "text": "RGB (Red-Green-Blue) LEDs are actually three LEDs in one! But that doesn't mean it can only make three colors. Because red, green, and blue are the additive primary colors, you can control the intensity of each to create every color of the rainbow. Most RGB LEDs have four pins: one for each color, and a common pin. On some, the common pin is the anode, and on others, it's the cathode."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "LEDs w/ Integrated Circuits"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Cycling"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Some LEDs are smarter than others. Take the cycling LED, for example. Inside these LEDs, there's actually an integrated circuit that allows the LED to blink without any outside controller. Here's a closeup of the IC (the big, black square chip on the tip of the anvil) controlling the colors."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Simply power it up and watch it go! These are great for projects where you want a little bit more action but don't have room for control circuitry. There are even RGB flashing LEDs that cycle through thousands of colors!"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Addressable LEDs"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Other types of LEDs can be controlled individually. There are different chipsets (WS2812, APA102, UCS1903, to name a few) used to control an individual LED that is chained together. Below is a closeup of a WS2812. The bigger square IC on the right controls the colors individually."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Built-In Resistor"
+    },
+    {
+      "kind": "paragraph",
+      "text": "What is this magic? An LED with a built-in resistor? That's right. There are also LEDs that include a small, current limiting resistor. If you look closely at the image below, there is a small, black square IC on the post to limit the current on these types of LEDs."
+    },
+    {
+      "kind": "paragraph",
+      "text": "So plug the LED with built-in resistor to your power source and light it up! We have tested these types of LEDs at 3.3V, 5V, and 9V."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Surface Mount (SMD) Packages"
+    },
+    {
+      "kind": "paragraph",
+      "text": "SMD LEDs aren't so much a specific kind of LED but a package type. As electronics get smaller and smaller, manufacturers have figured out how to cram more components in a smaller space. SMD (Surface Mount Device) parts are tiny versions of their standard counterparts. Here's a closeup of a WS2812B addressable LED packaged into a small 5050 package."
+    },
+    {
+      "kind": "paragraph",
+      "text": "SMD LEDs come in several sizes, from fairly large to smaller than a grain of rice! Because they're so small, and have pads instead of legs, they're not as easy to work with, but if you're tight on space, they might be just what the doctor ordered."
+    },
+    {
+      "kind": "paragraph",
+      "text": "SMD LEDs also make it easier and quicker for pick and place machines to populate a lot of LEDs onto PCBs and strips. You would probably not to manually solder all of those components by hand."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "High Power"
+    }
+  ]
+}

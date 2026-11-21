@@ -1,0 +1,214 @@
+{
+  "version": 1,
+  "title": "Wikipedia — H-bridge (\"General\" & \"Operation\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/H-bridge",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:18.492Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/H-bridge"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "An H-bridge is an electronic circuit that switches the polarity of a voltage applied to a load. These circuits are often used in robotics and other applications to allow DC motors to run forwards or backwards. The name is derived from its common schematic diagram representation, with four switching elements configured as the branches of a letter \"H\" and the load connected as the cross-bar."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Most DC-to-AC converters (power inverters), most AC/AC converters, the DC-to-DC push–pull converter, isolated DC-to-DC converter most motor controllers, and many other kinds of power electronics use H-bridges. In particular, a bipolar stepper motor is almost always driven by a motor controller containing two H-bridges."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "General"
+    },
+    {
+      "kind": "paragraph",
+      "text": "H-bridges are available as integrated circuits, or can be built from discrete components."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The term H-bridge is derived from the typical graphical representation of such a circuit. An H-bridge is built with four switches (solid-state or mechanical). When the switches S1 and S4 (according to the first figure) are closed (and S2 and S3 are open) a positive voltage is applied across the motor. By opening S1 and S4 switches and closing S2 and S3 switches, this voltage is reversed, allowing reverse operation of the motor."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using the nomenclature above, the switches S1 and S2 should never be closed at the same time, as this would cause a short circuit on the input voltage source. The same applies to the switches S3 and S4. This condition is known as shoot-through."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Common usage"
+    },
+    {
+      "kind": "paragraph",
+      "text": "An H-bridge is used to supply power to a two terminal device. By proper arrangement of the switches, the polarity of the power to the device can be changed. Two examples are discussed below: DC motor Driver, and transformer for a switching regulator. Note that not every switching configuration is safe; the \"short\" (see below in \"DC motor driver\" section) cases are dangerous to the power source and to the switches."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "DC motor driver"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Changing the polarity of the power supply to DC motor is used to change the direction of rotation. Apart from changing the rotation direction, the H-bridge can provide additional operation modes, \"brake\" and \"free run until frictional stop\". The H-bridge arrangement is generally used to reverse the polarity/direction of the motor, but can also be used to 'brake' the motor, where the motor comes to a sudden stop when the motor's terminals are connected together. By connecting its terminals, the motor's kinetic energy is consumed rapidly in form of electrical current and causes the motor to slow down. Another case allows the motor to coast to a stop, as the motor is effectively disconnected from the circuit. The following table summarizes operation, with S1-S4 corresponding to the diagram above. In the table below, \"1\" is used to represent \"on\" state of the switch, \"0\" to represent the \"off\" state."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Primary coil driver of switching power converter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Typical primary coil driver is to simply replace the two terminals of the DC motor by the two terminals of the primary coil. The switching current in the primary coil turns electrical energy into magnetic energy and transfers back to ac electrical energy in the secondary coil."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Construction"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Relays"
+    },
+    {
+      "kind": "paragraph",
+      "text": "One way to build an H-bridge is to use an array of relays from a relay board."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A \"double pole double throw\" (DPDT) relay can generally achieve the same electrical functionality as an H-bridge (considering the usual function of the device). However a semiconductor-based H-bridge would be preferable to the relay where a smaller physical size, high speed switching, or low driving voltage (or low driving power) is needed, or where the wearing out of mechanical parts is undesirable."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another configuration is to have a DPDT relay to set the direction of current flow and a transistor to enable the current flow. This can extend the relay life, as the relay will be switched while the transistor is off and thereby there is no current flow. It also enables the use of PWM switching to control the current level."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "N and P channel semiconductors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A solid-state H-bridge is typically constructed using opposite polarity devices, such as PNP bipolar junction transistors (BJT) or P-channel MOSFETs connected to the high voltage bus and NPN BJTs or N-channel MOSFETs connected to the low voltage bus."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "N channel-only semiconductors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The most efficient MOSFET designs use N-channel MOSFETs on both the high side and low side because they typically have a third of the ON resistance of P-channel MOSFETs. This requires a more complex design since the gates of the high side MOSFETs must be driven positive with respect to the DC supply rail. Many integrated circuit MOSFET gate drivers include a charge pump within the device to achieve this."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Alternatively, a switched-mode power supply DC–DC converter can be used to provide isolated ('floating') supplies to the gate drive circuitry. A multiple-output flyback converter is well-suited to this application."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another method for driving MOSFET-bridges is the use of a specialised transformer known as a GDT (gate drive transformer), which gives the isolated outputs for driving the upper FETs gates. The transformer core is usually a ferrite toroid, with 1:1 or 4:9 winding ratio. However, this method can only be used with high frequency signals. The design of the transformer is also very important, as the leakage inductance should be minimized, or cross conduction may occur. The outputs of the transformer are usually clamped by Zener diodes, because high voltage spikes could destroy the MOSFET gates."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Variants"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A common variation of this circuit uses just the two transistors on one side of the load, similar to a class AB amplifier. Such a configuration is called a \"half bridge\". It acts as an electronic toggle switch, the half bridge is not able to switch polarity of the voltage applied to the load. The half bridge is used in some switched-mode power supplies that use synchronous rectifiers and in switching amplifiers. The half-H-bridge type is commonly abbreviated to \"Half-H\" to distinguish it from full (\"Full-H\") H-bridges. Another common variation, adding a third 'leg' to the bridge, creates a three-phase inverter. The three-phase inverter is the core of any AC motor drive."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A further variation is the half-controlled bridge, where the low-side switching device on one side of the bridge, and the high-side switching device on the opposite side of the bridge, are each replaced with diodes. This eliminates the shoot-through failure mode, and is commonly used to drive variable or switched reluctance machines and actuators where bi-directional current flow is not required."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Commercial availability"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are many commercially available inexpensive single and dual H-bridge packages. The L293x series, being technically mostly obsolete since the late 1970s due to decreased switching losses and higher speeds in more modern semiconductor products, is still found in many hobbyist circuitry. Few packages, like L9110, have built-in flyback diodes for back EMF protection."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Operation as an inverter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A common use of the H-bridge is an inverter. The arrangement is sometimes known as a single-phase bridge inverter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The H-bridge with a DC supply will generate a square wave voltage waveform across the load. For a purely inductive load, the current waveform would be a triangle wave, with its peak depending on the inductance, switching frequency, and input voltage."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Active rectification",
+        "Commutator (electric)"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "H-Bridge Theory and Practice",
+        "Brief H-Bridge Theory of Operation[link removed]",
+        "H-bridge tutorial discussing various driving modes and using back-EMF",
+        "PWM DC Motor Controller Using MOSFETs and IR2110 H-Bridge Driver",
+        "H-Bridges on the BEAM Robotics Wiki",
+        "Derivation of formulas to estimate H-bridge controller current (Vex, JAGUAR, Victor). Discusses why some H-bridges used in robotics have non-linear current and speed responses."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Projects"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Building an H-bridge-controlled motor with photocells to track light",
+        "H-bridge motor control with 4017 (in Turkish)",
+        "Using the HIP4081A for H-bridge control Archived 27 February 2012 at the Wayback Machine",
+        "Using the L293D H-bridge for DC motor control",
+        "A simple circuit designed around L293D motor driver IC"
+      ]
+    }
+  ]
+}

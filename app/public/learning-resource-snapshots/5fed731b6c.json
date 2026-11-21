@@ -1,0 +1,366 @@
+{
+  "version": 1,
+  "title": "Python 3 Docs — `math` (\"Trigonometric functions\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://docs.python.org/3/library/math.html",
+  "provider": "Python documentation",
+  "providerKey": "python-docs",
+  "retrievedAt": "2026-11-21T02:10:20.620Z",
+  "license": {
+    "id": "PSF-2.0",
+    "url": "https://docs.python.org/3/license.html",
+    "reuse": "allowed",
+    "conditions": [
+      "notice",
+      "indicate-changes",
+      "no-trademark",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Python Software Foundation",
+    "originalUrl": "https://docs.python.org/3/library/math.html"
+  },
+  "notice": "Text-only snapshot of Python Software Foundation; images, tables, scripts and navigation are omitted. The source licence notice is shown below. Changes: text extracted; images, tables, scripts and navigation removed. No provider logo or trademark is used. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 1,
+      "text": "math — Mathematical functions"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This module provides access to common mathematical functions and constants, including those defined by the C standard."
+    },
+    {
+      "kind": "paragraph",
+      "text": "These functions cannot be used with complex numbers; use the functions of the same name from the cmath module if you require support for complex numbers. The distinction between functions which support complex numbers and those which don’t is made since most users do not want to learn quite as much mathematics as required to understand complex numbers. Receiving an exception instead of a complex result allows earlier detection of the unexpected complex number used as a parameter, so that the programmer can determine how and why it was generated in the first place."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The following functions are provided by this module. Except when explicitly noted otherwise, all return values are floats."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Floating point arithmetic"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the ceiling of x, the smallest integer greater than or equal to x. If x is not a float, delegates to x.__ceil__, which should return an Integral value."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the absolute value of x."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the floor of x, the largest integer less than or equal to x. If x is not a float, delegates to x.__floor__, which should return an Integral value."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Fused multiply-add operation. Return (x * y) + z, computed as though with infinite precision and range followed by a single round to the float format. This operation often provides better accuracy than the direct expression (x * y) + z."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This function follows the specification of the fusedMultiplyAdd operation described in the IEEE 754 standard. The standard leaves one case implementation-defined, namely the result of fma(0, inf, nan) and fma(inf, 0, nan). In these cases, math.fma returns a NaN, and does not raise any exception."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.13."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Get the larger of two floating-point values, treating NaNs as missing data."
+    },
+    {
+      "kind": "paragraph",
+      "text": "When both operands are (signed) NaNs or zeroes, return nan and 0 respectively and the sign of the result is implementation-defined, that is, fmax() is not required to be sensitive to the sign of such operands (see Annex F of the C11 standard, §F.10.0.3 and §F.10.9.2)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.15."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Get the smaller of two floating-point values, treating NaNs as missing data."
+    },
+    {
+      "kind": "paragraph",
+      "text": "When both operands are (signed) NaNs or zeroes, return nan and 0 respectively and the sign of the result is implementation-defined, that is, fmin() is not required to be sensitive to the sign of such operands (see Annex F of the C11 standard, §F.10.0.3 and §F.10.9.3)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.15."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the floating-point remainder of x / y, as defined by the platform C library function fmod(x, y). Note that the Python expression x % y may not return the same result. The intent of the C standard is that fmod(x, y) be exactly (mathematically; to infinite precision) equal to x - n*y for some integer n such that the result has the same sign as x and magnitude less than abs(y). Python’s x % y returns a result with the sign of y instead, and may not be exactly computable for float arguments. For example, fmod(-1e-100, 1e100) is -1e-100, but the result of Python’s -1e-100 % 1e100 is 1e100-1e-100, which cannot be represented exactly as a float, and rounds to the surprising 1e100. For this reason, function fmod() is generally preferred when working with floats, while Python’s x % y is preferred when working with integers."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the fractional and integer parts of x. Both results carry the sign of x and are floats."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Note that modf() has a different call/return pattern than its C equivalents: it takes a single argument and return a pair of values, rather than returning its second return value through an ‘output parameter’ (there is no such thing in Python)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the IEEE 754-style remainder of x with respect to y. For finite x and finite nonzero y, this is the difference x - n*y, where n is the closest integer to the exact value of the quotient x / y. If x / y is exactly halfway between two consecutive integers, the nearest even integer is used for n. The remainder r = remainder(x, y) thus always satisfies abs(r) <= 0.5 * abs(y)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Special cases follow IEEE 754: in particular, remainder(x, math.inf) is x for any finite x, and remainder(x, 0) and remainder(math.inf, x) raise ValueError for any non-NaN x. If the result of the remainder operation is zero, that zero will have the same sign as x."
+    },
+    {
+      "kind": "paragraph",
+      "text": "On platforms using IEEE 754 binary floating point, the result of this operation is always exactly representable: no rounding error is introduced."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.7."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return x with the fractional part removed, leaving the integer part. This rounds toward 0: trunc() is equivalent to floor() for positive x, and equivalent to ceil() for negative x. If x is not a float, delegates to x.__trunc__, which should return an Integral value."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For the ceil(), floor(), and modf() functions, note that all floating-point numbers of sufficiently large magnitude are exact integers. Python floats typically carry no more than 53 bits of precision (the same as the platform C double type), in which case any float x with abs(x) >= 2**52 necessarily has no fractional bits."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Floating point manipulation functions"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return a float with the magnitude (absolute value) of x but the sign of y. On platforms that support signed zeros, copysign(1.0, -0.0) returns -1.0."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the mantissa and exponent of x as the pair (m, e). If x is a finite nonzero number, then m is a float with 0.5 <= abs(m) < 1.0 and an integer e is such that x == m * 2**e exactly. Else, return (x, 0). This is used to “pick apart” the internal representation of a float in a portable way."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Note that frexp() has a different call/return pattern than its C equivalents: it takes a single argument and return a pair of values, rather than returning its second return value through an ‘output parameter’ (there is no such thing in Python)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if the values a and b are close to each other and False otherwise."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Whether or not two values are considered close is determined according to given absolute and relative tolerances. If no errors occur, the result will be: abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "rel_tol is the relative tolerance – it is the maximum allowed difference between a and b, relative to the larger absolute value of a or b. For example, to set a tolerance of 5%, pass rel_tol=0.05. The default tolerance is 1e-09, which assures that the two values are the same within about 9 decimal digits. rel_tol must be nonnegative and less than 1.0."
+    },
+    {
+      "kind": "paragraph",
+      "text": "abs_tol is the absolute tolerance; it defaults to 0.0 and it must be nonnegative. When comparing x to 0.0, isclose(x, 0) is computed as abs(x) <= rel_tol * abs(x), which is False for any nonzero x and rel_tol less than 1.0. So add an appropriate positive abs_tol argument to the call."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The IEEE 754 special values of NaN, inf, and -inf will be handled according to IEEE rules. Specifically, NaN is not considered close to any other value, including NaN. inf and -inf are only considered close to themselves."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.5."
+    },
+    {
+      "kind": "paragraph",
+      "text": "See also"
+    },
+    {
+      "kind": "paragraph",
+      "text": "PEP 485 – A function for testing approximate equality"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if x is neither an infinity nor a NaN, and False otherwise. (Note that 0.0 is considered finite.)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.2."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if x is a normal number, that is a finite nonzero number that is not a subnormal (see issubnormal()). Return False otherwise."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.15."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if x is a subnormal number, that is a finite nonzero number with a magnitude smaller than sys.float_info.min. Return False otherwise."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.15."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if x is a positive or negative infinity, and False otherwise."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if x is a NaN (not a number), and False otherwise."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return x * (2**i). This is essentially the inverse of function frexp()."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the floating-point value steps steps after x towards y."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If x is equal to y, return y, unless steps is zero."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Examples:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "math.nextafter(x, math.inf) goes up: towards positive infinity.",
+        "math.nextafter(x, -math.inf) goes down: towards minus infinity.",
+        "math.nextafter(x, 0.0) goes towards zero.",
+        "math.nextafter(x, math.copysign(math.inf, x)) goes away from zero."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "See also math.ulp()."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.9."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Changed in version 3.12: Added the steps argument."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return True if the sign of x is negative and False otherwise."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This is useful to detect the sign bit of zeroes, infinities and NaNs."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.15."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the value of the least significant bit of the float x:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "If x is a NaN (not a number), return x.",
+        "If x is negative, return ulp(-x).",
+        "If x is a positive infinity, return x.",
+        "If x is equal to zero, return the smallest positive denormalized representable float (smaller than the minimum positive normalized float, sys.float_info.min).",
+        "If x is equal to the largest positive representable float, return the value of the least significant bit of x, such that the first float smaller than x is x - ulp(x).",
+        "Otherwise (x is a positive finite number), return the value of the least significant bit of x, such that the first float bigger than x is x + ulp(x)."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "ULP stands for “Unit in the Last Place”."
+    },
+    {
+      "kind": "paragraph",
+      "text": "See also math.nextafter() and sys.float_info.epsilon."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.9."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Power, exponential and logarithmic functions"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the cube root of x."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.11."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return e raised to the power x, where e = 2.718281… is the base of natural logarithms. This is usually more accurate than math.e ** x or pow(math.e, x)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return 2 raised to the power x."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.11."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return e raised to the power x, minus 1. Here e is the base of natural logarithms. For small floats x, the subtraction in exp(x) - 1 can result in a significant loss of precision; the expm1() function provides a way to compute this quantity to full precision:"
+    },
+    {
+      "kind": "code",
+      "text": ">>> from math import exp, expm1\n>>> exp(1e-5) - 1  # gives result accurate to 11 places\n1.0000050000069649e-05\n>>> expm1(1e-5)    # result accurate to full precision\n1.0000050000166668e-05"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.2."
+    },
+    {
+      "kind": "paragraph",
+      "text": "With one argument, return the natural logarithm of x (to base e)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "With two arguments, return the logarithm of x to the given base, calculated as log(x)/log(base)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the natural logarithm of 1+x (base e). The result is calculated in a way which is accurate for x near zero."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the base-2 logarithm of x. This is usually more accurate than log(x, 2)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Added in version 3.3."
+    },
+    {
+      "kind": "paragraph",
+      "text": "See also"
+    },
+    {
+      "kind": "paragraph",
+      "text": "int.bit_length() returns the number of bits necessary to represent an integer in binary, excluding the sign and leading zeros."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return the base-10 logarithm of x. This is usually more accurate than log(x, 10)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Return x raised to the power y. Exceptional cases follow the IEEE 754 standard as far as possible. In particular, pow(1.0, x) and pow(x, 0.0) always return 1.0, even when x is a zero or a NaN. If both x and y are finite, x is negative, and y is not an integer then pow(x, y) is undefined, and raises ValueError."
+    }
+  ]
+}

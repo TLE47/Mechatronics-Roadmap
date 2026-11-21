@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Cubic Hermite spline (\"Unit interval [0, 1]\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Cubic_Hermite_spline",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:26.125Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Cubic_Hermite_spline"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "In numerical analysis, a cubic Hermite spline or cubic Hermite interpolator is a spline where each piece is a third-degree polynomial specified in Hermite form, that is, by its values and first derivatives at the end points of the corresponding domain interval."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Cubic Hermite splines are typically used for interpolation of numeric data specified at given argument values x1,x2,…,xn, to obtain a continuous function. The data should consist of the desired function value and derivative at each xk. (If only the values are provided, the derivatives must be estimated from them.) The Hermite formula is applied to each interval (xk,xk+1) separately. The resulting spline will be continuous and will have continuous first derivative."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Cubic polynomial splines can be specified in other ways, the Bezier cubic being the most common. However, these two methods provide the same set of splines, and data can be easily converted between the Bézier and Hermite forms; so the names are often used as if they were synonymous."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Cubic polynomial splines are extensively used in computer graphics and geometric modeling to obtain curves or motion trajectories that pass through specified points of the plane or three-dimensional space. In these applications, each coordinate of the plane or space is separately interpolated by a cubic spline function of a separate parameter t. Cubic polynomial splines are also used extensively in structural analysis applications, such as Euler–Bernoulli beam theory. Cubic polynomial splines have also been applied to mortality analysis and mortality forecasting."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Cubic splines can be extended to functions of two or more parameters, in several ways. Bicubic splines (Bicubic interpolation) are often used to interpolate data on a regular rectangular grid, such as pixel values in a digital image or altitude data on a terrain. Bicubic surface patches, defined by three bicubic splines, are an essential tool in computer graphics."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Cubic splines are often called csplines, especially in computer graphics. Hermite splines are named after Charles Hermite."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Interpolation on a single interval"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Unit interval [0, 1]"
+    },
+    {
+      "kind": "paragraph",
+      "text": "On the unit interval [0,1], given a starting point 𝒑0 at t=0 and an ending point 𝒑1 at t=1 with starting tangent 𝒎0 at t=0 and ending tangent 𝒎1 at t=1, the polynomial can be defined by 𝒑(t)=(2t3−3t2+1)𝒑0+(t3−2t2+t)𝒎0+(−2t3+3t2)𝒑1+(t3−t2)𝒎1, where t ∈ [0, 1]."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Interpolation on an arbitrary interval"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Interpolating x in an arbitrary interval (xk,xk+1) is done by mapping the latter to [0,1] through an affine (degree-1) change of variable. The formula is 𝒑(x)=h00(t)𝒑k+h10(t)(xk+1−xk)𝒎k+h01(t)𝒑k+1+h11(t)(xk+1−xk)𝒎k+1, where t=(x−xk)/(xk+1−xk), and h refers to the basis functions, defined below. Note that the tangent values have been scaled by xk+1−xk compared to the equation on the unit interval."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Uniqueness"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The formula specified above provides the unique third-degree polynomial path between the two points with the given tangents."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Proof. Let P,Q be two third-degree polynomials satisfying the given boundary conditions. Define R=Q−P, then:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Since both Q and P are third-degree polynomials, R is at most a third-degree polynomial. So R must be of the form R(x)=ax(x−1)(x−r). Calculating the derivative gives R′(x)=ax(x−1)+ax(x−r)+a(x−1)(x−r)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "We know furthermore that"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Putting (1) and (2) together, we deduce that a=0, and therefore R=0, thus P=Q."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Representations"
+    },
+    {
+      "kind": "paragraph",
+      "text": "We can write the interpolation polynomial on the unit interval (for an arbitrary interval see the rescaled version above) as 𝒑(t)=h00(t)𝒑0+h10(t)𝒎0+h01(t)𝒑1+h11(t)𝒎1 where h00, h10, h01, h11 are Hermite basis functions. These can be written in different ways, each way revealing different properties:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The \"expanded\" column shows the representation used in the definition above. The \"factorized\" column shows immediately that h10 and h11 are zero at the boundaries. You can further conclude that h01 and h11 have a zero of multiplicity 2 at 0, and h00 and h10 have such a zero at 1, thus they have slope 0 at those boundaries. The \"Bernstein\" column shows the decomposition of the Hermite basis functions into Bernstein polynomials of order 3: Bk(t)=(3k)⋅tk⋅(1−t)3−k."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using this connection you can express cubic Hermite interpolation in terms of cubic Bézier curves with respect to the four values 𝒑0,𝒑0+13𝒎0,𝒑1−13𝒎1,𝒑1 and do Hermite interpolation using the de Casteljau algorithm. It shows that in a cubic Bézier patch the two control points in the middle determine the tangents of the interpolation curve at the respective outer points."
+    },
+    {
+      "kind": "paragraph",
+      "text": "We can also write the polynomial in standard form as 𝒑(t)=(2𝒑0+𝒎0−2𝒑1+𝒎1)t3+(−3𝒑0−2𝒎0+3𝒑1−𝒎1)t2+𝒎0t+𝒑0 where the control points and tangents are coefficients. This permits efficient evaluation of the polynomial at various values of t since the constant coefficients can be computed once and reused."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Interpolating a data set"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A data set, (xk,𝒑k) for k=1,…,n, can be interpolated by applying the above procedure on each interval, where the tangents are chosen in a sensible manner, meaning that the tangents for intervals sharing endpoints are equal. The interpolated curve then consists of piecewise cubic Hermite splines and is globally continuously differentiable in (x1,xn)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The choice of tangents is not unique, and there are several options available."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Finite difference"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The simplest choice is the three-point difference, not requiring constant interval lengths:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "for internal points k=2,…,n−1, and one-sided difference at the endpoints of the data set."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Cardinal spline"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A cardinal spline, sometimes called a canonical spline, is obtained if"
+    },
+    {
+      "kind": "paragraph",
+      "text": "is used to calculate the tangents. The parameter c is a tension parameter that must be in the interval [0, 1]. In some sense, this can be interpreted as the \"length\" of the tangent. Choosing c = 1 yields all zero tangents, and choosing c = 0 yields a Catmull–Rom spline in the uniform parameterization case."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Catmull–Rom spline"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For tangents chosen to be"
+    },
+    {
+      "kind": "paragraph",
+      "text": "a Catmull–Rom spline is obtained, being a special case of a cardinal spline. This assumes uniform parameter spacing."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The curve is named after Edwin Catmull and Raphael Rom. The principal advantage of this technique is that the points along the original set of points also make up the control points for the spline curve. Two additional points are required on either end of the curve. The uniform Catmull–Rom implementation can produce loops and self-intersections. The chordal and centripetal Catmull–Rom implementations solve this problem, but use a slightly different calculation. In computer graphics, Catmull–Rom splines are frequently used to get smooth interpolated motion between key frames. For example, most camera path animations generated from discrete key-frames are handled using Catmull–Rom splines. They are popular mainly for being relatively easy to compute, guaranteeing that each key frame position will be hit exactly, and also guaranteeing that the tangents of the generated curve are continuous over multiple segments."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Kochanek–Bartels spline"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A Kochanek–Bartels spline is a further generalization on how to choose the tangents given the data points 𝒑k−1, 𝒑k and 𝒑k+1, with three parameters possible: tension, bias and a continuity parameter."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Monotone cubic interpolation"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If a cubic Hermite spline of any of the above listed types is used for interpolation of a monotonic data set, the interpolated function will not necessarily be monotonic, but monotonicity can be preserved by adjusting the tangents."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Interpolation on the unit interval with matched derivatives at endpoints"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Consider a single coordinate of the points 𝒑n−1,𝒑n,𝒑n+1 and 𝒑n+2 as the values that a function f(x) takes at integer ordinates x = n − 1, n, n + 1 and n + 2,"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In addition, assume that the tangents at the endpoints are defined as the centered differences of the adjacent points: mn=f(n+1)−f(n−1)2=pn+1−pn−12∀n∈ℤ."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To evaluate the interpolated f(x) for a real x, first separate x into the integer portion n and fractional portion u:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where ⌊x⌋ denotes the floor function, which returns the largest integer no larger than x."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Then the Catmull–Rom spline is f(x)=f(n+u)=CINTu(pn−1,pn,pn+1,pn+2)=[1uu2u3][0100−1201201−522−12−1232−3212][pn−1pnpn+1pn+2]=12[−u3+2u2−u3u3−5u2+2−3u3+4u2+uu3−u2]T[pn−1pnpn+1pn+2]=12[u((2−u)u−1)u2(3u−5)+2u((4−3u)u+1)u2(u−1)]T[pn−1pnpn+1pn+2]=12((u2(2−u)−u)pn−1+(u2(3u−5)+2)pn+(u2(4−3u)+u)pn+1+u2(u−1)pn+2)=12((−u3+2u2−u)pn−1+(3u3−5u2+2)pn+(−3u3+4u2+u)pn+1+(u3−u2)pn+2)=12((−pn−1+3pn−3pn+1+pn+2)u3+(2pn−1−5pn+4pn+1−pn+2)u2+(−pn−1+pn+1)u+2pn)=12(((−pn−1+3pn−3pn+1+pn+2)u+(2pn−1−5pn+4pn+1−pn+2))u+(−pn−1+pn+1))u+pn, where T denotes the matrix transpose. The bottom equality is depicting the application of Horner's method."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This writing is relevant for tricubic interpolation, where one optimization requires computing CINTu sixteen times with the same u and different p."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Bicubic interpolation, a generalization to two dimensions",
+        "Tricubic interpolation, a generalization to three dimensions",
+        "Hermite interpolation",
+        "Multivariate interpolation",
+        "Spline interpolation",
+        "Discrete spline interpolation"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Spline Curves, Prof. Donald H. House Clemson University",
+        "Multi-dimensional Hermite Interpolation and Approximation, Prof. Chandrajit Bajaj, Purdue University",
+        "Introduction to Catmull–Rom Splines, MVPs.org",
+        "Interpolating Cardinal and Catmull–Rom splines",
+        "Interpolation methods: linear, cosine, cubic and hermite (with C sources)",
+        "Common Spline Equations"
+      ]
+    }
+  ]
+}

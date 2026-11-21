@@ -1,0 +1,384 @@
+{
+  "version": 1,
+  "title": "SparkFun Tutorials — How to Read a Schematic & Datasheet Basics",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:31.094Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Overview"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Schematics are our map to designing, building, and troubleshooting circuits. Understanding how to read and follow schematics is an important skill for any electronics engineer."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This tutorial should turn you into a fully literate schematic reader! We'll go over all of the fundamental schematic symbols:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Then we'll talk about how those symbols are connected on schematics to create a model of a circuit. We'll also go over a few tips and tricks to watch out for."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Schematic comprehension is a pretty basic electronics skill, but there are a few things you should know before you read this tutorial. Check out these tutorials, if they sound like gaps in your growing brain:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "What is Electricity?",
+        "What is a Circuit?",
+        "Voltage, Current, Resistance, and Ohm's Law"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "From Schematic to Circuit"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Practice what you’ve learned with step-by-step electronics projects using the SparkFun Inventor's Kit."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Schematic Symbols (Part 1)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Are you ready for a barrage of circuit components? Here are some of the standardized, basic schematic symbols for various components."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Resistors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The most fundamental of circuit components and symbols! Resistors on a schematic are usually represented by a few zig-zag lines, with two terminals extending outward. Schematics using international symbols may instead use a featureless rectangle, instead of the squiggles."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Potentiometers and Variable Resistors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Variable resistors and potentiometers each augment the standard resistor symbol with an arrow. The variable resistor remains a two-terminal device, so the arrow is just laid diagonally across the middle. A potentiometer is a three-terminal device, so the arrow becomes the third terminal (the wiper)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Capacitors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are two commonly used capacitor symbols. One symbol represents a polarized (usually electrolytic or tantalum) capacitor, and the other is for non-polarized caps. In each case there are two terminals, running perpendicularly into plates."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The symbol with one curved plate indicates that the capacitor is polarized. The curved plate usually represents the cathode of the capacitor, which should be at a lower voltage than the positive, anode pin. A plus sign should also be added to the positive pin of the polarized capacitor symbol."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Inductors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Inductors are usually represented by either a series of curved bumps, or loopy coils. International symbols may just define an inductor as a filled-in rectangle."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Switches"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Switches exist in many different forms. The most basic switch, a single-pole/single-throw (SPST), is two terminals with a half-connected line representing the actuator (the part that connects the terminals together)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Switches with more than one throw, like the SPDT and SP3T below, add more landing spots for the the actuator."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Switches with multiple poles, usually have multiple, alike switches with a dotted line intersecting the middle actuator."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Power Sources"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Just as there are many options out there for powering your project, there are a wide variety of power source circuit symbols to help specify the power source."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "DC or AC Voltage Sources"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Most of the time when working with electronics, you'll be using constant voltage sources. We can use either of these two symbols to define whether the source is supplying direct current (DC) or alternating current (AC):"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Batteries"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Batteries, whether they're those cylindrical, alkaline AA's or rechargeable lithium-polymers, usually look like a pair of disproportionate, parallel lines:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "More pairs of lines usually indicates more series cells in the battery. Also, the longer line is usually used to represent the positive terminal, while the shorter line connects to the negative terminal."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Voltage Nodes"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Sometimes -- on really busy schematics especially -- you can assign special symbols to node voltages. You can connect devices to these one-terminal symbols, and it'll be tied directly to 5V, 3.3V, VCC, or GND (ground). Positive voltage nodes are usually indicated by an arrow pointing up, while ground nodes usually involve one to three flat lines (or sometimes a down-pointing arrow or triangle)."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Schematic Symbols (Part 2)"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Diodes"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Basic diodes are usually represented with a triangle pressed up against a line. Diodes are also polarized, so each of the two terminals require distinguishing identifiers. The positive, anode is the terminal running into the flat edge of the triangle. The negative, cathode extends out of the line in the symbol (think of it as a - sign)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are a all sorts of different types of diodes, each of which has a special riff on the standard diode symbol. Light-emitting diodes (LEDs) augment the diode symbol with a couple lines pointing away. Photodiodes, which generate energy from light (basically, tiny solar cells), flip the arrows around and point them toward the diode."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Other special types of diodes, like Schottky's or zeners, have their own symbols, with slight variations on the bar part of the symbol."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Transistors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Transistors, whether they're BJTs or MOSFETs, can exist in two configurations: positively doped, or negatively doped. So for each of these types of transistor, there are at least two ways to draw it."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Bipolar Junction Transistors (BJTs)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "BJTs are three-terminal devices; they have a collector (C), emitter (E), and a base (B). There are two types of BJTs -- NPNs and PNPs -- and each has its own unique symbol."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The collector (C) and emitter (E) pins are both in-line with each other, but the emitter should always have an arrow on it. If the arrow is pointing inward, it's a PNP, and, if the arrow is pointing outward, it's an NPN. A mnemonic for remembering which is which is \"NPN: not pointing in.\""
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Metal Oxide Field-Effect Transistors (MOSFETs)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Like BJTs, MOSFETs have three terminals, but this time they're named source (S), drain (D), and gate (G). And again, there are two different versions of the symbol, depending on whether you've got an n-channel or p-channel MOSFET. There are a number of commonly used symbols for each of the MOSFET types:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The arrow in the middle of the symbol (called the bulk) defines whether the MOSFET is n-channel or p-channel. If the arrow is pointing in means it's a n-channel MOSFET, and if it's pointing out it's a p-channel. Remember: \"n is in\" (kind of the opposite of the NPN mnemonic)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Digital Logic Gates"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Our standard logic functions -- AND, OR, NOT, and XOR -- all have unique schematic symbols:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Adding a bubble to the output negates the function, creating NANDs, NORs, and XNORs:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "They may have more than two inputs, but the shapes should remain the same (well, maybe a bit bigger), and there should still only be one output."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Integrated Circuits"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Integrated circuits accomplish such unique tasks, and are so numerous, that they don't really get a unique circuit symbol. Usually, an integrated circuit is represented by a rectangle, with pins extending out of the sides. Each pin should be labeled with both a number, and a function."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Because ICs have such a generic circuit symbol, the names, values and labels become very important. Each IC should have a value precisely identifying the name of the chip."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Unique ICs: Op Amps, Voltage Regulators"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Some of the more common integrated circuits do get a unique circuit symbol. You'll usually see operation amplifiers laid out like below, with 5 total terminals: a non-inverting input (+), inverting input (-), output, and two power inputs."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Simple voltage regulators are usually three-terminal components with input, output and ground (or adjust) pins. These usually take the shape of a rectangle with pins on the left (input), right (output) and bottom (ground/adjust)."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Miscellany"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Crystals and Resonators"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Crystals or resonators are usually a critical part of microcontroller circuits. They help provide a clock signal. Crystal symbols usually have two terminals, while resonators, which add two capacitors to the crystal, usually have three terminals."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Headers and Connectors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Whether it's for providing power, or sending out information, connectors are a requirement on most circuits. These symbols vary depending on what the connector looks like, here's a sampling:"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Motors, Transformers, Speakers, and Relays"
+    },
+    {
+      "kind": "paragraph",
+      "text": "We'll lump these together, since they (mostly) all make use of coils in some way. Transformers (not the more-than-meets-the-eye kind) usually involve two coils, butted up against each other, with a couple lines separating them:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Relays usually pair a coil with a switch:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Speakers and buzzers usually take a form similar to their real-life counterparts:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "And motors generally involve an encircled \"M\", sometimes with a bit more embellishment around the terminals:"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Fuses and PTCs"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Fuses and PTCs -- devices which are generally used to limit large inrushes of current -- each have their own unique symbol:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The PTC symbol is actually the generic symbol for a thermistor, a temperature-dependent resistor (notice the international resistor symbol in there?)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "No doubt, there are many circuit symbols left off this list, but those above should have you 90% literate in schematic reading. In general, symbols should share a fair amount in common with the real-life components they model. In addition to the symbol, each component on a schematic should have a unique name and value, which further helps to identify it."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Name Designators and Values"
+    },
+    {
+      "kind": "paragraph",
+      "text": "One of the biggest keys to being schematic-literate is being able to recognize which components are which. The component symbols tell half the story, but each symbol should be paired with both a name and value to complete it."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Names and Values"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Values help define exactly what a component is. For schematic components like resistors, capacitors, and inductors the value tells us how many ohms, farads, or henries they have. For other components, like integrated circuits, the value may just be the name of the chip. Crystals might list their oscillating frequency as their value. Basically, the value of a schematic component calls out its most important characteristic."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Component names are usually a combination of one or two letters and a number. The letter part of the name identifies the type of component -- R's for resistors, C's for capacitors, U's for integrated circuits, etc. Each component name on a schematic should be unique; if you have multiple resistors in a circuit, for example, they should be named R1, R2, R3, etc. Component names help us reference specific points in schematics."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The prefixes of names are pretty well standardized. For some components, like resistors, the prefix is just the first letter of the component. Other name prefixes are not so literal; inductors, for example, are L's (because current has already taken I [but it starts with a C...electronics is a silly place]). Here's a quick table of common components and their name prefixes:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Although theses are the \"standardized\" names for component symbols, they're not universally followed. You might see integrated circuits prefixed with IC instead of U, for example, or crystals labeled as XTAL's instead of Y's. Use your best judgment in diagnosing which part is which. The symbol should usually convey enough information."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Reading Schematics"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Understanding which components are which on a schematic is more than half the battle towards comprehending it. Now all that remains is identifying how all of the symbols are connected together."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Nets, Nodes and Labels"
+    }
+  ]
+}

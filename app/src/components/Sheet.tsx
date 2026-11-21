@@ -31,6 +31,8 @@ export interface SheetProps {
   footer?: React.ReactNode;
   /** `lg` is for the lesson chooser, whose two columns need the width. */
   size?: 'sm' | 'md' | 'lg';
+  /** Let a long title use two lines instead of clipping it to one at phone widths. */
+  titleLines?: 1 | 2;
 }
 
 const SIZE: Record<NonNullable<SheetProps['size']>, string> = {
@@ -50,6 +52,7 @@ export const Sheet: React.FC<SheetProps> = ({
   children,
   footer,
   size = 'md',
+  titleLines = 1,
 }) => {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
@@ -147,7 +150,12 @@ export const Sheet: React.FC<SheetProps> = ({
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <header className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-2.5">
-            <h2 id={titleId} className="truncate text-sm font-bold text-ink">
+            <h2
+              id={titleId}
+              className={`min-w-0 text-sm font-bold text-ink ${
+                titleLines === 2 ? 'line-clamp-2 break-words' : 'truncate'
+              }`}
+            >
               {title}
             </h2>
             <button

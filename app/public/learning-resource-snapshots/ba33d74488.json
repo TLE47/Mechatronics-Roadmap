@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Safe operating area",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Safe_operating_area",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:32.242Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Safe_operating_area"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "For power semiconductor devices (such as BJT, MOSFET, thyristor or IGBT), the safe operating area (SOA) is defined as the voltage and current conditions over which the device can be expected to operate without self-damage."
+    },
+    {
+      "kind": "paragraph",
+      "text": "SOA is usually presented in transistor datasheets as a graph with VCE (collector-emitter voltage) on the abscissa and ICE (collector-emitter current) on the ordinate; the safe 'area' referring to the area under the curve. The SOA specification combines the various limitations of the device — maximum voltage, current, power, junction temperature, secondary breakdown — into one curve, allowing simplified design of protection circuitry."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Often, in addition to the continuous rating, separate SOA curves are also plotted for short duration pulse conditions (1 ms pulse, 10 ms pulse, etc.)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The safe operating area curve is a graphical representation of the power handling capability of the device under various conditions. The SOA curve takes into account the wire bond current carrying capability, transistor junction temperature, internal power dissipation and secondary breakdown limitations."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Limits of the safe operating area"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Where both current and voltage are plotted on logarithmic scales, the borders of the SOA are straight lines:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "SOA specifications are useful to the design engineer working on power circuits such as amplifiers and power supplies as they allow quick assessment of the limits of device performance, the design of appropriate protection circuitry, or selection of a more capable device. SOA curves are also important in the design of foldback circuits."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Secondary breakdown"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For a device that makes use of the secondary breakdown effect see Avalanche transistor"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Secondary breakdown is a failure mode in bipolar power transistors. In a power transistor with a large junction area, under certain conditions of current and voltage, the current concentrates in a small spot of the base-emitter junction. This causes local heating, progressing into a short between collector and emitter. This often leads to the destruction of the transistor. Secondary breakdown can occur both with forward and reverse base drive. Except at low collector-emitter voltages, the secondary breakdown limit restricts the collector current more than the steady-state power dissipation of the device. Older power MOSFETs did not exhibit secondary breakdown, with their safe operating area being limited only by maximum current (the capacity of the bonding wires), maximum power dissipation and maximum voltage. This has changed in more recent devices as detailed in the next section. However, power MOSFETs have parasitic PN and BJT elements within the structure, which can cause more complex localized failure modes resembling secondary breakdown."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "MOSFET thermal runaway in linear mode"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In their early history, MOSFETs became known for their absence of secondary breakdown. This benefit was due to the fact that ON-resistance increases with increasing temperature, so that part of the MOSFET which is running hotter (e.g. due to irregularities in the die-attachment, etc.) will carry a lower current density, tending to even out any temperature variation and prevent hot spots. Recently, MOSFETs with very high transconductance, optimised for switching operation, have become available. When operated in linear mode, especially at high drain-source voltages and low drain currents, the gate-source voltage tends to be very close to the threshold voltage. Unfortunately the threshold voltage decreases as temperature increases, so that if there are any slight temperature variations across the chip, then the hotter regions will tend to carry more current than the cooler regions when Vgs is very close to Vth. This can lead to thermal runaway and the destruction of the MOSFET even when it is operating within its Vds, Id and Pd ratings. Some (usually expensive) MOSFETs are specified for operation in the linear region and include DC SOA diagrams, e.g. IXYS IXTK8N150L."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Reverse bias safe operating area"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Transistors require some time to turn off, due to effects such as minority carrier storage time and capacitance. While turning off, they may be damaged depending on how the load responds (especially with poorly snubbed inductive loads). The reverse bias safe operating area (or RBSOA) is the SOA during the brief time before turning the device into the off state—during the short time when the base current bias is reversed. As long as the collector voltage and collector current stay within the RBSOA during the entire turnoff, the transistor will be undamaged. Typically the RBSOA will be specified for a variety of turn-off conditions, such as shorting the base to the emitter, but also faster turn-off protocols where the base-emitter voltage bias is reversed."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The RBSOA shows distinct dependencies compared to the normal SOA. For example in IGBTs the high-current, high-voltage corner of the RBSOA is cut out when the collector voltage increases too quickly. Since the RBSOA is associated with a very brief turn-off process, it is not constrained by the continuous power dissipation limit."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The ordinary safe operating area (when the device is in the on state) may be referred to as the Forward bias safe operating area (or FBSOA) when it is possible to confuse it with the RBSOA."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Protection"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The most common form of SOA protection used with bipolar junction transistors senses the collector-emitter current with a low-value series resistor. The voltage across this resistor is applied to a small auxiliary transistor that progressively 'steals' base current from the power device as it passes excess collector current."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another style of protection is to measure the temperature of the outside of the transistor, as an estimate of junction temperature, and reduce drive to the device or switch it off if the temperature is too high. If multiple transistors are used in parallel, only a few need to be monitored for case temperature to protect all parallel devices."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This approach is effective but not bullet-proof. In practice, it is very difficult to design a protection circuit that will work under all conditions, and it is left up to the design engineer to weigh the likely fault conditions against the complexity and cost of the protection."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Derating"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "H. A. Schafft, J. C. French, Secondary Breakdown in Transistors, IRE Trans. Electron Devices ED-9, 129-136 (1962). online Archived 2011-10-14 at the Wayback Machine",
+        "Michaël Bairanzade, Understanding Power Transistors Breakdown Parameters, OnSemi application node AN1628/D online",
+        "Apex technical document on operating power opamps within SOA"
+      ]
+    }
+  ]
+}

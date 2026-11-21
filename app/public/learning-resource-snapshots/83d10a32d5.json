@@ -1,0 +1,400 @@
+{
+  "version": 1,
+  "title": "SparkFun — Series and Parallel Circuits",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/series-and-parallel-circuits",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:39.560Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/series-and-parallel-circuits"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Series and Parallel Circuits"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Simple circuits (ones with only a few components) are usually fairly straightforward for beginners to understand. But, things can get sticky when other components come to the party. Where's the current going? What's the voltage doing? Can this be simplified for easier understanding? Fear not, intrepid reader. Valuable information follows."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In this tutorial, we’ll first discuss the difference between series circuits and parallel circuits, using circuits containing the most basic of components -- resistors and batteries -- to show the difference between the two configurations. We’ll then explore what happens in series and parallel circuits when you combine different types of components, such as capacitors and inductors."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Covered in this Tutorial"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "What series and parallel circuit configurations look like",
+        "How passive components act in these configurations",
+        "How a voltage source will act upon passive components in these configurations"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You may want to visit these tutorials on the basic components before diving into building the circuits in this tutorial."
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "What is Electricity",
+        "Voltage, Current, Resistance, and Ohm's Law",
+        "What is a Circuit?",
+        "Capacitors",
+        "Inductors",
+        "Resistors",
+        "How to Use a Breadboard",
+        "How to Use a Multimeter"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Video"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Series Circuits"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Nodes and Current Flow"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Before we get too deep into this, we need to mention what a node is. It's nothing fancy, just representation of an electrical junction between two or more components. When a circuit is modeled on a schematic, these nodes represent the wires between components."
+    },
+    {
+      "kind": "paragraph",
+      "text": "That's half the battle towards understanding the difference between series and parallel. We also need to understand how current flows through a circuit. Current flows from a high voltage to a lower voltage in a circuit. Some amount of current will flow through every path it can take to get to the point of lowest voltage (usually called ground). Using the above circuit as an example, here's how current would flow as it runs from the battery's positive terminal to the negative:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Notice that in some nodes (like between R1 and R2) the current is the same going in as at is coming out. At other nodes (specifically the three-way junction between R2, R3, and R4) the main (blue) current splits into two different ones. That's the key difference between series and parallel!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Series Circuits Defined"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Two components are in series if they share a common node and if the same current flows through them. Here's an example circuit with three series resistors:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There's only one way for the current to flow in the above circuit. Starting from the positive terminal of the battery, current flow will first encounter R1. From there the current will flow straight to R2, then to R3, and finally back to the negative terminal of the battery. Note that there is only one path for current to follow. These components are in series."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Parallel Circuits"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Parallel Circuits Defined"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If components share two common nodes, they are in parallel. Here's an example schematic of three resistors in parallel with a battery:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "From the positive battery terminal, current flows to R1... and R2, and R3. The node that connects the battery to R1 is also connected to the other resistors. The other ends of these resistors are similarly tied together, and then tied back to the negative terminal of the battery. There are three distinct paths that current can take before returning to the battery, and the associated resistors are said to be in parallel."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Where series components all have equal currents running through them, parallel components all have the same voltage drop across them -- series:current::parallel:voltage."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Series and Parallel Circuits Working Together"
+    },
+    {
+      "kind": "paragraph",
+      "text": "From there we can mix and match. In the next picture, we again see three resistors and a battery. From the positive battery terminal, current first encounters R1. But, at the other side of R1 the node splits, and current can go to both R2 and R3. The current paths through R2 and R3 are then tied together again, and current goes back to the negative terminal of the battery."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In this example, R2 and R3 are in parallel with each other, and R1 is in series with the parallel combination of R2 and R3."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Calculating Equivalent Resistances in Series Circuits"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here’s some information that may be of some more practical use to you. When we put resistors together like this, in series and parallel, we change the way current flows through them. For example, if we have a 10V supply across a 10kΩ resistor, Ohm’s law says we've got 1mA of current flowing."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If we then put another 10kΩ resistor in series with the first and leave the supply unchanged, we've cut the current in half because the resistance is doubled."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In other words, there's still only one path for current to take and we just made it even harder for current to flow. How much harder? 10kΩ + 10kΩ = 20kΩ. And, that’s how we calculate resistors in series -- just add their values."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To put this equation more generally: the total resistance of N -- some arbitrary number of -- resistors is their total sum."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Calculating Equivalent Resistances in Parallel Circuits"
+    },
+    {
+      "kind": "paragraph",
+      "text": "What about parallel resistors? That’s a bit more complicated, but not by much. Consider the last example where we started with a 10V supply and a 10kΩ resistor, but this time we add another 10kΩ in parallel instead of series. Now there are two paths for current to take. Since the supply voltage didn’t change, Ohm’s Law says the first resistor is still going to draw 1mA. But, so is the second resistor, and we now have a total of 2mA coming from the supply, doubling the original 1mA. This implies that we’ve cut the total resistance in half."
+    },
+    {
+      "kind": "paragraph",
+      "text": "While we can say that 10kΩ || 10kΩ = 5kΩ (“||” roughly translates to “in parallel with”), we’re not always going to have 2 identical resistors. What then?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The equation for adding an arbitrary number of resistors in parallel is:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If reciprocals aren't your thing, we can also use a method called “product over sum” when we have two resistors in parallel:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "However, this method is only good for two resistors in one calculation. We can combine more than 2 resistors with this method by taking the result of R1 || R2 and calculating that value in parallel with a third resistor (again as product over sum), but the reciprocal method may be less work."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Experiment Time - Part 1"
+    },
+    {
+      "kind": "paragraph",
+      "text": "What you’ll need:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "A handful of 10kΩ resistors",
+        "A multimeter",
+        "A breadboard"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let’s try a simple experiment just to prove that these things work the way we're saying they do."
+    },
+    {
+      "kind": "paragraph",
+      "text": "First, we’re going to hook up some 10kΩ resistors in series and watch them add in a most un-mysterious way. Using a breadboard, place one 10kΩ resistor as indicated in the figure and measure with a multimeter. Yes, we already know it’s going to say it’s 10kΩ, but this is what we in the biz call a “sanity check”. Once we’ve convinced ourselves that the world hasn't changed significantly since we last looked at it, place another one in similar fashion but with a lead from each resistor connecting electrically through the breadboard and measure again. The meter should now say something close to 20kΩ."
+    },
+    {
+      "kind": "paragraph",
+      "text": "You may notice that the resistance you measure might not be exactly what the resistor says it should be. Resistors have a certain amount of tolerance, which means they can be off by a certain percentage in either direction. Thus, you may read 9.99kΩ or 10.01kΩ. As long as it's close to the correct value, everything should work fine."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The reader should continue this exercise until convincing themselves that they know what the outcome will be before doing it again, or they run out of resistors to stick in the breadboard, whichever comes first."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Experiment Time - Part 2"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now let’s try it with resistors in a parallel configuration. Place one 10kΩ resistor in the breadboard as before (we’ll trust that the reader already believes that a single 10kΩ resistor is going to measure something close to 10kΩ on the multimeter). Now place a second 10kΩ resistor next to the first, taking care that the leads of each resistor are in electrically connected rows. But before measuring the combination, calculate by either product-over-sum or reciprocal methods what the new value should be (hint: it’s going to be 5kΩ). Then measure. Is it something close to 5kΩ? If it’s not, double check the holes into which the resistors are plugged."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Repeat the exercise now with 3, 4 and 5 resistors. The calculated/measured values should be 3.33kΩ, 2.5kΩ and 2kΩ, respectively. Did everything come out as planned? If not, go back and check your connections. If it did, EXCELSIOR! Go have a milkshake before we continue. You’ve earned it."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Rules of Thumb for Series and Parallel Resistors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are a few situations that may call for some creative resistor combinations. For example, if we’re trying to set up a very specific reference voltage you’ll almost always need a very specific ratio of resistors whose values are unlikely to be “standard” values. And while we can get a very high degree of precision in resistor values, we may not want to wait the X number of days it takes to ship something, or pay the price for non-stocked, non-standard values. So in a pinch, we can always build our own resistor values."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Tip #1: Equal Resistors in Parallel"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Adding N like-valued resistors R in parallel gives us R/N ohms. Let’s say we need a 2.5kΩ resistor, but all we’ve got is a drawer full of 10kΩ's. Combining four of them in parallel gives us 10kΩ/4 = 2.5kΩ."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Tip #2: Tolerance"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Know what kind of tolerance you can tolerate. For example, if you needed a 3.2kΩ resistor, you could put 3 10kΩ resistors in parallel. That would give you 3.3kΩ, which is about a 4% tolerance from the value you need. But, if the circuit you're building needs to be closer than 4% tolerance, we can measure our stash of 10kΩ’s to see which are lowest values because they have a tolerance, too. In theory, if the stash of 10kΩ resistors are all 1% tolerance, we can only get to 3.3kΩ. But part manufacturers are known to make just these sorts of mistakes, so it pays to poke around a bit."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Tip #3: Power Ratings in Series/Parallel"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This sort of series and parallel combination of resistors works for power ratings, too. Let’s say that we need a 100Ω resistor rated for 2 watts (W), but all we’ve got is a bunch of 1kΩ quarter-watt (¼W) resistors (and it’s 3am, all the Mountain Dew is gone, and the coffee’s cold). You can combine 10 of the 1kΩ's to get 100Ω (1kΩ/10 = 100Ω), and the power rating will be 10x0.25W, or 2.5W. Not pretty, but it will get us through a final project, and might even get us extra points for being able to think on our feet."
+    },
+    {
+      "kind": "paragraph",
+      "text": "We need to be a little more careful when we combine resistors of dissimilar values in parallel where total equivalent resistance and power ratings are concerned. It should be completely obvious to the reader, but..."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Tip #4: Different Resistors in Parallel"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The combined resistance of two resistors of different values is always less than the smallest value resistor. The reader would be amazed at how many times someone combines values in their head and arrives at a value that’s halfway between the two resistors (1kΩ || 10kΩ does NOT equal anything around 5kΩ!). The total parallel resistance will always be dragged closer to the lowest value resistor. Do yourself a favor and read tip #4 10 times over."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Tip #5: Power Dissipation in Parallel"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The power dissipated in a parallel combination of dissimilar resistor values is not split evenly between the resistors because the currents are not equal. Using the previous example of (1kΩ || 10kΩ), we can see that the 1kΩ will be drawing 10X the current of the 10kΩ. Since Ohm’s Law says power = voltage x current, it follows that the 1kΩ resistor will dissipate 10X the power of the 10kΩ."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Ultimately, the lessons of tips 4 and 5 are that we have to pay closer attention to what we’re doing when combining resistors of dissimilar values in parallel. But tips 1 and 3 offer some handy shortcuts when the values are the same."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Series and Parallel Capacitors"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Combining capacitors is just like combining resistors...only the opposite. As odd as that sounds, it’s absolutely true. Why would this be?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A capacitor is just two plates spaced very close together, and it’s basic function is to hold a whole bunch of electrons. The greater the value of capacitance, the more electrons it can hold. If the size of the plates is increased, the capacitance goes up because there's physically more space for electrons to hang out. And if the plates are moved farther apart, the capacitance goes down, because the electric field strength between them goes down as the distance goes up."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now let’s say we've got two 10µF capacitors wired together in series, and let’s say they’re both charged up and ready discharge into the friend sitting next to you."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Remember that in a series circuit there's only one path for current to flow. It follows that the number of electrons that are discharging from the cap on the bottom is going to be the same number of electrons coming out of the cap on the top. So the capacitance hasn't increased, has it?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In fact, it’s even worse than that. By placing the capacitors in series, we've effectively spaced the plates farther apart because the spacing between the plates of the two capacitors adds together. So we don't have 20µF, or even 10µF. We’ve got 5µF. The upshot of this is that we add series capacitor values the same way we add parallel resistor values. Both the product-over-sum and reciprocal methods are valid for adding capacitors in series."
+    },
+    {
+      "kind": "paragraph",
+      "text": "It may seem that there’s no point to adding capacitors in series. But it should be pointed out that one thing we did get is twice as much voltage (or voltage ratings). Just like batteries, when we put capacitors together in series the voltages add up."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Adding capacitors in parallel is like adding resistors in series: the values just add up, no tricks. Why is this? Putting them in parallel effectively increases the size of the plates without increasing the distance between them. More area equals more capacitance. Simple."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Experiment Time - Part 3"
+    },
+    {
+      "kind": "paragraph",
+      "text": "What you'll need:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "One 10kΩ resistor",
+        "Three 100µF caps",
+        "A 3-cell AA battery holder",
+        "Three AA cells",
+        "A breadboard",
+        "A multimeter",
+        "Clip-leads"
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let’s see some series and parallel connected capacitors in action. This will be a little trickier than the resistor examples, because it’s harder to measure capacitance directly with a multimeter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let’s first talk about what happens when a capacitor charges up from zero volts. When current starts to go in one of the leads, an equal amount of current comes out the other. And if there’s no resistance in series with the capacitor, it can be quite a lot of current. In any case, the current flows until the capacitor starts to charge up to the value of the applied voltage, more slowly trickling off until the voltages are equal, when the current flow stops entirely."
+    },
+    {
+      "kind": "paragraph",
+      "text": "As stated above, the current draw can be quite large if there’s no resistance in series with the capacitor, and the time to charge can be very short (like milliseconds or less). For this experiment, we want to be able to watch a capacitor charge up, so we’re going to use a 10kΩ resistor in series to slow the action down to a point where we can see it easily. But first we need to talk about what an RC time constant is."
+    },
+    {
+      "kind": "paragraph",
+      "text": "What the above equation says is that one time constant in seconds (called tau) is equal to the resistance in ohms times the capacitance in farads. Simple? No? We shall demonstrate on the next page."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Experiment Time - Part 3, Continued..."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For the first part of this experiment, we’re going to use one 10K resistor and one 100µF (which equals 0.0001 farads). These two parts create a time constant of 1 second:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When charging our 100µF capacitor through a 10kΩ resistor, we can expect the voltage on the cap to rise to about 63% of the supply voltage in 1 time constant, which is 1 second. After 5 time constants (5 seconds in this case) the cap is about 99% charged up to the supply voltage, and it will follow a charge curve something like the plot below."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now that we know that stuff, we’re going to connect the circuit in the diagram (make sure to get the polarity right on that capacitor!)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "With our multimeter set to measure volts, check the output voltage of the pack with the switch turned on. That’s our supply voltage, and it should be something around 4.5V (it'll be a bit more if the batteries are new). Now connect the circuit, taking care that the switch on the battery pack is in the “OFF” position before plugging it into the breadboard. Also, take care that the red and black leads are going to the right places. If it’s more convenient, you can use alligator clips to attach the meter probes to the legs of the capacitor for measurement (you can also spread those legs out a bit to make it easier)."
+    }
+  ]
+}

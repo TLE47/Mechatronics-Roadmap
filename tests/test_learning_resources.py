@@ -76,6 +76,184 @@ class LearningResourceRegistryTests(unittest.TestCase):
             "expected every P.1 resource to be external; check the URL kind classification",
         )
 
+    def test_reader_snapshots_cover_every_licence_cleared_resource(self):
+        allowed = [
+            resource
+            for group in self.registry["lessons"].values()
+            for resource in group["resources"]
+            if resource["kind"] == "external"
+            and resource["license"]
+            and resource["license"]["reuse"] == "allowed"
+        ]
+        self.assertEqual(
+            len(allowed),
+            95,
+            "expected every licence-cleared occurrence to be counted; check the provider policy",
+        )
+        self.assertEqual(
+            self.registry["snapshotCount"],
+            95,
+            "expected every licence-cleared occurrence to carry a snapshot path",
+        )
+        self.assertTrue(
+            all(resource.get("snapshot", {}).get("path") for resource in allowed),
+            "expected no licence-cleared resource to fall back to a link by accident",
+        )
+        paths = {resource["snapshot"]["path"] for resource in allowed}
+        self.assertEqual(
+            len(paths),
+            70,
+            "expected one checked-in snapshot per unique permitted URL; check the resource keys",
+        )
+        for path in paths:
+            file_path = ROOT / "app" / "public" / path
+            self.assertTrue(file_path.exists(), f"expected the snapshot file {path} to be present")
+            snapshot = json.loads(file_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                snapshot["version"],
+                1,
+                f"expected {path} to use snapshot format version 1; check the builder output",
+            )
+            self.assertEqual(
+                snapshot["license"]["reuse"],
+                "allowed",
+                f"expected {path} to retain an allowed reuse verdict; check the provider policy",
+            )
+            self.assertTrue(
+                snapshot["blocks"],
+                f"expected {path} to contain readable text blocks; check the extractor",
+            )
+            self.assertTrue(
+                snapshot["notice"], f"expected {path} to carry the attribution and change notice"
+            )
+
+        for group in self.registry["lessons"].values():
+            for resource in group["resources"]:
+                if resource["license"] and resource["license"]["reuse"] != "allowed":
+                    self.assertNotIn(
+                        "snapshot",
+                        resource,
+                        "expected a source without reuse permission to stay a link",
+                    )
+
+    def test_p1_carries_provider_embed_and_licence_metadata(self):
+        first = self.p1_resources[0]
+        self.assertEqual(
+            first["providerKey"],
+            "futurecoder",
+            "expected the first P.1 resource to resolve to the futurecoder provider; check the provider allowlist host map",
+        )
+        self.assertEqual(
+            first["resourceKind"],
+            "interactive",
+            "expected futurecoder to be classified interactive; check the provider kind in the policy file",
+        )
+        self.assertEqual(
+            first["embed"]["status"],
+            "embeddable",
+            "expected futurecoder to be embeddable; check the committed embed report for its host",
+        )
+        self.assertEqual(
+            first["embed"]["method"],
+            "credentialless",
+            "expected a credentialless frame because futurecoder sends no CORP; check the header probe result",
+        )
+        self.assertEqual(
+            first["attribution"]["originalUrl"],
+            first["url"],
+            "expected attribution to point at the authored URL; check the generator's attribution block",
+        )
+        self.assertEqual(
+            first["presentation"],
+            "auto",
+            "expected the default presentation to remain auto; check the author override parsing",
+        )
+        self.assertEqual(
+            first["license"]["reuse"],
+            "allowed",
+            "expected futurecoder licence reuse to be allowed for the MIT repository text/code; check the policy's licence field",
+        )
+        self.assertIn(
+            "notice",
+            first["license"]["conditions"],
+            "expected futurecoder to require the MIT notice; check the policy's conditions",
+        )
+        self.assertIn(
+            "per-asset-check",
+            first["license"]["conditions"],
+            "expected futurecoder images and videos to need a per-asset check; check the policy's conditions",
+        )
+        self.assertEqual(
+            len(first["resourceKey"]),
+            10,
+            "expected a ten-character stable resource key; check the generator's URL hash",
+        )
+        self.assertEqual(
+            first["snapshot"]["path"],
+            f"learning-resource-snapshots/{first['resourceKey']}.json",
+            "expected the futurecoder snapshot path to be generated from its stable resource key",
+        )
+
+        cs50 = self.p1_resources[1]
+        self.assertEqual(
+            cs50["providerKey"],
+            "cs50p",
+            "expected the second P.1 resource to resolve to cs50p; check the provider host map",
+        )
+        self.assertEqual(
+            cs50["embed"]["status"],
+            "blocked",
+            "expected CS50P to be blocked; check its X-Frame-Options header in the embed report",
+        )
+        self.assertIn(
+            "X-Frame-Options",
+            cs50["embed"]["evidence"],
+            "expected the evidence to name X-Frame-Options; check the verifier's header capture",
+        )
+        self.assertEqual(
+            cs50["license"]["reuse"],
+            "allowed",
+            "expected CS50P licence reuse to be allowed only with its non-commercial/share-alike conditions; check the policy",
+        )
+        self.assertIn(
+            "non-commercial",
+            cs50["license"]["conditions"],
+            "expected CS50P to record its non-commercial restriction; check the policy's conditions",
+        )
+        self.assertIn(
+            "share-alike",
+            cs50["license"]["conditions"],
+            "expected CS50P to record its share-alike condition; check the policy's conditions",
+        )
+
+        # Every non-null licence must carry the obligations a Reader Mode build has to satisfy;
+        # a bare `allowed` verdict is the shape that let the matrix drift in the first place.
+        for group in self.registry["lessons"].values():
+            for resource in group["resources"]:
+                if resource["license"]:
+                    self.assertTrue(
+                        resource["license"].get("conditions"),
+                        f"expected {resource['id']} to record its licence conditions; check the provider policy",
+                    )
+
+        # The same URL used twice keeps one resourceKey but two occurrence ids and two guides.
+        repeated = [resource for resource in self.p1_resources if resource["url"] == cs50["url"]]
+        self.assertEqual(
+            len(repeated),
+            2,
+            "expected CS50P to be authored twice in P.1; check that both Idea blocks were parsed",
+        )
+        self.assertEqual(
+            len({resource["resourceKey"] for resource in repeated}),
+            1,
+            "expected one resourceKey for the repeated URL; check the generator's URL identity",
+        )
+        self.assertEqual(
+            len({resource["id"] for resource in repeated}),
+            2,
+            "expected two occurrence ids for the repeated URL; check the occurrence identity suffix",
+        )
+
     def test_p1_reads_the_child_and_inline_guides(self):
         by_key = {(resource["role"], resource["idea"]["number"]): resource for resource in self.p1_resources}
 

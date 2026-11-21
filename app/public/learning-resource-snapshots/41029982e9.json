@@ -1,0 +1,387 @@
+{
+  "version": 1,
+  "title": "Wikipedia — Low-pass filter (\"RC filter\" & \"Time response\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/Low-pass_filter",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:19.605Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/Low-pass_filter"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "A low-pass filter is a filter that passes signals with a frequency lower than a selected cutoff frequency and attenuates signals with frequencies higher than the cutoff frequency. The exact frequency response of the filter depends on the filter design. The filter is sometimes called a high-cut filter, or treble-cut filter in audio applications. A low-pass filter is the complement of a high-pass filter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In optics, high-pass and low-pass may have different meanings, depending on whether referring to the frequency or wavelength of light, since these variables are inversely related. High-pass frequency filters would act as low-pass wavelength filters, and vice versa. For this reason, it is a good practice to refer to wavelength filters as short-pass and long-pass to avoid confusion, which would correspond to high-pass and low-pass frequencies."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Low-pass filters exist in many different forms, including electronic circuits such as a hiss filter used in audio, anti-aliasing filters for conditioning signals before analog-to-digital conversion, digital filters for smoothing sets of data, acoustic barriers, blurring of images, and so on. The moving average operation used in fields such as finance is a particular kind of low-pass filter and can be analyzed with the same signal processing techniques as are used for other low-pass filters. Low-pass filters provide a smoother form of a signal, removing the short-term fluctuations and leaving the longer-term trend."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Filter designers will often use the low-pass form as a prototype filter. That is a filter with unity bandwidth and impedance. The desired filter is obtained from the prototype by scaling for the desired bandwidth and impedance and transforming into the desired bandform (that is, low-pass, high-pass, band-pass or band-stop)."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Examples"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Examples of low-pass filters occur in acoustics, optics and electronics."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A stiff physical barrier tends to reflect higher sound frequencies, acting as an acoustic low-pass filter for transmitting sound. When music is playing in another room, the low notes are easily heard, while the high notes are attenuated."
+    },
+    {
+      "kind": "paragraph",
+      "text": "An optical filter with the same function can correctly be called a low-pass filter, but conventionally is called a longpass filter (low frequency is long wavelength), to avoid confusion."
+    },
+    {
+      "kind": "paragraph",
+      "text": "In an electronic low-pass RC filter for voltage signals, high frequencies in the input signal are attenuated, but the filter has little attenuation below the cutoff frequency determined by its RC time constant. For current signals, a similar circuit, using a resistor and capacitor in parallel, works in a similar manner. (See current divider discussed in more detail below.)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Electronic low-pass filters are used on inputs to subwoofers and other types of loudspeakers, to block high pitches that they cannot efficiently reproduce. Radio transmitters use low-pass filters to block harmonic emissions that might interfere with other communications. The tone knob on many electric guitars is a low-pass filter used to reduce the amount of treble in the sound. An integrator is another time constant low-pass filter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Telephone lines fitted with DSL splitters use low-pass filters to separate DSL from POTS signals (and high-pass vice versa), which share the same pair of wires (transmission channel)."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Low-pass filters also play a significant role in the sculpting of sound created by analogue and virtual analogue synthesisers. See subtractive synthesis."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A low-pass filter is used as an anti-aliasing filter before sampling and for reconstruction in digital-to-analog conversion."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Ideal and real filters"
+    },
+    {
+      "kind": "paragraph",
+      "text": "An ideal low-pass filter completely eliminates all frequencies above the cutoff frequency while passing those below unchanged; its frequency response is a rectangular function and is a brick-wall filter. The transition region present in practical filters does not exist in an ideal filter. An ideal low-pass filter can be realized mathematically (theoretically) by multiplying a signal by the rectangular function in the frequency domain or, equivalently, convolution with its impulse response, a sinc function, in the time domain."
+    },
+    {
+      "kind": "paragraph",
+      "text": "However, the ideal filter is impossible to realize without also having signals of infinite extent in time, and so generally needs to be approximated for real ongoing signals, because the sinc function's support region extends to all past and future times. The filter would therefore need to have infinite delay, or knowledge of the infinite future and past, to perform the convolution. It is effectively realizable for pre-recorded digital signals by assuming extensions of zero into the past and future, or, more typically, by making the signal repetitive and using Fourier analysis."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Real filters for real-time applications approximate the ideal filter by truncating and windowing the infinite impulse response to make a finite impulse response; applying that filter requires delaying the signal for a moderate period of time, allowing the computation to \"see\" a little bit into the future. This delay is manifested as phase shift. Greater accuracy in approximation requires a longer delay."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Truncating an ideal low-pass filter result in ringing artifacts via the Gibbs phenomenon, which can be reduced or worsened by the choice of windowing function. Design and choice of real filters involves understanding and minimizing these artifacts. For example, simple truncation of the sinc function will create severe ringing artifacts, which can be reduced using window functions that drop off more smoothly at the edges."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Time response"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The time response of a low-pass filter is found by solving the response to the simple low-pass RC filter."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using Kirchhoff's laws we arrive at the differential equation vout(t)=vin(t)−RCdvoutdt. This first-order differential equation is also the standard form of a leaky integrator, with the time constant τ = RC."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Step input response example"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If we let vin(t) be a step function of magnitude Vi, then the differential equation has the solution vout(t)=Vi(1−e−ω0t), where ω0=1RC is the cutoff frequency of the filter."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Frequency response"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The most common way to characterize the frequency response of a circuit is to find its Laplace transform transfer function, H(s)=Vout(s)/Vin(s). Taking the Laplace transform of our differential equation and solving for H(s), we get H(s)=Vout(s)Vin(s)=ω0s+ω0."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Difference equation through discrete time sampling"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A discrete difference equation is easily obtained by sampling the step input response above at regular intervals of nT, where n=0,1,…, and T is the time between samples. Taking the difference between two consecutive samples, we have vout(nT)−vout((n−1)T)=Vi(1−e−ω0nT)−Vi(1−e−ω0[(n−1)T])."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Solving for vout(nT) gives vout(nT)=βvout((n−1)T)+(1−β)Vi, where β=e−ω0T."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Using the notation Vn=vout(nT) and vn=vin(nT), and substituting our sampled value, vn=Vi, we get the difference equation Vn=βVn−1+(1−β)vn."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Error analysis"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Comparing the reconstructed output signal from the difference equation, Vn=βVn−1+(1−β)vn, to the step input response, vout(t)=Vi(1−e−ω0t), we find that there is an exact reconstruction (0% error). This is the reconstructed output for a time-invariant input. However, if the input is time-variant, such as vin(t)=Visin⁡(ωt), this model approximates the input signal as a series of step functions with duration T, producing an error in the reconstructed output signal. The error produced from time-variant inputs is difficult to quantify[citation needed] but decreases as T→0."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Discrete-time realization"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Many digital filters are designed to give low-pass characteristics. Both infinite impulse response and finite impulse response low-pass filters, as well as filters using Fourier transforms, are widely used."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Simple infinite impulse response filter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The effect of an infinite impulse response low-pass filter can be simulated on a computer by analyzing an RC filter's behavior in the time domain, and then discretizing the model."
+    },
+    {
+      "kind": "paragraph",
+      "text": "From the circuit diagram to the right[where?], according to Kirchhoff's laws and the definition of capacitance,"
+    },
+    {
+      "kind": "paragraph",
+      "text": "where Qc(t) is the charge stored in the capacitor at time t. Substituting equation Q into equation I gives i(t)=Cdvout/dt, which can be substituted into equation V, so that vin(t)−vout(t)=RCdvoutdt."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This equation can be discretized. For simplicity, assume that samples of the input and output are taken at evenly spaced points in time separated by ΔT time. Let the samples of vin be represented by the sequence (x1,x2,…,xn), and let vout be represented by the sequence (y1,y2,…,yn), which correspond to the same points in time. Making these substitutions, xi−yi=RCyi−yi−1ΔT. Rearranging terms gives the recurrence relation yi=xi(ΔTRC+ΔT)⏟input contribution+yi−1(RCRC+ΔT)⏟inertia from previous output. That is, this discrete-time implementation of a simple RC low-pass filter is the exponentially weighted moving average: yi=αxi+(1−α)yi−1,α:=ΔTRC+ΔT."
+    },
+    {
+      "kind": "paragraph",
+      "text": "By definition, the smoothing factor is within the range 0≤α≤1. The expression for α yields the equivalent time constant RC in terms of the sampling period ΔT and smoothing factor α: RC=ΔT1−αα. Recalling that fc=12πRC,RC=12πfc, note that α and fc are related as α=2πΔTfc2πΔTfc+1,fc=α(1−α)2πΔT."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If α = 0.5, then the RC time constant equals the sampling period. If α≪0.5, then RC is significantly larger than the sampling interval, and ΔT≈αRC."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The filter recurrence relation provides a way to determine the output samples in terms of the input samples and the preceding output. The following pseudocode algorithm simulates the effect of a low-pass filter on a series of digital samples:"
+    },
+    {
+      "kind": "code",
+      "text": "// Return RC low-pass filter output samples, given input samples,\n// time interval dt, and time constant RC\nfunction lowpass(real[1..n] x, real dt, real RC)\n    var real[1..n] y\n    var real α := dt / (RC + dt)\n    y[1] := α * x[1]\n    for i from 2 to n\n        y[i] := α * x[i] + (1 - α) * y[i - 1]\n    return y"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The loop that calculates each of the n outputs can be refactored into the equivalent:"
+    },
+    {
+      "kind": "code",
+      "text": "for i from 2 to n\n        y[i] := y[i - 1] + α * (x[i] - y[i - 1])"
+    },
+    {
+      "kind": "paragraph",
+      "text": "That is, the change from one filter output to the next is proportional to the difference between the previous output and the next input. This exponential smoothing property matches the exponential decay seen in the continuous-time system. As expected, as the time constant RC increases, the discrete-time smoothing parameter α decreases, and the output samples (y1,y2,…,yn) respond more slowly to a change in the input samples (x1,x2,…,xn); the system has more inertia. This filter is an infinite-impulse-response (IIR) single-pole low-pass filter."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Finite impulse response"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Finite-impulse-response filters can be built that approximate the sinc function time-domain response of an ideal sharp-cutoff low-pass filter. For minimum distortion, the finite impulse response filter has an unbounded number of coefficients operating on an unbounded signal. In practice, the time-domain response must be time truncated and is often of a simplified shape; in the simplest case, a running average can be used, giving a square time response."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Fourier transform"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For non-realtime filtering, to achieve a low-pass filter, the entire signal is usually taken as a looped signal, the Fourier transform is taken, filtered in the frequency domain, followed by an inverse Fourier transform. Only O(n log(n)) operations are required compared to O(n2) for the time domain filtering algorithm."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This can also sometimes be done in real time, where the signal is delayed long enough to perform the Fourier transformation on shorter, overlapping blocks."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Continuous-time realization"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are many different types of filter circuits, with different responses to changing frequency. The frequency response of a filter is generally represented using a Bode plot, and the filter is characterized by its cutoff frequency and rate of frequency rolloff. In all cases, at the cutoff frequency, the filter attenuates the input power by half or 3 dB. So the order of the filter determines the amount of additional attenuation for frequencies higher than the cutoff frequency."
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "A first-order filter, for example, reduces the signal amplitude by half (so power reduces by a factor of 4, or 6 dB), every time the frequency doubles (goes up one octave); more precisely, the power rolloff approaches 20 dB per decade in the limit of high frequency. The magnitude Bode plot for a first-order filter looks like a horizontal line below the cutoff frequency, and a diagonal line above the cutoff frequency. There is also a \"knee curve\" at the boundary between the two, smoothly transitioning between the two straight-line regions. If the transfer function of a first-order low-pass filter has a zero as well as a pole, the Bode plot flattens out again, at some maximum attenuation of high frequencies; such an effect is caused for example by a little bit of the input leaking around the one-pole filter; this one-pole–one-zero filter is still a first-order low-pass. See Pole–zero plot and RC circuit.",
+        "A second-order filter attenuates high frequencies more steeply. The Bode plot for this type of filter resembles that of a first-order filter, except that it falls off more quickly. For example, a second-order Butterworth filter reduces the signal amplitude to one-fourth of its original level every time the frequency doubles (so power decreases by 12 dB per octave, or 40 dB per decade). Other all-pole second-order filters may roll off at different rates initially depending on their Q factor, but approach the same final rate of 12 dB per octave; as with the first-order filters, zeroes in the transfer function can change the high-frequency asymptote. See RLC circuit.",
+        "Third- and higher-order filters are defined similarly. In general, the final rate of power rolloff for an order- n all-pole filter is 6n dB per octave (20n dB per decade)."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "On any Butterworth filter, if one extends the horizontal line to the right and the diagonal line to the upper-left (the asymptotes of the function), they intersect at exactly the cutoff frequency, 3 dB below the horizontal line. The various types of filters (Butterworth filter, Chebyshev filter, Bessel filter, etc.) all have different-looking knee curves. Many second-order filters have \"peaking\" or resonance that puts their frequency response above the horizontal line at this peak."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The meanings of 'low' and 'high'—that is, the cutoff frequency—depend on the characteristics of the filter. The term \"low-pass filter\" merely refers to the shape of the filter's response; a high-pass filter could be built that cuts off at a lower frequency than any low-pass filter—it is their responses that set them apart. Electronic circuits can be devised for any desired frequency range, right up through microwave frequencies (above 1 GHz) and higher."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Laplace notation"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Continuous-time filters can also be described in terms of the Laplace transform of their impulse response, in a way that makes it easy to analyze all characteristics of the filter by considering the pattern of poles and zeros of the Laplace transform in the complex plane. (In discrete time, one can similarly consider the Z-transform of the impulse response.)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For example, a first-order low-pass filter can be described by the continuous time transfer function, in the Laplace domain, as H(s)=outputinput=K1τs+1=Kαs+α, where H is the transfer function, s is the Laplace-transform variable (complex angular frequency), τ is the filter time constant, α is the cutoff frequency, and K is the gain of the filter in the passband. The cutoff frequency is related to the time constant as α=1τ."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Electronic low-pass filters"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "First-order passive"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "RC filter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "One simple low-pass filter circuit consists of a resistor in series with a load, and a capacitor in parallel with the load. The capacitor exhibits reactance and blocks low-frequency signals, forcing them through the load instead. At higher frequencies, the reactance drops, and the capacitor effectively functions as a short circuit. The combination of resistance and capacitance gives the time constant of the filter τ=RC (represented by the Greek letter tau). The break frequency, also called the turnover frequency, corner frequency, or cutoff frequency (in hertz), is determined by the time constant: fc=12πτ=12πRC, or equivalently (in radians per second), ωc=1τ=1RC."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This circuit may be understood by considering the time the capacitor needs to charge or discharge through the resistor:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "At low frequencies, there is plenty of time for the capacitor to charge up to practically the same voltage as the input voltage.",
+        "At high frequencies, the capacitor only has time to charge up a small amount before the input switches direction. The output goes up and down only a small fraction of the amount the input goes up and down. At double the frequency, there's only time for it to charge up half the amount."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "Another way to understand this circuit is through the concept of reactance at a particular frequency:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Since direct current (DC) cannot flow through the capacitor, DC input must flow out the path marked Vout (analogous to removing the capacitor).",
+        "Since alternating current (AC) flows very well through the capacitor, almost as well as it flows through a solid wire, AC input flows out through the capacitor, effectively short-circuiting to the ground (analogous to replacing the capacitor with just a wire)."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "The capacitor is not an \"on/off\" object (like the block or pass fluidic explanation above) but acts variably between these two extremes. The Bode plot and frequency response show this variability."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "RL filter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A resistor–inductor circuit or RL filter is an electric circuit composed of resistors and inductors driven by a voltage or current source. A first-order RL circuit is composed of one resistor and one inductor and is the simplest type of RL circuit."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A first-order RL circuit is one of the simplest analogue infinite impulse response electronic filters. It consists of a resistor and an inductor, either in series driven by a voltage source or in parallel driven by a current source."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Second-order passive"
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "RLC filter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "An RLC circuit (the letters R, L, and C can be in a different sequence) is an electrical circuit consisting of a resistor, an inductor, and a capacitor, connected in series or in parallel. The RLC part of the name is due to those letters being the usual electrical symbols for resistance, inductance, and capacitance, respectively. The circuit forms a harmonic oscillator for current and will resonate in a similar way as an LC circuit will. The main difference that the presence of the resistor makes is that any oscillation induced in the circuit will die away over time if it is not kept going by a source. This effect of the resistor is called damping. The presence of the resistance also reduces the peak resonant frequency somewhat. Some resistance is unavoidable in real circuits, even if a resistor is not specifically included as a component. An ideal, pure LC circuit is an abstraction for the purpose of theory."
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are many applications for this circuit. They are used in many different types of oscillator circuits. Another important application is for tuning, such as in radio receivers or television sets, where they are used to select a narrow range of frequencies from the ambient radio waves. In this role, the circuit is often called a tuned circuit. An RLC circuit can be used as a band-pass filter, band-stop filter, low-pass filter, or high-pass filter. The RLC filter is described as a second-order circuit, meaning that any voltage or current in the circuit can be described by a second-order differential equation in circuit analysis."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Second-order low-pass filter in standard form"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The transfer function HLP(f) of a second-order low-pass filter can be expressed as a function of frequency f as the second-order low-pass filter standard form: HLP(f)=−KfFSF⋅fc2+1Q⋅jfFSF⋅fc+1. In this equation, f is the frequency variable, fc is the cutoff frequency, fFSF is the frequency scaling factor, and Q is the quality factor. The equation describes three regions of operation: below cutoff, in the area of cutoff, and above cutoff. For each area, it reduces to:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "f≪fc: HLP(f)≈K – the circuit passes signals multiplied by the gain factor K.",
+        "ffc=fFSF: HLP(f)=jKQ – signals are phase-shifted 90° and modified by the quality factor Q.",
+        "f≫fc: HLP(f)≈−KfFSF⋅f2 – signals are phase-shifted 180° and attenuated by the square of the frequency ratio. This behavior is detailed by Jim Karki in \"Active Low-Pass Filter Design\"."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "With attenuation at frequencies above fc increasing by a power of two, the last formula describes a second-order low-pass filter. The frequency scaling factor fFSF is used to scale the cutoff frequency of the filter so that it follows the definitions given before."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Higher-order passive filters"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Higher-order passive filters can also be constructed (see diagram for a third-order example)."
+    }
+  ]
+}

@@ -1,0 +1,395 @@
+{
+  "version": 1,
+  "title": "SparkFun — How to Power a Project",
+  "sourceTitle": "",
+  "sourceUrl": "https://learn.sparkfun.com/tutorials/how-to-power-a-project",
+  "provider": "SparkFun",
+  "providerKey": "sparkfun",
+  "retrievedAt": "2026-11-21T02:10:20.132Z",
+  "license": {
+    "id": "CC-BY-SA-4.0 (tutorial text); MIT (code); images may be CC-BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "SparkFun Electronics",
+    "originalUrl": "https://learn.sparkfun.com/tutorials/how-to-power-a-project"
+  },
+  "notice": "Text-only snapshot of SparkFun Electronics; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Overview"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This tutorial will cover the various ways you can power your electronic projects. It will go into some detail about voltage and current considerations you may want to make. It will also go into the extra considerations you have to make if your project is mobile/remote or, in other words, not going to be sitting next to a wall power outlet."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If this is truly your first electronic project, you have the option of reading through this tutorial or sticking with the recommended supply for the project or development board of your choice. The SparkFun Inventor’s Kit contains the USB cable you need for power and works fine for all the projects in the kit as well as many more advanced projects. If you're feeling overwhelmed, that kit is the best place to start."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Suggested Reading"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here are related tutorials you may want to check out before reading this one:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Voltage, Current, Resistance, and Ohm’s Law",
+        "Electric Power",
+        "Battery Technologies",
+        "Connector Basics",
+        "How to Use a Digital Multimeter",
+        "Voltage Regulators",
+        "Parallel vs Series Circuits"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Ways to Power a Project"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here are some of the most common methods used for powering a project:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "USB Power",
+        "Variable DC Benchtop Power Supply",
+        "AC to DC Wall Adapter (like a computer or laptop would use)",
+        "Batteries"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Which Option Should I Pick to Power My Project?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The answer to this question largely depends on your project specific requirements."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "USB Power"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you're starting off with the SparkFun Inventor's Kit or another basic development board, you will likely just need a USB cable. The Arduino Uno is an example that requires only a USB A to B cable to supply the power to run the example circuits in the kit. Here are a few USB cables from our catalog to power your project from a USB port."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Variable DC Benchtop Power Supply"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you're in the business of building projects and testing circuits regularly, acquiring a variable DC bench power supply is highly recommended. This will allow you to set the voltage to a specific value depending on what you need for your project. It also buys you some protection as you can set a maximum current allowed. Then, if there is a short circuit in your project, the bench supply will shut down hopefully preventing harm to some components in your project."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Here are a few variable DC benchtop power supplies from our catalog."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "AC to DC Wall Adapters"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A specific AC to DC power supply is often used after a circuit is proven. This option is also great if you often use the same development board again and again in your projects. These wall adapters usually have a set voltage and current output, so it's important to make sure that the adapter you choose has the correct specifications as the project you will be powering and to not exceed those specifications. Here are a few wall adapters from the catalog that offer a few amps."
+    },
+    {
+      "kind": "paragraph",
+      "text": "For more current hungry projects, check out some of these power supplies from our catalog. Just make sure to get the appropriate cable for your region from product page's recommended products."
+    },
+    {
+      "kind": "heading",
+      "level": 4,
+      "text": "Batteries"
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you want your project to be mobile or based in a remote location away from where you can gather AC wall power from the grid, batteries are the answer you're looking for. Batteries come in a huge variety, so be sure to check out the later parts of this tutorial so you can figure out precisely what to choose. Common choices include alkaline, rechargeable NiMH AA's, and lithium polymer ion. Here are a few batteries from the catalog."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If your project needs a certain voltage or a bit more current from a battery, try adding a boost converter or switching regulator. You can take the varying voltage from your battery and output a set voltage 5V. Depending on the board and components used with your project, you could potentially output 9V or 10V depending on the configuration. You'll just need make sure to get the necessary components to build your circuit in order to output voltages higher than 5V. Here are a few converters from our catalog."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Voltage/Current Considerations"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "How Much Voltage Do I Need for Project X?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This depends largely on the circuit, so there is no easy answer to this question. However, most microprocessor development boards like the Arduino Uno have a voltage regulator on board. This allows us to supply a voltage in a specified range above the regulated voltage. A lot of microprocessors and IC's on development boards run at 3.3V or 5V but have voltage regulators that can handle anywhere from 6V to 12V."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The power comes from a power supply and is then regulated closely by a voltage regulator so that each chip is powered at a consistent voltage even when the current draw may fluctuate at different times. Here at SparkFun, we use 9V power supplies for many of our products that operate in the 3.3V to 5V range. However, to verify what voltages are safe, it is recommended that you check the datasheet for the voltage regulator on the development board to see what voltage range is recommended by the manufacturer."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "How Much Current Do I Need for Project X?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This question also depends on the development board and microprocessor you're using as well as what circuits you plan on connecting to it. If your power supply cannot give you the amount of juice the project needs, the circuit may start acting in a strange, unpredictable way. This is also known as a brown-out."
+    },
+    {
+      "kind": "paragraph",
+      "text": "As with voltage, it's recommended to check the datasheets and estimate what the different bits and pieces of the circuit might need. It's also better practice to round up and assume your circuit will need more current than to not provide enough current. If your circuit includes elements that require massive amounts of current, like motors or large amounts of LEDs, you may need a large supply or even separate supplies for the microprocessor and the extra motors. Otherwise, the dips in power may cause the microprocessor to reset, not provide enough torque from your motor, or your LEDs may not fully light up. Again, it's always in your best interest to get a power supply rated for a higher current and not use the extra compared to having a supply that can't provide enough."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Have No Idea How Much Current Your Project Draws?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Once you've been playing with circuits for a while, it will be easier to estimate the amount of current your project requires. However, the common ways to figure it out experimentally are to either use a variable DC benchtop power supply that has a readout for current or to use a digital multimeter to measure the current going to your circuit while it's running. This will give you a general idea of what kind of power supply to choose for your project."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you don't know how to measure current with a multimeter, please see our multimeter tutorial."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "How to Use a Multimeter"
+    },
+    {
+      "kind": "paragraph",
+      "text": "We highly recommend having a DMM in your electronics toolbox. It's great for measuring current or voltage."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Connections"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "How Do I Connect My Battery or Power Supply to My Circuit?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are many ways to actually connect a power supply to your project."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Variable benchtop power supplies commonly connect to circuits using banana jacks or wires directly. These are also similar to the connectors found on the multimeter probe cables."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Many projects are built on a breadboard first with wires as a prototype, before they become a final product. There are numerous ways to power your breadboard circuit, many of them involving the same connectors mentioned here."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Once a project is past the prototyping phase, it will usually end up on a PCB. If you plan on making the circuit once or twice, one can transfer the circuit to a prototyping board and wire the circuit up manually to secure project. If you plan on making the circuit more than a few times, you may want to look into designing the circuit with a CAD software (i.e. Eagle) to save time wiring the project or if you plan on shrinking the size of the overall circuit."
+    },
+    {
+      "kind": "paragraph",
+      "text": "One of the most common power connectors used on a finished PCB, in both consumer electronics and hobby electronics alike, is the barrel connector, also know as a barrel jack. These can vary in size, but they all function the same and provide a simply, reliable way to power your project. Depending on your design, you can also pull power from a computer or wall adapter's USB port."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Batteries are generally held in a case that holds the batteries and connects the the circuit via wires or a barrel jack. Some batteries like Lithium Polymer Ion batteries often use a JST connector. Here are a few from our catalog."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To learn more about different power connectors, please see our connectors tutorial."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Connector Basics"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Remote/Mobile Power"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Which Battery Should I Choose?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "When you're powering a remote circuit, the same issues of finding a battery that delivers the proper voltage and current still apply. Battery life, or capacity, is a measure of total charge the battery contains. The capacity of a battery is usually rated in ampere-hours (Ah) or milliampere-hours (mAh), and it tells you how many amps a fully charged battery can supply over a period of one hour. For example, a 2000mAh battery can supply up to 2A (2000mA) for one hour."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Battery size, shape, and weight is also something to consider when making your project mobile, especially if it's going to be on something that flies like a small quad-copter. You can get a rough idea of the variety by visiting this Wikipedia list. Learn more about battery types in our battery technology tutorial."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Battery Technologies"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Batteries in Series and Parallel"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You can add batteries in series or parallel to produce the desired voltage and current needed for your project. When two or more batteries are placed in series, the voltages of the batteries are added together. For example, lead-acid car batteries are actually made out of six single-cell lead acid batteries tied together in series; the six 2.1V cells add up to produce 12.6V. When tying two batteries in series, it's recommended that they be of the same chemistry. Also, be wary of charging batteries in series as many chargers are limited to single-cell charging."
+    },
+    {
+      "kind": "paragraph",
+      "text": "When you connect two or more batteries in parallel, the capacities add. For example, four AA batteries connected in parallel will still produce 1.5V, however the capacity of the batteries will be quadrupled."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "How Much Battery Capacity Do I Need For My Project?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "This question is easier to answer once you have determined the amount of current that your circuit normally draws. In the following example, we will use estimation. However, it is encouraged that you measure current draw of your circuit using a Digital Multimeter to get accurate results."
+    },
+    {
+      "kind": "paragraph",
+      "text": "As an example, let’s start with a circuit, estimate its current output, then select a battery and calculate how long it the circuit will run on battery power. Let’s choose a ATmega 328 microcontroller to be our brains for the circuit. It draws about 20mA under normal conditions. Let’s now connect three red LED’s and the standard 330 ohm current limiting resistors to digital I/O pins of the microcontroller. In that configuration, each LED added makes the circuit draw about 10mA more current. Now let’s connect two Micro Metal motors to the microcontroller as well. Each one of these uses approximately 25mA when turned on. Our total possible current draw is now:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Let’s choose a standard alkaline AA battery for this because it has more than enough current capability (up to 1A), has a decent battery capacity (usually in the range of 1.5 Ah to 2.5Ah), and is very common. We'll assume the average is 2Ah for this example. The downside to using a AA is it only has a 1.5V output, and, since the rest of our components will run on 5V, we need to step up the voltage. We can use this 5V step-up breakout to get the voltage we need, or we can use three AA batteries in series to get us close to the voltage we need. Three AA’s in series gives us a voltage of 4.5 V (3 times 1.5V). You could also add another battery for a total of 6V and regulate the voltage down to what your circuit requires."
+    },
+    {
+      "kind": "paragraph",
+      "text": "To calculate how long a circuit will last on battery power, we use the following equation:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "For a circuit powered by 3 AA's in parallel that's connected to a circuit with a constant 100mA current draw, this translates to:"
+    },
+    {
+      "kind": "paragraph",
+      "text": "We would ideally get 60 hours of battery life out of these three alkaline AA’s in this parallel configuration. However, it’s good practice to ‘derate’ batteries, which means to assume you’re going to get less than ideal battery life. Let’s conservatively say that we’ll get 75% of the ideal battery life, and therefore about 45 hours of battery life for our project."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Battery life can also vary based on the actual current draw amount. Here's a graph from an Energizer AA battery showing its expected battery life based on constant current draw."
+    },
+    {
+      "kind": "paragraph",
+      "text": "This is just one of the numerous configurations you could use to power your project remotely."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Powering LilyPad LED Projects"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Stress Testing"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Now that you have chosen your power supply and connector, make sure to test your project out and observe its behavior. Depending on the manufacturer, power supplies may have varying performances. Make sure to test the wall adapter over a certain period of time to ensure that the microcontroller won't brownout, and power supply won't reset under a load. For certain projects using capacitive touch sensors, make sure to test to see if there are any latencies caused by noisy power supplies."
+    },
+    {
+      "kind": "paragraph",
+      "text": "If you are powering your project remotely, make sure to always test it with the battery. Batteries can provide varying outputs depending on the load attached and battery chemistry. This can also cause the microcontroller to brownout or stop providing power."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Resources and Going Further"
+    },
+    {
+      "kind": "paragraph",
+      "text": "You should now know the most common ways to power your circuit and how to figure out which way is best for you depending on your your project’s specific requirements. You can make a better judgment now based on current, voltage, connector, and mobility considerations for your project. Check out these other great tutorials to monitor, control, or power your project!"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "LTC4150 Coulomb Counter Hookup Guide"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Wake-on-Shake Hookup Guide"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Benchtop Power Board Kit Hookup Guide"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Mean Well LED Switching Power Supply Hookup Guide"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Or check out some of these blog posts for ideas:"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "What's All the Fuss About Lithium Batteries?"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Read Post"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Enginursday: Deep Sleep Adventures"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Read Post"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Enginursday: Battery Management"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Read Post"
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Power Solutions for Wearables and Cosplay"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Read Post"
+    }
+  ]
+}

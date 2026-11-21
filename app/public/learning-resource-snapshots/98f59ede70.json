@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "title": "Wikipedia — System identification (\"Overview\")",
+  "sourceTitle": "",
+  "sourceUrl": "https://en.wikipedia.org/wiki/System_identification",
+  "provider": "Wikipedia",
+  "providerKey": "wikipedia",
+  "retrievedAt": "2026-11-21T02:10:27.917Z",
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+    "reuse": "allowed",
+    "conditions": [
+      "attribution",
+      "share-alike",
+      "indicate-changes",
+      "per-asset-check"
+    ]
+  },
+  "attribution": {
+    "publisher": "Wikipedia contributors",
+    "originalUrl": "https://en.wikipedia.org/wiki/System_identification"
+  },
+  "notice": "Text-only snapshot of Wikipedia contributors; images, tables, scripts and navigation are omitted. The publisher and original URL are shown with this snapshot. This adapted text is shared under the same source licence. Changes: text extracted; images, tables, scripts and navigation removed. Only text is included; images and other assets were not copied.",
+  "truncated": false,
+  "blocks": [
+    {
+      "kind": "paragraph",
+      "text": "The field of system identification uses statistical methods to build mathematical models of dynamical systems from measured data. System identification also includes the optimal design of experiments for efficiently generating informative data for fitting such models as well as model reduction. A common approach is to start from measurements of the behavior of the system and the external influences (inputs to the system) and try to determine a mathematical relation between them without going into many details of what is actually happening inside the system; this approach is called black box system identification."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Overview"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A dynamic mathematical model in this context is a mathematical description of the dynamic behavior of a system or process in either the time or frequency domain. Examples include:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "physical processes such as the movement of a falling body under the influence of gravity;",
+        "economic processes such as international trade markets that react to external influences."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "One of the many possible applications of system identification is in control systems. For example, it is the basis for modern data-driven control systems, in which concepts of system identification are integrated into the controller design, and lay the foundations for formal controller optimality proofs."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Input-output vs output-only"
+    },
+    {
+      "kind": "paragraph",
+      "text": "System identification techniques can utilize both input and output data (e.g. eigensystem realization algorithm) or can include only the output data (e.g. frequency domain decomposition). Typically an input-output technique would be more accurate, but the input data is not always available. In addition, the final estimated responses from arbitrary inputs can be analyzed by investigating their correlation and spectral properties."
+    },
+    {
+      "kind": "heading",
+      "level": 3,
+      "text": "Optimal design of experiments"
+    },
+    {
+      "kind": "paragraph",
+      "text": "The quality of system identification depends on the quality of the inputs, which are under the control of the systems engineer. Therefore, systems engineers have long used the principles of the design of experiments. In recent decades, engineers have increasingly used the theory of optimal experimental design to specify inputs that yield maximally precise estimators."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "White-, grey-, and black-box"
+    },
+    {
+      "kind": "paragraph",
+      "text": "One could build a white-box model based on first principles, e.g. a model for a physical process from the Newton equations, but in many cases, such models will be overly complex and possibly even impossible to obtain in reasonable time due to the complex nature of many systems and processes."
+    },
+    {
+      "kind": "paragraph",
+      "text": "A more common approach is therefore to start from measurements of the behavior of the system and the external influences (inputs to the system) and try to determine a mathematical relation between them without going into the details of what is actually happening inside the system. This approach is called system identification. Two types of models are common in the field of system identification:"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "grey box model: although the peculiarities of what is going on inside the system are not entirely known, a certain model based on both insight into the system and experimental data is constructed. This model does however still have a number of unknown free parameters which can be estimated using system identification. One example uses the Monod saturation model for microbial growth. The model contains a simple hyperbolic relationship between substrate concentration and growth rate, but this can be justified by molecules binding to a substrate without going into detail on the types of molecules or types of binding. Grey box modeling is also known as semi-physical modeling.",
+        "black box model: No prior model is available. Most system identification algorithms are of this type."
+      ]
+    },
+    {
+      "kind": "paragraph",
+      "text": "In the context of nonlinear system identification Jin et al. describe grey-box modeling by assuming a model structure a priori and then estimating the model parameters. Parameter estimation is relatively easy if the model form is known but this is rarely the case. Alternatively, the structure or model terms for both linear and highly complex nonlinear models can be identified using NARMAX methods. This approach is completely flexible and can be used with grey box models where the algorithms are primed with the known terms, or with completely black-box models where the model terms are selected as part of the identification procedure. Another advantage of this approach is that the algorithms will just select linear terms if the system under study is linear, and nonlinear terms if the system is nonlinear, which allows a great deal of flexibility in the identification."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Identification for control"
+    },
+    {
+      "kind": "paragraph",
+      "text": "In control systems applications, the objective of engineers is to obtain a good performance of the closed-loop system, which is the one comprising the physical system, the feedback loop and the controller. This performance is typically achieved by designing the control law relying on a model of the system, which needs to be identified starting from experimental data. If the model identification procedure is aimed at control purposes, what really matters is not to obtain the best possible model that fits the data, as in the classical system identification approach, but to obtain a model satisfying enough for the closed-loop performance. This more recent approach is called identification for control, or I4C in short."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The idea behind I4C can be better understood by considering the following simple example. Consider a system with true transfer function G0(s):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "and an identified model Ĝ(s):"
+    },
+    {
+      "kind": "paragraph",
+      "text": "From a classical system identification perspective, Ĝ(s) is not, in general, a good model for G0(s). In fact, modulus and phase of Ĝ(s) are different from those of G0(s) at low frequency. What is more, while G0(s) is an asymptotically stable system, Ĝ(s) is a simply stable system. However, Ĝ(s) may still be a model good enough for control purposes. In fact, if one wants to apply a purely proportional negative feedback controller with high gain K, the closed-loop transfer function from the reference to the output is, for G0(s)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "and for Ĝ(s)"
+    },
+    {
+      "kind": "paragraph",
+      "text": "Since K is very large, one has that 1+K≈K. Thus, the two closed-loop transfer functions are indistinguishable. In conclusion, Ĝ(s) is a perfectly acceptable identified model for the true system if such feedback control law has to be applied. Whether or not a model is appropriate for control design depends not only on the plant/model mismatch but also on the controller that will be implemented. As such, in the I4C framework, given a control performance objective, the control engineer has to design the identification phase in such a way that the performance achieved by the model-based controller on the true system is as high as possible."
+    },
+    {
+      "kind": "paragraph",
+      "text": "Sometimes, it is even more convenient to design a controller without explicitly identifying a model of the system, but directly working on experimental data. This is the case of direct data-driven control systems."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Forward model"
+    },
+    {
+      "kind": "paragraph",
+      "text": "A common understanding in Artificial Intelligence is that the controller has to generate the next move for a robot. For example, the robot starts in the maze and then the robot decides to move forward. Model predictive control determines the next action indirectly. The term \"model\" is referencing to a forward model which doesn't provide the correct action but simulates a scenario. A forward model is equal to a physics engine used in game programming. The model takes an input and calculates the future state of the system."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The reason why dedicated forward models are constructed is because it allows one to divide the overall control process. The first question is how to predict the future states of the system. That means, to simulate a plant over a timespan for different input values. And the second task is to search for a sequence of input values which brings the plant into a goal state. This is called predictive control."
+    },
+    {
+      "kind": "paragraph",
+      "text": "The forward model is the most important aspect of a MPC-controller. It has to be created before the solver can be realized. If it's unclear what the behavior of a system is, it's not possible to search for meaningful actions. The workflow for creating a forward model is called system identification. The idea is to formalize a system in a set of equations which will behave like the original system. The error between the real system and the forward model can be measured."
+    },
+    {
+      "kind": "paragraph",
+      "text": "There are many techniques available to create a forward model: ordinary differential equations is the classical one which is used in physics engines like Box2D. A more recent technique is a neural network for creating the forward model."
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "See also"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Black box model of power converter",
+        "Black box",
+        "Data-driven control system",
+        "Generalized filtering",
+        "Grey box completion and validation",
+        "Hysteresis",
+        "Linear time-invariant system theory",
+        "Model order reduction",
+        "Model selection",
+        "Nonlinear autoregressive exogenous model",
+        "Open system (systems theory)",
+        "Parameter estimation",
+        "Pattern recognition",
+        "Structural identifiability",
+        "System dynamics",
+        "System realization",
+        "Systems theory"
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "Further reading"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "Goodwin, Graham C. & Payne, Robert L. (1977). Dynamic System Identification: Experiment Design and Data Analysis. Academic Press.",
+        "Daniel Graupe: Identification of Systems, Van Nostrand Reinhold, New York, 1972 (2nd ed., Krieger Publ. Co., Malabar, FL, 1976)",
+        "Eykhoff, Pieter: System Identification – Parameter and System Estimation, John Wiley & Sons, New York, 1974. ISBN 0-471-24980-7",
+        "Lennart Ljung: System Identification — Theory For the User, 2nd ed, PTR Prentice Hall, Upper Saddle River, N.J., 1999.",
+        "Jer-Nan Juang: Applied System Identification, Prentice-Hall, Upper Saddle River, N.J., 1994.",
+        "Kushner, Harold J. and Yin, G. George (2003). Stochastic Approximation and Recursive Algorithms and Applications (Second ed.). Springer.{{cite book}}: CS1 maint: multiple names: authors list (link)",
+        "Oliver Nelles: Nonlinear System Identification, Springer, 2001. ISBN 3-540-67369-5",
+        "T. Söderström, P. Stoica, System Identification, Prentice Hall, Upper Saddle River, N.J., 1989. ISBN 0-13-881236-5",
+        "R. Pintelon, J. Schoukens, System Identification: A Frequency Domain Approach, 2nd Edition, IEEE Press, Wiley, New York, 2012. ISBN 978-0-470-64037-1",
+        "Spall, J. C. (2003), Introduction to Stochastic Search and Optimization: Estimation, Simulation, and Control, Wiley, Hoboken, NJ.",
+        "Walter, Éric & Pronzato, Luc (1997). Identification of Parametric Models from Experimental Data. Springer."
+      ]
+    },
+    {
+      "kind": "heading",
+      "level": 2,
+      "text": "External links"
+    },
+    {
+      "kind": "list",
+      "ordered": false,
+      "items": [
+        "L. Ljung: Perspectives on System Identification, July 2008",
+        "System Identification and Model Reduction via Empirical Gramians"
+      ]
+    }
+  ]
+}
