@@ -287,6 +287,15 @@ way is self-selected and a row is a first reading, not a sample. `--status` prin
 until a folder holds an export **and** an answered record, and `pilot-results.md` stays the template it
 says it is.
 
+**Re-audited 2026-11-21 at `a434a3b`.** Every acceptance command in §§0–4 was re-run against this tree
+and is green, with one exception that was repaired rather than excused: `npm run test:perf` was red
+because the walk typed into an editor that Study opens folded, so it timed a body no learner can type
+in. `scripts/perf_walk.mjs` now presses **Expand** where a desktop learner does (the phone already
+tapped Code), those two moments include the press, and [`docs/PERF.md`](PERF.md) says so; the walk
+passes on both profiles and `--record` wrote its two rows. The counts printed in this page are the
+slice's own and have grown since (97 pages, 42 reader checks, 33 generator tests); the properties they
+prove are unchanged. What is still owed is §5 and only §5: three non-author beginners.
+
 ## Order, and what this plan refuses
 
 Risk and value first: **§1 and §0 (done) → §2 (done) → §3 (done) → §4 (done) → §5 (instrument done)**.

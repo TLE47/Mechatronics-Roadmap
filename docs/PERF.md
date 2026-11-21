@@ -67,6 +67,8 @@ replaces its own row rather than contradicting it.
 | 2026-10-24 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | phone | 11239 | 6136 | 24855 | 139 | 244 | 13452 |
 | 2026-10-28 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | laptop | 469 | 106 | 1208 | 65 | 221 | 207 |
 | 2026-10-28 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | phone | 14224 | 7781 | 24779 | 194 | 311 | 16331 |
+| 2026-11-21 | 19/01 · linux 6.1.102 · 16 GB · Node v26.13.0 | laptop | 603 | 306 | 2260 | 181 | 346 | 483 |
+| 2026-11-21 | 19/01 · linux 6.1.102 · 16 GB · Node v26.13.0 | phone | 15823 | 8553 | 24152 | 271 | 682 | 19210 |
 
 ## What the walk grades
 
@@ -95,6 +97,11 @@ On a phone the editor is deferred until Code is chosen (`app/src/phoneSurface.ts
 first keystroke* and *lesson switch → usable editor* include the Code tap — the same tap a learner
 makes, not a state the walk could conjure. That is why the phone's two numbers are larger than they
 were before the phone shell: they now measure the flow that exists.
+
+On a laptop the same rule holds for a different control: Study and Read open the editor body folded
+(`RunnerEditorCard`), because those presets are for reading and the code is one press away. The walk
+presses **Expand** before it types, so those two moments include that press — timing a body that the
+screen has folded would have measured a state no learner can type in.
 
 Raising a ceiling is allowed, and it has to leave a trace: a fresh `--record` row, the reason the new
 number is acceptable, and — if the rise was not intended — the change that caused it. Lowering one is

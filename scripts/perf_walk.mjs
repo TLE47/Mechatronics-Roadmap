@@ -396,6 +396,24 @@ async function openCodeSurface(page) {
   return true;
 }
 
+/**
+ * Unfold the editor's body, the press a learner makes after reading.
+ *
+ * Study and Read open folded (`RunnerEditorCard`): the reading is the preset's job and the code is
+ * one press away, so a walk that typed straight into the editor would be timing a control the screen
+ * does not show. The phone has its own door (`openCodeSurface`); on a desktop this is the editor
+ * card's own Expand button, and the press is part of the keystroke moment because a learner cannot
+ * type without it. Returns whether it pressed, so a preset that opens unfolded costs no press.
+ */
+async function openEditorBody(page) {
+  const toggle = page.getByTestId('btn-toggle-editor');
+  if (!(await toggle.count())) return false;
+  if ((await toggle.getAttribute('aria-expanded')) === 'true') return false;
+  await toggle.click({ timeout: NAVIGATION_TIMEOUT });
+  await waitForEditor(page);
+  return true;
+}
+
 async function measureProfile(browser, baseUrl, profile) {
   const context = await browser.newContext({
     viewport: profile.viewport,
@@ -454,6 +472,7 @@ async function measureProfile(browser, baseUrl, profile) {
     // (`getEditorCode`), so the echo is a change to that text, not a `#` that was already there. On a
     // phone the moment starts with the Code tap, because the editor is not on screen before it.
     if (await openCodeSurface(page)) notes.opened_editor_by_tap = true;
+    if (await openEditorBody(page)) notes.opened_editor_by_press = true;
     const starter = await getEditorCode(page);
     await waitForEditor(page);
     await page.evaluate(() => {
@@ -525,6 +544,9 @@ async function measureProfile(browser, baseUrl, profile) {
       await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: NAVIGATION_TIMEOUT });
       await openCodeSurface(page);
     }
+    // A switch can remount the card, which opens Study folded again: the usable-editor moment
+    // includes the press that unfolds it for the same reason the first keystroke does.
+    await openEditorBody(page);
     await page.waitForFunction(
       ({ id, meta, editorSelector }) => {
         const row = document.querySelector(meta);
@@ -556,6 +578,7 @@ async function measureProfile(browser, baseUrl, profile) {
 
     // 6. Reload → the draft comes back. Typed, not written through the bridge, because the debounced
     // writer listens to the editor's own updates and this is the path a learner takes.
+    await openEditorBody(page);
     await page.evaluate(() => {
       const editor = window.__mechalabEditors['editor-main'];
       editor.setCursor(0);
