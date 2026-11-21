@@ -37,6 +37,7 @@ flowchart LR
 | `CompactShelf.tsx` | The Compact preset's one dock: a single row of module names with the number worth reading while each is closed, and the one panel a press opens under the row. One module at a time, no scrolling inside it, so the dock's height with everything closed is the same whatever the open module holds. |
 | `EditorSettingsPanel.tsx` | The editor's own preferences drawer: the persisted code-tooltip switch that reconfigures mounted editors without remounting them. |
 | `RunnerEditorCard.tsx` | The editor surface: the file row, two labelled view rails (**Checks** for reports on the run, **Tools** for instruments), and the editor body beside Requirements, Predict, Run output, Expected, Cases, Breakpoints, Trace, Workflow, Calculator, Study and Robot. |
+| `EditorCodePane.tsx` | The main pane and its **Visual / Python Code** switch. Python Code is the open default and the CodeMirror editor every lesson already had; Visual is the lazy block workspace in [`../../../pythonBlocks/`](../../../pythonBlocks/README.md), fetched on first use. Both faces draw the same `code` prop and write it through the same `commitCode`, so drafts, checks, Run, a shared document and the phone's punctuation strip cannot tell which one was used. A helper file has no switch: it is a read-only module, not a program to construct. |
 | `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, the dividers a pointer drags to resize them, a result tab dragged in from the tab strip (it splits when there is room and focuses when the view is already open), the Study tab's notes, highlights and deck, each split pane's own close — that view leaves, the rest stay in order — and the offer that puts a closed view back in its slot. The prediction gate's own Close records the same arrangement through `paneUndo.ts`. |
 | `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. Close records the arrangement it takes away, so the same Undo a pane's corner close offers restores the whole split. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
 | `PanePlacement.tsx` | A pane's own split direction once there are three or more: the two buttons that open its boundary beside or under it, in their own spot beside the close so no control covers another, loaded with the placement control instead of the tab's eager chunk. |
@@ -175,6 +176,40 @@ The editor precedes the reader in the DOM so the stacked Study preset reads code
 still places them by column at `2xl`, so only the walk order changes, not the drawing. The lesson
 chooser's fold and strip live in `LessonChooserRail.tsx`, which is also why the tab stays inside its
 line budget.
+
+## The visual Python editor
+
+The editor's main pane has two faces over one program. **Python Code** is CodeMirror, unchanged and
+the default a stored preference starts on; **Visual** is built from Python-shaped statement cards.
+`app/src/pythonBlocks/` owns that face and knows nothing about lessons:
+
+- `ast.ts` is the shared model. A program is a list of statement nodes with fields and suites; it
+  renders to Python and the code view draws the same string. An **untouched program is byte-
+  identical** to the file (`renderProgram` returns `source` until the first edit), so opening visual
+  mode cannot reformat a starter. Raw Python the parser cannot draw — a class body, a decorator, a
+  multi-line statement — is kept as its own lines with its relative indentation.
+- `parser.ts` reads logical lines (brackets, triple-quoted strings and backslash continuations are
+  grouped before classification) and descends suites by indentation, not by a keyword stack.
+- `operations.ts` is the immutable edit set: insert, edit a field, move within a body, duplicate with
+  fresh ids, delete. Every edit marks the program dirty and re-renders it; the code view is always
+  the generated program.
+- `registry.ts` is the Python Toolbox: the plan's nine categories, complete statement templates, and
+  the Recommended / Categories / A–Z / Recently used sorts. Search reads labels, Python, keywords
+  and categories, so `print` is found while Variables is selected.
+- `PythonBlockEditor.tsx` and `BlockCard.tsx` are the workspace: inline fields, up/down, duplicate,
+  delete, insert-after, and **Add statement inside** for a nested suite. `useBlockEditor.ts` keeps
+  the undo/redo stacks and the insertion point; a change to the code from elsewhere re-parses.
+- `appearance.ts` draws Normal (neutral) or Colorful (semantic family inks). The colours are theme
+  tokens, so both looks follow dark, light, paper and high contrast, and appearance never reaches
+  the model or a check. `settings.ts` remembers mode, look, sort and recent elements on the device.
+
+The workspace is its own lazy chunk. `npm run test:blocks` (model) and `npm run test:e2e:blocks`
+(real browser: both directions, one actual interpreter run, axe and a 390 px touch width) are its
+gates; the model suite proves byte-identical round trips, nesting, raw-Python preservation and that
+every generated template parses with CPython's `ast`. The browser suite types a statement into
+Python Code and checks that Visual draws it and gives the text back unchanged. The app-wide
+`check:axe` and `test:theme:e2e` sweeps also open the workspace in Normal and Colorful, in all four
+palettes, on a seeded all-family program.
 
 Size rule, held by `npm run test:runner` (`scripts/test_runner_shape.mjs`): the tab's budget is
 **3,020 lines with 28 state cells and 24 refs**, a state-owning hook stays under 400 lines except

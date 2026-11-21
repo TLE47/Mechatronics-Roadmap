@@ -267,6 +267,9 @@ async function main() {
     { label: 'try', script: 'test_try_links.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'runner-shape', script: 'test_runner_shape.mjs', env: { NODE_OPTIONS: TYPES } },
+    // The visual Python editor's program model: byte-identical round trips, nesting, raw Python,
+    // the nine toolbox categories and the four sorts.
+    { label: 'blocks', script: 'test_python_blocks.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'rail', script: 'test_rail_collapse.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'board', script: 'test_board_bridge.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -320,6 +323,9 @@ async function main() {
     { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'studio2e', script: 'e2e_studio.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    // The visual editor's browser contract: mode round trip, toolbox insertion, undo/redo,
+    // remembered appearance and a phone with no horizontal scroll.
+    { label: 'blocks2e', script: 'e2e_python_blocks.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     // The split resource workspace: the only suite that proves a provider frame survives Expand,
     // the divider and the phone pane toggle without being remounted.

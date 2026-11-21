@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.14.3`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.15.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,77 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-21] — The Python editor gets a Visual face over the same `main.py`
+
+`python-runner-editor`'s main pane now has a **Visual / Python Code** switch. Python Code is the
+CodeMirror editor every lesson already had and stays the open default; Visual is a mobile-first
+workspace of Python-shaped statement cards: assignment, call, `if`/`elif`/`else`, `for`, `while`,
+`def`, `return`, `try`/`except`/`finally` and import. A value is edited where it sits (tap a token,
+Enter commits), a statement can move up or down, duplicate, delete or take a new statement after
+it, and a suite offers **Add statement inside**. Undo and redo walk the card history with ⌘Z / ⇧⌘Z.
+The generated Python is written through the same `commitCode` the code editor uses, so drafts,
+checks, Predict, the robot probe, co-editing and Run still read one file; the browser suite presses
+the real Run and reads the block's `print` from the interpreter's own output.
+
+**Opening Visual is not an edit.** The model returns the parsed source byte-for-byte until the
+first block changes, so a starter's comments, blank lines, triple-quoted strings, multi-line calls
+and two-space indentation survive a switch there and back untouched. Once edited, the program is
+drawn from the model: an empty suite gets `pass`, a new body uses the file's own indent unit, and
+Python the blocks cannot draw (a `class` body, a decorator, `del`) stays a raw node with its
+relative indentation rather than being deleted or flattened.
+
+The **Python Toolbox** is the plan's nine categories — Variables, Data Types, Operators, Conditions,
+Loops, Functions, Input / Output, Exceptions, Modules — and every element is a complete statement,
+not a placeholder. It has a category dropdown, Previous/Next, search across labels, Python, keywords
+and categories, and the Recommended / Categories / A–Z / Recently used sorts; the sort and the
+recent list are remembered. **Normal / Colorful** changes card appearance through the theme's
+semantic tokens, so both looks work in dark, light, paper and high contrast, and appearance never
+reaches the model or a check. The look and the mode are device preferences beside the editor's
+tooltip switch; the default stays Python Code.
+
+The workspace is its own `React.lazy` chunk (32,772 B raw / 10,500 B gzipped), so the code editor's
+first paint does not wait for it: `entry_gzip` measured 647,779 B local / 649,584 B signed-in and
+`largest_js_gzip` 406,164 / 406,350 B of their unchanged ceilings. `js_gzip` counts every emitted
+byte, so its ceilings moved by hand after measurement — 1,263,000 / 1,322,000 B — and the local
+`total` moved from 4,020,000 to 4,026,000 B, which had only 296 B left; both shapes' numbers and the
+reason are in `docs/weight-budget.json`, and css, fonts, prose, reader, audio, music and the
+signed-in total keep their numbers. The workspace sits behind
+[`runner/EditorCodePane.tsx`](app/src/components/tabs/runner/EditorCodePane.tsx), the extracted main
+pane, so the runner's shape ratchet still passes at 3,018 lines / 28 cells.
+
+`npm run test:blocks` (29 checks, no browser) pins byte-identical round trips, nesting, raw
+preservation, an incomplete suite completed with `pass`, two-space and tab indentation, every
+toolbox template through CPython's `ast.parse`, the nine categories and the four sorts. `npm run test:e2e:blocks` drives the real surface: Python
+Code is the default face and Normal the default look; opening Visual and returning leaves `main.py`
+untouched and the code caret where it was; a statement typed in Python Code draws as a block and
+comes back byte-identical; the toolbox collapses, changes category by dropdown and by Previous/Next,
+searches across categories, sorts, and leads Recently used with the item just inserted; a toolbox
+tap and an inline field edit reach the code view; add-inside survives a view round trip; insert-after,
+duplicate, delete and move up/down change the generated program; the interpreter runs the block's
+print; the buttons and ⌘Z/⇧⌘Z share one undo history; Colorful leaves the code alone and, with the
+mode and recent list, survives a reload; an axe pass reports no serious or critical finding; and a
+390 px phone has no horizontal scrolling while a real touch tap inserts a statement. The model's own
+document is [`app/src/pythonBlocks/README.md`](app/src/pythonBlocks/README.md).
+
+Both app-wide audits now open the workspace as a surface of their own in Normal and Colorful, in
+all four palettes. `npm run check:axe` and `npm run test:theme:e2e` seed one card of every statement
+family, because Lesson 1's starter draws only assignments and prints; Colorful's amber, rose and
+purple inks would otherwise never be measured. The wider program found a real WCAG 2.5.3 mismatch
+that the own suite's smaller starter missed: every container's “Add statement inside” button had an
+accessible name that paraphrased the visible words (“Add a statement inside…”). The name now starts
+with the visible text, with no allowlist entry. The contrast sweep measures 305 on-screen runs per
+appearance and palette with no failure or warning; the surface's lowest is 4.62:1 in light.
+
+The cleanup pass removed the editor's dead exports (`familyToken`, `opensSuite`,
+`programFromText`) and the helpers that only leaked through `export`, collapsed the two assignment
+regexes into one operator set, turned the family→token indirection into one kind→token table, and
+removed the duplicated `visualOpened` effect and the unused category descriptions. No behaviour
+changed; the model suite, browser suite and app-wide audits remain the evidence. The block browser
+suite now also switches the open Python Code pane through all four palettes, compares CodeMirror's
+rendered keyword, string, number and comment inks and its surface with the palette variables, then
+closes and reopens the pane across another palette and checks them again; the same run proves the
+visual face stays mounted once it has been opened.
 
 ## [2026-11-21] — One self-check per exercise, and a pane the first paint did not need
 

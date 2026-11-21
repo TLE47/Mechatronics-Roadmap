@@ -8,7 +8,8 @@
  * 1. Does the controls own the page? `data-theme` on <html>, the stored key, the
  *    OS default on a first visit, the flip plus the two on/off palettes (contrast
  *    and paper), and an explicit pick surviving both a reload and an OS flip.
- * 2. Is every one of the sixteen tabs readable in each of the four palettes? The audit walks
+ * 2. Is every one of the sixteen tabs readable in each of the four palettes, and the visual
+ *    Python workspace in both its Normal and Colorful appearances? The audit walks
  *    every visible text node, composites its colour over the stack of ancestor
  *    backgrounds it actually sits on, and computes WCAG contrast. Text below
  *    3:1 fails at any size; text between 3:1 and its size's minimum is listed as
@@ -38,6 +39,30 @@ const tabNames = JSON.parse(
   fs.readFileSync(path.join(process.cwd(), 'app/src/data/workbenchTabs.json'), 'utf8')
 );
 const TAB_IDS = Object.keys(tabNames.tabs);
+/** The visual workspace is a mode inside the runner, so the tab list alone never reaches it. */
+const BLOCK_SURFACES = ['blocks-normal', 'blocks-colorful'];
+const SURFACES = [...TAB_IDS, ...BLOCK_SURFACES];
+/**
+ * One compact card of every statement family, so Colorful's five family inks are actually on the
+ * page: P.1's own starter has only assignments and prints, and an audit that never draws amber,
+ * rose or purple would report a clean workspace while three of its inks went unmeasured.
+ */
+const BLOCK_PROGRAM = [
+  'import math',
+  'value = 1',
+  'print(value)',
+  'if value:',
+  '    value = 2',
+  'for i in range(2):',
+  '    value = i',
+  'def f():',
+  '    return value',
+  'try:',
+  '    f()',
+  'except Exception:',
+  '    pass',
+  '',
+].join('\n');
 
 const SHOTS = process.argv.includes('--screenshots');
 const SHOT_DIR = path.join(process.cwd(), '.fb-scratch', 'theme');
@@ -162,6 +187,41 @@ function hexToRgb(hex) {
   const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
   const [r, g, b] = [0, 2, 4].map((at) => Number.parseInt(full.slice(at, at + 2), 16));
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+/**
+ * Open Lesson 1's visual workspace and choose one appearance. The guide, the folded body and the
+ * lazy editor are the same three edges the block browser suite handles; without this opener the
+ * runner tab is always audited with its code face in front.
+ */
+async function openBlockSurface(page, surface) {
+  await page.click('[data-testid="tab-btn-tab-pyodide"]');
+  await page.waitForFunction(
+    () =>
+      !document.querySelector('[data-testid="tab-loading"]') &&
+      !document.querySelector('[data-editor-ready="false"]'),
+    undefined,
+    { timeout: 20000 }
+  );
+  const guide = page.getByTestId('btn-guide-dismiss');
+  if (await guide.isVisible().catch(() => false)) await guide.click();
+  const folded = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+  if (await folded.count()) await folded.first().click();
+  // Seed through the editor's own bridge, the same path the suites type through, so the program is
+  // committed by the runner rather than painted into the DOM behind its back.
+  await page.evaluate((code) => window.__mechalabEditors['editor-main'].set(code), BLOCK_PROGRAM);
+  await page.getByTestId('editor-mode-visual').click();
+  await page.getByTestId('python-block-editor').waitFor({ state: 'visible', timeout: 20000 });
+  const appearance = surface === 'blocks-colorful' ? 'colorful' : 'normal';
+  await page.getByTestId(`block-appearance-${appearance}`).click();
+  await page.waitForFunction(
+    (wanted) =>
+      document
+        .querySelector('[data-testid="python-block-editor"]')
+        ?.getAttribute('data-appearance') === wanted,
+    appearance
+  );
+  await page.getByTestId('python-block-editor').scrollIntoViewIfNeeded();
 }
 
 async function firstVisit(page, url, colorScheme) {
@@ -325,8 +385,16 @@ async function main() {
       // Beginner mode hides the deeper labs; the sweep needs every tab.
       const advanced = page.locator('[data-testid="btn-mode-advanced"]');
       if (await advanced.count()) await advanced.click();
-      for (const tabId of TAB_IDS) {
-        await page.click(`[data-testid="tab-btn-${tabId}"]`);
+      for (const surface of SURFACES) {
+        const blocks = BLOCK_SURFACES.includes(surface);
+        // A tall window for the workspace: every seeded card is then on screen at once, rather than
+        // grading whatever happened to fit above the fold.
+        if (blocks) await page.setViewportSize({ width: 1280, height: 2200 });
+        if (blocks) {
+          await openBlockSurface(page, surface);
+        } else {
+          await page.click(`[data-testid="tab-btn-${surface}"]`);
+        }
         // A tab past the runner is a lazy chunk (`React.lazy` in App.tsx), so the click can land on
         // the Suspense panel. The editor is lazy for the same reason and paints its code as a
         // placeholder (`data-editor-ready="false"`) until CodeMirror arrives. Audit the tab, never
@@ -347,12 +415,12 @@ async function main() {
           const surface = document.querySelector('.plot');
           return surface ? getComputedStyle(surface).backgroundColor : null;
         });
-        if (plot) assert.equal(plot, 'rgb(7, 10, 18)', `[${theme}/${tabId}] plot surfaces must stay dark`);
-        rows.push({ theme, tab: tabId, ...report });
+        if (plot) assert.equal(plot, 'rgb(7, 10, 18)', `[${theme}/${surface}] plot surfaces must stay dark`);
+        rows.push({ theme, tab: surface, ...report });
         if (SHOTS) {
           fs.mkdirSync(SHOT_DIR, { recursive: true });
           await page.screenshot({
-            path: path.join(SHOT_DIR, `${theme}-${tabId.replace('tab-', '')}.png`),
+            path: path.join(SHOT_DIR, `${theme}-${surface.replace('tab-', '')}.png`),
             fullPage: false,
           });
         }
@@ -362,8 +430,9 @@ async function main() {
             .slice(0, 3)
             .map((f) => `"${f.text}" ${f.ratio}:1 (${f.size}px, ${f.color} on ${f.background}) ${f.className}`)
             .join('\n           ');
-          notes.push(`[${theme}/${tabId}] ${report.failures.length} text run(s) below 3:1:\n           ${sample}`);
+          notes.push(`[${theme}/${surface}] ${report.failures.length} text run(s) below 3:1:\n           ${sample}`);
         }
+        if (blocks) await page.setViewportSize({ width: 1280, height: 720 });
       }
       await context.close();
     }
@@ -503,14 +572,14 @@ async function main() {
     }
   }
   if (failures || notes.length) {
-    console.error(`\n[FAIL] ${failures} text run(s) below 3:1 across ${rows.length} tab/theme pairs:`);
+    console.error(`\n[FAIL] ${failures} text run(s) below 3:1 across ${rows.length} surface/theme pairs:`);
     for (const note of notes) console.error(`  ${note}`);
     process.exitCode = 1;
     return;
   }
   const lowest = rows.reduce((min, row) => Math.min(min, row.worst[0]?.ratio ?? 99), 99);
   console.log(
-    `\n[PASS] Theme contract holds; across ${rows.length} tab/theme pairs every on-screen text run clears 3:1 (lowest measured ${lowest}:1).`
+    `\n[PASS] Theme contract holds; across ${rows.length} surface/theme pairs every on-screen text run clears 3:1 (lowest measured ${lowest}:1).`
   );
 }
 

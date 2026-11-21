@@ -10,8 +10,11 @@
  *
  * The sweep walks the same tab list the theme suite uses (`app/src/data/workbenchTabs.json`), so a
  * new tab is swept without touching this file, plus Home (`?view=home`), which is a whole page rather
- * than a tab. It runs each surface in every palette (dark, light, paper, high contrast) because a
- * violation can be theme-specific — an invisible focus ring, a disabled colour that disappears.
+ * than a tab, and the visual Python workspace in both of its appearances (Normal and Colorful). The
+ * workspace is a mode inside the runner tab, so it has its own opener: opening the tab and leaving
+ * the code face in front would never audit the cards. It runs each surface in every palette (dark,
+ * light, paper, high contrast) because a violation can be theme-specific — an invisible focus ring,
+ * a disabled colour that disappears.
  *
  * Two deliberate choices about the ruleset:
  *
@@ -33,6 +36,7 @@
  *     node scripts/axe_tabs.mjs --json          # machine-readable, stdout only
  *     node scripts/axe_tabs.mjs --verbose       # every node of every violation, listed
  *     node scripts/axe_tabs.mjs --tab tab-arch   # one tab, while fixing it
+ *     node scripts/axe_tabs.mjs --tab blocks     # both visual-workspace appearances
  *
  * Exit-code family: typed
  *     0  no unlisted violation, and no allowlisted entry is stale or wider than recorded
@@ -57,6 +61,25 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'];
 const FAILING = new Set(['serious', 'critical']);
 /** Every palette a signed-out reader can be in; the sweep audits each in turn. */
 const THEMES = ['dark', 'light', 'paper', 'contrast'];
+/** The two appearances of the visual workspace, swept as surfaces of their own. */
+const BLOCK_SURFACES = ['blocks-normal', 'blocks-colorful'];
+/** One card of every family, so the sweep audits containers and raw lines, not only P.1's prints. */
+const BLOCK_PROGRAM = [
+  'import math',
+  'value = 1',
+  'print(value)',
+  'if value:',
+  '    value = 2',
+  'for i in range(2):',
+  '    value = i',
+  'def f():',
+  '    return value',
+  'try:',
+  '    f()',
+  'except Exception:',
+  '    pass',
+  '',
+].join('\n');
 /** The OS colour scheme each palette is browsed under; the two extras are reached by a stored pick. */
 const SCHEME = { dark: 'dark', light: 'light', paper: 'light', contrast: 'dark' };
 
@@ -95,7 +118,43 @@ const tabNames = JSON.parse(fs.readFileSync(path.join(ROOT, 'app/src/data/workbe
 const TAB_IDS = Object.keys(tabNames.tabs);
 /** `home` is not a tab; it is the whole page a returning learner lands on (`homeLanding.ts`). */
 const HOME = 'home';
-const SURFACE_IDS = ONLY ? [ONLY] : [...TAB_IDS, HOME];
+const SURFACE_IDS = ONLY
+  ? ONLY === 'blocks'
+    ? BLOCK_SURFACES
+    : [ONLY]
+  : [...TAB_IDS, ...BLOCK_SURFACES, HOME];
+
+/**
+ * Open the visual workspace on Lesson 1 and put it in one of its two appearances. This is a surface
+ * inside the runner tab, not a tab of its own: the same guide, fold and lazy edges the browser
+ * suites handle stand between the mode bar and a loaded workspace.
+ */
+async function openBlockSurface(page, surface) {
+  await page.click('[data-testid="tab-btn-tab-pyodide"]');
+  await page.waitForFunction(
+    () =>
+      !document.querySelector('[data-testid="tab-loading"]') &&
+      !document.querySelector('[data-editor-ready="false"]'),
+    undefined,
+    { timeout: 20000 }
+  );
+  const guide = page.getByTestId('btn-guide-dismiss');
+  if (await guide.isVisible().catch(() => false)) await guide.click();
+  const folded = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+  if (await folded.count()) await folded.first().click();
+  await page.evaluate((code) => window.__mechalabEditors['editor-main'].set(code), BLOCK_PROGRAM);
+  await page.getByTestId('editor-mode-visual').click();
+  await page.getByTestId('python-block-editor').waitFor({ state: 'visible', timeout: 20000 });
+  const appearance = surface === 'blocks-colorful' ? 'colorful' : 'normal';
+  await page.getByTestId(`block-appearance-${appearance}`).click();
+  await page.waitForFunction(
+    (wanted) =>
+      document
+        .querySelector('[data-testid="python-block-editor"]')
+        ?.getAttribute('data-appearance') === wanted,
+    appearance
+  );
+}
 
 async function runAxe(page) {
   return page.evaluate(async () => {
@@ -177,6 +236,8 @@ async function main() {
           await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
           await page.addScriptTag({ content: axeSource });
           await page.waitForTimeout(300);
+        } else if (BLOCK_SURFACES.includes(tabId)) {
+          await openBlockSurface(page, tabId);
         } else {
           await page.click(`[data-testid="tab-btn-${tabId}"]`);
         }
@@ -319,8 +380,8 @@ async function main() {
   }
 
   log(
-    `\n[PASS] axe: ${TAB_IDS.length} tabs and Home × ${THEMES.length} themes clear every serious/critical rule ` +
-      `(${allowlist.entries.length} documented exception(s), none stale).`
+    `\n[PASS] axe: ${TAB_IDS.length} tabs, the visual workspace (${BLOCK_SURFACES.length} appearances) and Home × ${THEMES.length} themes ` +
+      `clear every serious/critical rule (${allowlist.entries.length} documented exception(s), none stale).`
   );
 }
 

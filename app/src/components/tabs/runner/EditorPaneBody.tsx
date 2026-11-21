@@ -10,9 +10,9 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { PythonKeys } from '../../PythonKeys';
-import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
-import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
+import type { PythonEditorHandle } from '../../PythonEditor';
+import type { LessonFile } from '../../../lessonFiles';
+import { EditorCodePane } from './EditorCodePane';
 import {
   EDITOR_TAB_DRAG_TYPE,
   EDITOR_VIEW_LABELS,
@@ -180,23 +180,10 @@ export function EditorPaneBody({
   tooltipsEnabled?: boolean;
   onClosePredict?: () => void;
 }) {
-  const {
-    code,
-    commitCode,
-    mainEditorRef,
-    helperEditorRef,
-    helperFiles,
-    openHelper,
-    pendingJump,
-    vim: { on: vimOn, onMode: onVimMode },
-    lesson: { id: lessonId },
-    onSliderCommit,
-    getAnalysis,
-    onGoToDefinition,
-    onRunCell,
-    breakpoints,
-    editorTestId = 'editor-main',
-  } = draft;
+  // The main pane's own draft, files and editor handles travel as one object to
+  // `EditorCodePane`, which is the module that draws the code/visual choice. This body still reads
+  // the source for the calculator's bridge.
+  const { code, commitCode, onSliderCommit } = draft;
   const { coEdit, collabNotice, peerLabel } = collab;
   const {
     actualOutputPane,
@@ -228,7 +215,6 @@ export function EditorPaneBody({
   const columnWidths = paneWidths(panes, Math.max(groups.length, 1));
   const shownWidths = preview.columns ?? columnWidths;
   const rowSharesFor = (count: number) => preview.rows ?? sharesFor(count, panes.rowShares);
-  const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
 
   /** A tab drag carries the custom type; a link or a selection dropped here must not split the body. */
   const carriesTab = (event: ReactDragEvent<HTMLDivElement>) =>
@@ -411,78 +397,17 @@ export function EditorPaneBody({
   const paneContent = (view: EditorView): ReactNode => {
     if (view === 'main') {
       return (
-        <div data-pane-main-body className="flex min-h-0 flex-1 flex-col">
-          {coEdit && (
-            <p
-              role="status"
-              data-testid="coedit-status"
-              className="border-b px-3 py-1.5 text-[11px]"
-              style={{ borderColor: 'var(--border)', color: 'var(--emerald, var(--accent))', backgroundColor: 'var(--bg)' }}
-            >
-              Co-editing {coEdit.lesson} with {peerLabel ?? 'the other workbench'} ·{' '}
-              {coEdit.remote === 0 ? 'no edits from them yet' : `${coEdit.remote} of their edits`} · undo is yours
-            </p>
-          )}
-          {!coEdit && collabNotice && (
-            <p
-              role="status"
-              data-testid="coedit-notice"
-              className="border-b px-3 py-1.5 text-[11px]"
-              style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-            >
-              {collabNotice}
-            </p>
-          )}
-          {!deferPhoneEditor && isPhone && !openHelperFile && (
-            <PythonKeys onInsert={(text) => mainEditorRef.current?.insertText(text)} />
-          )}
-          {deferPhoneEditor ? null : openHelperFile ? (
-            <>
-              <p
-                className="border-b px-3 py-1.5 text-[11px]"
-                style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-              >
-                Read-only helper. Your code imports this file; edit{' '}
-                <span className="font-mono" style={{ color: 'var(--accent)' }}>
-                  {MAIN_FILE_NAME}
-                </span>{' '}
-                to change the answer.
-              </p>
-              <PythonEditor
-                key={`${lessonId}:${openHelperFile.name}`}
-                ref={helperEditorRef}
-                value={openHelperFile.content}
-                readOnly
-                ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
-                testId="editor-helper"
-                onGoToDefinition={onGoToDefinition}
-                initialLine={pendingJump?.file === openHelperFile.name ? pendingJump.line : undefined}
-              />
-            </>
-          ) : (
-            <PythonEditor
-              key={`main:${lessonId}`}
-              ref={mainEditorRef}
-              value={code}
-              onChange={commitCode}
-              ariaLabel="Python code editor"
-              testId={editorTestId}
-              onSliderCommit={onSliderCommit}
-              getAnalysis={getAnalysis}
-              onGoToDefinition={onGoToDefinition}
-              onRunCell={onRunCell}
-              onToggleBreakpoint={breakpoints?.onToggle}
-              onBreakpointsMoved={breakpoints?.onMoved}
-              breakpoints={breakpoints?.entries}
-              runLine={runLine}
-              errorLine={errorLine}
-              tooltipsEnabled={tooltipsEnabled}
-              vimMode={vimOn}
-              onVimMode={onVimMode}
-              initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
-            />
-          )}
-        </div>
+        <EditorCodePane
+          draft={draft}
+          isPhone={isPhone}
+          deferPhoneEditor={deferPhoneEditor}
+          coEdit={coEdit}
+          collabNotice={collabNotice}
+          peerLabel={peerLabel}
+          runLine={runLine}
+          errorLine={errorLine}
+          tooltipsEnabled={tooltipsEnabled}
+        />
       );
     }
     if (view === 'requirements') {
