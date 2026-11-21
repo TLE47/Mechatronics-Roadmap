@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.14.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.14.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -21,9 +21,12 @@ flowchart LR
 `saveDraft` has returned `false` since the retention slice, so the study panel, the reader and a
 restore could each say *Not saved — storage is blocked or full* — but the runner ignored its own
 answer. A learner whose browser refused the write kept typing into a draft a reload would not bring
-back, and nothing on screen said so. `TabPyodideRunner` now carries that answer: the debounced write
-and the write before a lesson switch both set a status line under the editor with the same sentence,
-cleared the next time a write lands. `scripts/e2e_storage.mjs` shuts both of `bulkStorage.ts`'s doors
+back, and nothing on screen said so. Every draft write in `TabPyodideRunner` — the debounced one, the
+one before a lesson switch, an adopted attempt, a restored version, the starter — now goes through
+`runner/useDraftSave.tsx`, which keeps the answer and draws the status line under the editor with the
+same sentence, cleared the next time a write lands. The module is also where the state has to live:
+`npm run test:runner` holds the tab to 3,020 lines and 28 cells as a ratchet, so a new line or cell
+there is a red gate rather than a feature, and the extraction is what keeps the tab at 3,018. `scripts/e2e_storage.mjs` shuts both of `bulkStorage.ts`'s doors
 (the database refuses to open, the bucket refuses the draft key), types, and asserts the line
 appears, so the promise is a browser check rather than a comment.
 

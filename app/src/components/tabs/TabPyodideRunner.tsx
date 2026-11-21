@@ -46,7 +46,7 @@ import { recordSittingEvent } from '../../sittingClock';
 import { AnalysisSession, sameNotes, type LintNote } from '../../analysisClient';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
-import { isEdited, readDraft, readDrafts, saveDraft } from '../../lessonDraft';
+import { isEdited, readDraft, readDrafts } from '../../lessonDraft';
 import { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
 import { recordSnapshot } from '../../draftHistory';
 import {
@@ -96,6 +96,7 @@ import { ResultsColumn } from './runner/ResultsColumn';
 import { CompactShelf } from './runner/CompactShelf';
 import { CompactModeRow, CompactTabChips } from './runner/CompactPageChrome';
 import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
+import { DraftSaveNotice, useDraftSave } from './runner/useDraftSave';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
@@ -327,10 +328,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The name F12 was pressed on when nothing in the lesson defines it. Said in the file strip, which
   // is already there, rather than in a toast the learner has to dismiss.
   const [symbolMiss, setSymbolMiss] = useState<string | null>(null);
-  // A draft write the browser refused (`lessonDraft.ts`). The text stays on screen either way, so the
-  // one thing the learner cannot otherwise see is that a reload will not bring it back; the line says
-  // so until a write lands. False in a browser that stores normally, so it costs no markup.
-  const [draftRefused, setDraftRefused] = useState(false);
   // The arrangement — preset, dock and the editor's panes — has one owner of its own.
   const {
     layout,
@@ -679,6 +676,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     verified: Boolean(verifiedLessons[selectedId]),
     onRestore: (restored) => restoreDraftVersion(restored),
   });
+  // The draft's write answer and the line under the editor that reports a refusal
+  // (`runner/useDraftSave.tsx`).
+  const draftSave = useDraftSave();
   // The secondary half of the toolbar, folded away by default (`docs/PLAN-2.1a.md` §3). Closed is
   // the first screen a beginner sees; a control that is opened on purpose is read before it is used.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -935,7 +935,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // Scratch text is the page's snippet: writing it as this lesson's draft would overwrite work the
     // learner never replaced. `readDraft` still holds their own text, and leaving scratch restores it.
     if (scratchRef.current) return;
-    const timer = setTimeout(() => setDraftRefused(!saveDraft(selectedId, code)), 400);
+    const timer = setTimeout(() => draftSave.save(selectedId, code), 400);
     return () => clearTimeout(timer);
   }, [selectedId, code]);
 
@@ -952,9 +952,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // The lesson being left gets one last write before the editor is replaced: the debounce below
     // may not have fired for the keystrokes typed just before the switch. Not from scratch: that text
     // is the page's snippet, and the learner's own draft is still in the store.
-    if (lessonIdRef.current !== id && !scratchRef.current) {
-      if (!saveDraft(lessonIdRef.current, codeRef.current)) setDraftRefused(true);
-    }
+    if (lessonIdRef.current !== id && !scratchRef.current) draftSave.save(lessonIdRef.current, codeRef.current);
     // Picking a lesson is leaving scratch: the snippet belonged to the page that sent it.
     setScratch(false);
     scratchRef.current = false;
@@ -1017,7 +1015,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       setCode(text);
     },
     selectLesson,
-    saveText: saveDraft,
+    saveText: draftSave.save,
     onAccepted: () => setPairOpen(false),
     onAttempt: (attempt) => {
       setPairAttempt(attempt);
@@ -1071,7 +1069,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const loadPairAttempt = () => {
     if (!pairAttempt) return;
     commitCode(pairAttempt.code);
-    saveDraft(selectedId, pairAttempt.code);
+    draftSave.save(selectedId, pairAttempt.code);
     setPassStatus('untested');
     setBehaviorCheck('untested');
     setOutputCheck('untested');
@@ -1083,7 +1081,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const loadSharedAttempt = () => {
     if (!sharedAttempt) return;
     commitCode(sharedAttempt.code);
-    saveDraft(selectedId, sharedAttempt.code);
+    draftSave.save(selectedId, sharedAttempt.code);
     setPassStatus('untested');
     setBehaviorCheck('untested');
     setOutputCheck('untested');
@@ -1415,7 +1413,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * code that was there a moment ago, not this one. */
   const restoreDraftVersion = (restored: string) => {
     commitCode(restored);
-    saveDraft(selectedId, restored);
+    draftSave.save(selectedId, restored);
     setPassStatus('untested');
     setBehaviorCheck('untested');
     setOutputCheck('untested');
@@ -1895,7 +1893,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       onResetStarter={() => {
         commitCode(currentLesson.starterCode);
         // Back on the starter is the one edit that means "forget this one".
-        saveDraft(currentLesson.id, currentLesson.starterCode);
+        draftSave.save(currentLesson.id, currentLesson.starterCode);
         setPassStatus('untested');
         setBehaviorCheck('untested');
         setOutputCheck('untested');
@@ -2042,20 +2040,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             )}
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
                 something the learner just asked for, and pressing Share twice must not trap them. */}
-            {/* A refused draft write (`lessonDraft.ts`): the code is on screen, but the next reload
-                will not carry it, and only this line says so. The study panel and the reader report
-                their own refused writes the same way. */}
-            {draftRefused && (
-              <p
-                role="status"
-                data-testid="draft-status"
-                className="mt-2 text-[12px] leading-relaxed"
-                style={{ color: 'var(--rose)' }}
-              >
-                Not saved — storage is blocked or full. Your code is still here, but a reload will not
-                bring it back.
-              </p>
-            )}
+            {/* A refused draft write: the code is on screen, the next reload would not carry it. */}
+            <DraftSaveNotice refused={draftSave.refused} />
 
             {/* Format's answer: the file was tidied, it already was, or why not. A formatter that
                 silently did nothing would leave the learner diffing their own file to find out. */}
