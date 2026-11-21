@@ -895,6 +895,7 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
       return {
         body: rect(body),
         mainBody: rect(document.querySelector('[data-pane="main"] [data-pane-main-body]')),
+        modeBar: rect(document.querySelector('[data-testid="editor-mode-bar"]')),
         editor: rect(document.querySelector('[data-editor="editor-main"] .cm-editor')),
         bar: rect(document.querySelector('[data-testid="pane-divider-bottom"]')),
         reset: rect(document.querySelector('[data-testid="btn-pane-reset"]')),
@@ -945,9 +946,18 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
       `${name}: the editor leaves a gap under it (editor ${before.editor.bottom.toFixed(1)}, ` +
         `body ${before.body.bottom.toFixed(1)}, pane ${before.mainBody.bottom.toFixed(1)})`
     );
+    // The main body now carries the Visual/Python Code bar above the code face. The editor fills
+    // everything below that bar, not the whole body, so its height is the body less the bar.
+    assert.ok(before.modeBar, `${name}: the main editor's mode bar is missing`);
     assert.ok(
-      before.editor.h >= before.body.h - 4,
-      `${name}: the editor is ${before.editor.h.toFixed(1)}px in a ${before.body.h.toFixed(1)}px body`
+      before.editor.y >= before.modeBar.bottom - 2,
+      `${name}: the editor starts at ${before.editor.y.toFixed(1)}px, under the mode bar ending ` +
+        `at ${before.modeBar.bottom.toFixed(1)}px`
+    );
+    assert.ok(
+      before.editor.h >= before.body.h - before.modeBar.h - 4,
+      `${name}: the editor is ${before.editor.h.toFixed(1)}px in a ${before.body.h.toFixed(1)}px ` +
+        `body with a ${before.modeBar.h.toFixed(1)}px mode bar`
     );
 
     /**
