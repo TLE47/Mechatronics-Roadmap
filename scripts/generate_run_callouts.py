@@ -88,10 +88,13 @@ def workbench_pages():
     is the one a reader lands on, and `exercise.json` already records it.
     """
     text = read(DATA)
-    _, sep, payload = text.partition("PYTHON_LESSONS: PythonLessonItem[] =")
+    _, sep, payload = text.partition("LESSON_ROWS: Array<PythonLessonItem | ExerciseEntry> =")
     if not sep:
-        raise SystemExit("ERROR: %s has no PYTHON_LESSONS array" % DATA)
-    entries = json.loads(payload.rstrip().rstrip(";"))
+        raise SystemExit("ERROR: %s has no LESSON_ROWS array" % DATA)
+    # The rows are the array itself; `PYTHON_LESSONS` below them appends each exercise's self-check
+    # as the module loads, so the JSON value is followed by code. `raw_decode` reads the array and
+    # stops at its closing bracket, which is the one shape every reader of this file can share.
+    entries, _end = json.JSONDecoder().raw_decode(payload.lstrip())
     pages = []
     for entry in entries:
         path = entry["path"]

@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "4.14.2",
+  "version": "4.14.3",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py && python3 scripts/generate_learning_resources.py",
@@ -194,7 +194,8 @@
     "check:embeds": "python3 scripts/verify_resource_embeds.py --check",
     "test:embeds": "python3 -m unittest tests.test_resource_embeds && python3 scripts/verify_resource_embeds.py --check",
     "test:workspace": "node --experimental-strip-types scripts/test_resource_workspace.mjs",
-    "test:e2e:resources": "node scripts/e2e_resource_workspace.mjs"
+    "test:e2e:resources": "node scripts/e2e_resource_workspace.mjs",
+    "test:e2e:lazy": "node scripts/e2e_lazy_bundle.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

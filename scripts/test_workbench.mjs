@@ -300,7 +300,12 @@ async function main() {
     { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-a', browser: true },
     { label: 'robot2e', script: 'test_robot_browser.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'clock2e', script: 'e2e_study_clock.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
-    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, partition: 'bundle', browser: true },
+    // `pages` reads the registry the app reads (type-stripped .ts), so it carries the same flag as
+    // the other built-bundle suites that import it.
+    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
+    // The two surfaces that left the entry chunk: the lazy Workflow pane mounts on the built bundle,
+    // and the collapsed tapes/rain loop resolve to hashed assets that load byte-for-byte.
+    { label: 'lazy2e', script: 'e2e_lazy_bundle.mjs', env: { NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     // Every registry page on the built bundle: its own address, its payload, both scopes, its card,
     // and the gallery. It reads `dist/` through the runner's static server like the Pages sweep.

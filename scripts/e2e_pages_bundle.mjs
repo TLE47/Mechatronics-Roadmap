@@ -59,6 +59,9 @@ import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { nameStale, staleBuild } from './buildFreshness.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 import { seedRobotTourSeen } from './robot_tour_seed.mjs';
+// The registry as the app reads it: an exercise's programs are composed (body + its self-check) as
+// the module loads, so the complete reference a grader runs only exists here, not in the array text.
+import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import {
   auditNarrowWorkbench,
   auditPaneLayouts,
@@ -188,12 +191,7 @@ export function sampleExerciseIds(ids) {
 function rampReferences() {
   const registry = path.join(repoRoot, 'app', 'src', 'data', 'pythonLessonsData.ts');
   assert.ok(fs.existsSync(registry), `no generated registry at ${registry} - run scripts/generate_python_lessons_data.py`);
-  const marker = 'PYTHON_LESSONS: PythonLessonItem[] =';
-  const text = fs.readFileSync(registry, 'utf8');
-  const at = text.indexOf(marker);
-  assert.ok(at >= 0, `${registry} has no PYTHON_LESSONS array`);
-  const entries = JSON.parse(text.slice(at + marker.length).trim().replace(/;$/, ''));
-  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  const byId = new Map(PYTHON_LESSONS.map((entry) => [entry.id, entry]));
   return RAMP_LESSONS.map((id) => {
     const entry = byId.get(id);
     assert.ok(entry, `the registry carries no ramp entry ${id}`);

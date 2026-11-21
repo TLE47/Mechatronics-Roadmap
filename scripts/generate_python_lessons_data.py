@@ -1099,13 +1099,13 @@ def exercise_lessons():
                 # An exercise is one learning objective, not a list of its functions: the ideas
                 # count is a beginner-lesson rule and the workbench enforces <= 2.
                 "ideas": [manifest["title"]],
-                "starterCode": exercise_bundle.browser_program(directory, "starter"),
+                "starterBody": exercise_bundle.program_body(directory, "starter"),
                 "hints": [
                     "Open the module, section 5 (`## 5. Exercise`): the hint ladder and the worked "
                     "solution are there. The self-check at the bottom of this file names what it "
                     "tests; run it as often as you like.",
                 ],
-                "fullSolution": exercise_bundle.browser_program(directory, "solution"),
+                "solutionBody": exercise_bundle.program_body(directory, "solution"),
                 "expectedOutput": exercise_bundle.expected_output(directory, root=ROOT),
                 "outputMatch": "normalized",
                 "instructorTestSummary": [
@@ -1267,6 +1267,11 @@ def build_lessons():
     return lessons
 
 
+# The separator between a stored program body and its self-check. Raw backslashes, so the
+# generated TypeScript contains the two-character escape and not three real newlines.
+TS_PROGRAM_SEPARATOR = r"'\n\n\n'"
+
+
 def main():
     lessons = build_lessons()
 
@@ -1296,9 +1301,27 @@ def main():
         "  instructorTestSummary: string[];\n"
         "  instructorTests: string;\n"
         "}\n\n"
-        "export const PYTHON_LESSONS: PythonLessonItem[] = "
+        "/** An exercise stores each program's body once; the append happens as the registry loads, so\n"
+        " * the self-check ships once per exercise rather than three times (starter, solution, tests). */\n"
+        "type ExerciseEntry = Omit<PythonLessonItem, 'starterCode' | 'fullSolution'> & {\n"
+        "  starterBody: string;\n"
+        "  solutionBody: string;\n"
+        "};\n\n"
+        "const SELF_CHECK_HEADER = " + json.dumps(exercise_bundle.HEADER) + ";\n\n"
+        "const appendSelfCheck = (body: string, selfcheck: string): string =>\n"
+        "  body + " + TS_PROGRAM_SEPARATOR + " + SELF_CHECK_HEADER + selfcheck;\n\n"
+        "export const LESSON_ROWS: Array<PythonLessonItem | ExerciseEntry> = "
         + json.dumps(lessons, indent=2)
-        + ";\n"
+        + ";\n\n"
+        "export const PYTHON_LESSONS: PythonLessonItem[] = LESSON_ROWS.map((entry) => {\n"
+        "  if (!('starterBody' in entry)) return entry;\n"
+        "  const { starterBody, solutionBody, ...lesson } = entry;\n"
+        "  return {\n"
+        "    ...lesson,\n"
+        "    starterCode: appendSelfCheck(starterBody, lesson.instructorTests),\n"
+        "    fullSolution: appendSelfCheck(solutionBody, lesson.instructorTests),\n"
+        "  };\n"
+        "});\n"
     )
 
     if "--check" in os.sys.argv:

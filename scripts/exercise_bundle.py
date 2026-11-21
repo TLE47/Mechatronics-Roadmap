@@ -24,7 +24,7 @@ import os
 import subprocess
 import sys
 
-HEADER = "# --- browser self-check, appended by scripts/exercise_bundle.py; do not edit here ---\n"
+HEADER = "# --- self-check, appended at build time; do not edit here ---\n"
 
 
 def selfcheck_source(directory):
@@ -33,12 +33,18 @@ def selfcheck_source(directory):
         return handle.read()
 
 
-def browser_program(directory, which="solution"):
-    """The single-file program the workbench runs for `which` ('starter' or 'solution')."""
+def program_body(directory, which="solution"):
+    """The learner's own file alone: what the registry stores, and the half the self-check is
+    appended to. The browser composes the same program from this and `selfcheck.py` at load, so
+    the registry ships the check once per exercise instead of once per program."""
     path = os.path.join(directory, which + ".py")
     with open(path, "r", encoding="utf-8") as handle:
-        learner_source = handle.read()
-    return learner_source.rstrip() + "\n\n\n" + HEADER + selfcheck_source(directory)
+        return handle.read().rstrip()
+
+
+def browser_program(directory, which="solution"):
+    """The single-file program the workbench runs for `which` ('starter' or 'solution')."""
+    return program_body(directory, which) + "\n\n\n" + HEADER + selfcheck_source(directory)
 
 
 def run_browser_program(directory, which="solution", root=None):

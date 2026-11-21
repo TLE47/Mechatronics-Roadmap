@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.14.2`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.14.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,49 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-21] — One self-check per exercise, and a pane the first paint did not need
+
+`npm run check:weight` sat 521 B under `largest_js_gzip` (700 B locally) and on the ceiling for
+`js_gzip` at 1,249,123 B of 1,250,000, so the next sentence of prose anywhere would have been a red
+gate rather than a lesson. The trim is lossless — no lesson, hint, test or solution changed, and no
+budget in `docs/weight-budget.json` moved.
+
+Each of the 50 exercise entries stored `selfcheck.py` **three times**: appended to the starter,
+appended to the solution, and again as `instructorTests`. `scripts/exercise_bundle.py` now exposes
+`program_body()` — the learner's file alone — and the generated registry composes the appended copy
+once as it loads (`appendSelfCheck(body, instructorTests)`), so the check ships once per exercise
+instead of once per program. A SHA-256 comparison of all 50 entries against the `browser_program()`
+text CI executes shows both programs byte-identical, starter and solution; only the generated file's
+shape changed.
+
+The other half is a partition, not a deferral, and it is worth saying so plainly. `TabPyodideRunner`
+mounts its panes with the editor body and hides the closed ones, so the Workflow panel was rendered on
+every visit — 22 kB of plan cards and inspector inside the entry chunk. It now sits behind
+`runner/WorkflowPane.tsx`, the lazy slot `robotPane.tsx` established (shared with the lazy Studio
+tab): the same code loads on the same visit, but as its own chunk, which is what puts
+`largest_js_gzip` back under its ceiling without touching a lesson. The eleven music tapes and the
+rain loop resolve through one eager `?url` glob and `new URL(...)` instead of leaving a ~100 B stub
+chunk each, and the self-check banner is 64 characters rather than 100, a line each of the 100
+appended programs paid for.
+
+The generated file keeps two readers honest: `LESSON_ROWS` is the array itself and
+`PYTHON_LESSONS` is the composed registry under it, so `scripts/generate_run_callouts.py` decodes the
+first JSON value with `raw_decode` and `e2e_pages_bundle.mjs` imports the registry the app reads.
+That is what the bundle partition caught — it parsed the array as JSON and failed on the composed
+shape — and `npm run test:workbench -- --partition bundle` now passes with `pages` grading all 50
+exercises off the composed entries.
+
+`scripts/e2e_lazy_bundle.mjs` — in the bundle partition, so CI keeps it — serves the built bundle the
+way Pages does and presses the Workflow tab: the entry chunk has no `panel-workflow` in it, the
+panel's chunk is fetched with a 200, the pane mounts closed, then opens on its empty state and draws
+the first card the blank workflow adds. The same suite imports the built `musicBeds` and `rainAsset`
+chunks in the page, asks them for every URL, and loads each one: all twelve must be hashed assets
+under the Pages base, byte-for-byte the files on disk.
+
+Signed in, `largest_js_gzip` is now 405,599 B of 429,000 — **23,401 B** of room where the gate had
+521 — and `js_gzip` is 1,304,367 B of 1,310,000 (**+5,633 B**). Local-only: 405,445 B (from 428,300)
+and 1,244,830 B (from 1,249,123). `css_gzip`'s 749 B is now the tightest metric, and it did not move.
 
 ## [2026-11-21] — The editor says when a draft did not land
 

@@ -20,7 +20,7 @@ import { lessonPageUrl } from '../../startHere';
 import { assetUrlsFromDocument, cacheInventory, offlineWarmSupported, warmWithServiceWorker, type OfflineCacheReport } from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
 
-import { WorkflowPanel } from '../WorkflowPanel';
+import { WorkflowPane } from './runner/WorkflowPane';
 import { LessonReader } from '../LessonReader';
 import { TracePanel } from '../TracePanel';
 import { LessonChooser, type TrackFilter } from '../LessonChooser';
@@ -1759,7 +1759,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // output view like Run output: one tab press away, splittable beside the code, and mounted only
   // while the editor shows, so the Read preset pays nothing for it.
   const workflowPane = (
-    <WorkflowPanel
+    <WorkflowPane
       lessonId={selectedId}
       lessonTitle={currentLesson.title}
       onOpenLesson={selectLesson}
