@@ -30,7 +30,9 @@ appears, so the promise is a browser check rather than a comment.
 `docs/PLAN-2.1a.md` was re-audited against `d297c76`: the §5 table named a refusal that belongs to
 `help` rather than `understood_error`, §3's folded list was missing Trace, and the remaining numbers
 were the slice's own (12 tabs, 2.0.0, 12 folded controls). The note at the end of §5 now names each
-number that has moved, and the current counts.
+number that has moved, and the current counts. **No beginner evidence yet**: §5's three non-author
+sittings are still owed, and [`docs/pilot-results.md`](docs/pilot-results.md) stays the template its
+`N (non-author) = 0` says it is.
 
 ## [2026-11-21] — Reader Mode for permission-cleared sources, links for everything else
 
