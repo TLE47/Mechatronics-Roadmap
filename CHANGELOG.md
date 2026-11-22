@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,16 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-22] — A closed keyboard no longer remembers Shift
+
+Caps lock and an armed one-shot Shift lived in the keyboard component, which stays mounted while the
+shell slides away. Locking capitals and then choosing Done or Native left the next open capitalised,
+unlike the OS keyboard, which starts with Shift unarmed. The shell now passes its open state to the
+keyboard, and the close transition clears Shift and caps lock (Fn, the 123/ABC page and the lighting
+are still remembered). The physical-touch gate locks capitals across Done, arms Shift across the
+editor's Native handoff, and locks capitals across a page field's Native handoff, asserting both
+states are clear when the custom keys return.
 
 ## [2026-11-22] — The native keyboard return works on Android too
 

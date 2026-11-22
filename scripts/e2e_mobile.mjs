@@ -1313,7 +1313,13 @@ async function main() {
       await press(editorShell, 'python-key-layout');
 
       // Native is a handoff, not a one-way door: after its field is left, touching the code again
-      // brings the site's keys back instead of leaving a focused editor with no keyboard.
+      // brings the site's keys back instead of leaving a focused editor with no keyboard. One-shot
+      // Shift is transient, so the returning custom keyboard must start unarmed like the OS one.
+      await press(editorShell, 'python-key-shift');
+      check(
+        (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'true',
+        'Shift must arm before the native handoff'
+      );
       await press(editorShell, 'python-key-native');
       await page.waitForTimeout(260);
       check(
@@ -1350,6 +1356,10 @@ async function main() {
         await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
         'the returned editor keys did not keep the caret'
       );
+      check(
+        (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
+        'armed Shift survived the native handoff and reopened with the custom keys'
+      );
       await press(editorShell, 'python-key-native');
       await page.waitForTimeout(260);
       await page.evaluate(() => document.querySelector('.cm-content')?.blur());
@@ -1383,6 +1393,14 @@ async function main() {
         `the gate must drive touches, got ${JSON.stringify([...new Set(pointerTypes)])}`
       );
 
+      // Caps lock is transient too: Done folds the keyboard, so the next open starts lowercase even
+      // though Fn and the page are remembered.
+      await press(editorShell, 'python-key-shift');
+      await press(editorShell, 'python-key-shift', 25);
+      check(
+        (await editorKeyboard.getAttribute('data-caps')) === '1',
+        'caps lock must arm before Done'
+      );
       await press(editorShell, 'python-key-fn');
       const editorCloseFrames = await sampleKeyboardSlide(page, 'mobile-keyboard-shell', () =>
         touchTap(page, cdp, editorShell.getByTestId('python-key-done'), { hold: 40, label: 'Done' })
@@ -1413,6 +1431,14 @@ async function main() {
       check(
         (await editorKeyboard.getAttribute('data-fn')) === '1',
         'the editor keyboard reopened without the Fn layer it had'
+      );
+      check(
+        (await editorKeyboard.getAttribute('data-caps')) === null,
+        'caps lock survived Done and reopened with the custom keys'
+      );
+      check(
+        (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
+        'Shift reopened armed after Done'
       );
       const barOnKeys = await box(page, 'phone-bar');
       const risen = await editorShell.boundingBox();
@@ -1528,7 +1554,14 @@ async function main() {
       check((await search.inputValue()) === '', 'the held page Backspace did not clean up');
 
       // The page field's native handoff has the same return: leave the field, touch it again, and
-      // the site keys are back with the OS keyboard suppressed before focus.
+      // the site keys are back with the OS keyboard suppressed before focus. Caps lock belongs to
+      // the open session only, as it does on the OS keyboard.
+      await press(fieldShell, 'python-key-shift');
+      await press(fieldShell, 'python-key-shift', 25);
+      check(
+        (await fieldShell.getByTestId('python-keyboard').getAttribute('data-caps')) === '1',
+        'caps lock must arm before the page field native handoff'
+      );
       await press(fieldShell, 'python-key-native');
       await page.waitForTimeout(200);
       check(
@@ -1565,6 +1598,14 @@ async function main() {
       check(
         await search.evaluate((element) => element === document.activeElement),
         'the returned page keys did not keep the field caret'
+      );
+      check(
+        (await fieldShell.getByTestId('python-keyboard').getAttribute('data-caps')) === null,
+        'caps lock survived the page field native handoff and reopened with the custom keys'
+      );
+      check(
+        (await fieldShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
+        'Shift reopened armed in the page field after the native handoff'
       );
       await press(fieldShell, 'python-key-native');
       await page.waitForTimeout(200);

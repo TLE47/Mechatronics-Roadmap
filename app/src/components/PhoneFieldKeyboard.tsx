@@ -291,6 +291,7 @@ export function PhoneFieldKeyboard() {
       {everOpened && (
         <MobilePythonKeyboard
           mode="code"
+          open={open}
           onInsertText={(text) => {
             const current = field();
             if (current) insertFieldText(current, text);

@@ -555,6 +555,7 @@ export function EditorCodePane({
         >
           <MobilePythonKeyboard
             mode={mode}
+            open={keyboardOpen}
             {...keyboardActions}
             onNativeKeyboard={openNativeKeyboard}
             onDone={closeKeyboard}

@@ -76,6 +76,8 @@ type KeyboardAction =
 export interface MobilePythonKeyboardProps {
   /** Which editor is underneath, so a label can name the operation it performs there. */
   mode: MobileKeyboardMode;
+  /** Whether the shell is showing. Closing clears the transient Shift state, as a native keyboard does. */
+  open: boolean;
   onInsertText: (text: string) => void;
   onBackspace: () => void;
   onIndent: () => void;
@@ -341,6 +343,7 @@ function duration(fast: number, slow: number, speed: number): string {
 
 export function MobilePythonKeyboard({
   mode,
+  open,
   onInsertText,
   onBackspace,
   onIndent,
@@ -363,6 +366,16 @@ export function MobilePythonKeyboard({
   const [caps, setCaps] = useState(false);
   const shiftTapAt = useRef(0);
   const capital = shift || caps;
+
+  // A native keyboard comes back with Shift unarmed and caps lock off. This shell stays mounted
+  // while folded, so clear both whenever it closes — Done, Native, or the caret leaving — instead
+  // of handing the next open the last word's capitals. Fn, page and lighting stay remembered.
+  useEffect(() => {
+    if (open) return;
+    setShift(false);
+    setCaps(false);
+    shiftTapAt.current = 0;
+  }, [open]);
   // The lighting layer, and the choice it remembers. Fn + the layout key opens it; the same key
   // closes it. `page` and `fn` are not reset by the trip, so the learner returns to what they had.
   const [rgbOpen, setRgbOpen] = useState(false);

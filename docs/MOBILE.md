@@ -45,7 +45,9 @@ flowchart LR
    keyboard drawn once by `EditorCodePane` and shared by Python Code and Visual: indentation actions,
    the programming symbols, QWERTY with number labels, Shift, the operator row, and `123` / native /
    space / Done. **Fn** makes the top row block verbs and the QWERTY row digits; **123** opens the
-   digits and arithmetic page; Shift is one-shot. Keys clear the app's 28 px floor at 40 px, because
+   digits and arithmetic page; Shift is one-shot, and a second quick tap locks capitals. Closing the
+   keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
+   the page and the lighting stay remembered. Keys clear the app's 28 px floor at 40 px, because
    they are hit repeatedly and without looking. A key cancels its pointer default, so the caret, the
    field and the open keyboard stay put. It also compresses under the finger (a transform, so no
    neighbour moves), raises its character above the cap, and asks for a light vibration where the
