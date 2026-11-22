@@ -15,6 +15,7 @@ import {
   MAX_CLOCK_LOG,
   TIMER_STORAGE_KEY,
   clearTimer,
+  clearedClockLog,
   clearedTimer,
   isClearedTimer,
   newerClock,
@@ -232,6 +233,28 @@ check('a press that cannot be read is dropped, not the whole log', () => {
   assert.deepEqual(parseTimer(null).log, []);
   // An older store has no log at all, and reads as one with none rather than failing.
   assert.deepEqual(parseTimer(JSON.stringify({ bankedMs: 5000 })).log, []);
+});
+
+check('clearing the log keeps the digits, the lesson and what was finished', () => {
+  const started = startTimer(IDLE_TIMER, T0, 'P.1', 'start');
+  const paused = pauseTimer(startTimer(started, T0 + 6 * MIN, 'P.1', 'resume'), T0 + 9 * MIN);
+  const withCompletion = { ...paused, completed: ['P.1'] };
+  const cleared = clearedClockLog(withCompletion, T0 + 10 * MIN);
+  assert.deepEqual(cleared.log, [], 'the presses are what the clear removes');
+  assert.equal(elapsedMs(cleared, T0 + 60 * MIN), 9 * MIN, 'the digits keep their time');
+  assert.equal(cleared.lesson, 'P.1');
+  assert.deepEqual(cleared.completed, ['P.1'], 'a session log is not a completion record');
+  // Stamped like Log & reset: the empty log has to be the newest fact, or a sync pulls it back.
+  assert.equal(cleared.lastTick, T0 + 10 * MIN);
+  assert.ok(newerClock(paused, cleared) === cleared, 'the cleared log wins the merge');
+});
+
+check('clearing a running log leaves the stretch running', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1', 'start');
+  const cleared = clearedClockLog(running, T0 + 2 * MIN);
+  assert.equal(cleared.runningSince, T0, 'the clock is not paused by clearing its log');
+  assert.equal(elapsedMs(cleared, T0 + 5 * MIN), 5 * MIN);
+  assert.equal(cleared.lastTick, T0 + 2 * MIN);
 });
 
 section('a store from another visit');

@@ -3,8 +3,8 @@ import { Blocks, Redo2, Undo2 } from 'lucide-react';
 import { type BlockNode } from './ast.ts';
 import { BlockCard, type BlockCardHandlers } from './BlockCard';
 import { APPEARANCE_LABELS, type BlockAppearance } from './appearance.ts';
-import { PythonToolbox } from './PythonToolbox';
-import { itemById } from './registry.ts';
+import { PythonToolbox, type ToolboxDropTarget } from './PythonToolbox';
+import { itemById, type ToolboxItem } from './registry.ts';
 import { readBlockSettings, writeBlockSettings } from './settings.ts';
 import { useBlockEditor } from './useBlockEditor';
 
@@ -24,11 +24,14 @@ export function PythonBlockEditor({
   code,
   onCode,
   active = true,
+  isPhone = false,
 }: {
   code: string;
   onCode: (next: string) => void;
   /** False while Python Code is the face on screen; the model then waits for the next switch. */
   active?: boolean;
+  /** The phone's dock: the toolbox is pinned under the code instead of ending the workspace. */
+  isPhone?: boolean;
 }) {
   const editor = useBlockEditor(code, onCode, active);
   const [appearance, setAppearance] = useState<BlockAppearance>(
@@ -43,6 +46,9 @@ export function PythonBlockEditor({
   const handlers: BlockCardHandlers = {
     appearance,
     selectedId: editor.selectedId,
+    // A phone's card is the code first: five controls per statement cost more width than a 390 px
+    // screen has, so they open on request. Desktop draws them, where a learner can see the verbs.
+    actionsOpenByDefault: !isPhone,
     insertionHere: (bodyId, index) =>
       editor.insertion.bodyId === bodyId && editor.insertion.index === index,
     onSelect: editor.select,
@@ -51,6 +57,11 @@ export function PythonBlockEditor({
     onDuplicate: editor.duplicate,
     onRemove: editor.remove,
     onInsertInside: (id) => editor.insertAtEnd(id),
+  };
+
+  /** A dragged toolbox block landed on a card: insert exactly there, not at the last tap. */
+  const onDropItem = (item: ToolboxItem, target: ToolboxDropTarget) => {
+    editor.insertAt(target.bodyId, target.index, item.template, item.id);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -81,8 +92,10 @@ export function PythonBlockEditor({
       onKeyDown={onKeyDown}
       className="flex min-w-0 flex-col bg-panel"
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-line-soft bg-canvas px-2 py-1.5">
-        <p className="flex min-w-0 flex-1 items-center gap-1 text-[11px] leading-snug text-muted">
+      {/* Phone budget: this bar is above the code a learner came for, so it is one compact row
+          there — tighter padding, no sentence, a smaller count — and the full bar from `sm` up. */}
+      <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 border-b border-line-soft bg-canvas px-1.5 py-1 sm:gap-x-2 sm:px-2 sm:py-1.5">
+        <p className="hidden min-w-0 flex-1 items-center gap-1 text-[11px] leading-snug text-muted sm:flex">
           <Blocks className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
           <span className="min-w-0">
             Blocks write <code>main.py</code> — the same program Run executes.
@@ -107,7 +120,7 @@ export function PythonBlockEditor({
                   : 'Semantic colours for each kind of statement'
               }
               onClick={() => chooseAppearance(option)}
-              className={`min-h-7 cursor-pointer rounded-md px-2 font-mono text-[11.5px] transition-colors ${
+              className={`min-h-6 cursor-pointer rounded-md px-1.5 font-mono text-[11px] transition-colors sm:min-h-7 sm:px-2 sm:text-[11.5px] ${
                 appearance === option
                   ? 'bg-accent-soft font-semibold text-accent'
                   : 'text-muted hover:text-body'
@@ -121,9 +134,10 @@ export function PythonBlockEditor({
         <span
           role="status"
           data-testid="block-count"
-          className="shrink-0 font-mono text-[11px] tabular-nums text-faint"
+          className="shrink-0 font-mono text-[10.5px] tabular-nums text-faint sm:text-[11px]"
         >
-          {count} {count === 1 ? 'statement' : 'statements'}
+          {count}
+          <span className="hidden sm:inline"> {count === 1 ? 'statement' : 'statements'}</span>
         </span>
 
         <div className="flex shrink-0 items-center gap-0.5">
@@ -134,7 +148,7 @@ export function PythonBlockEditor({
             title="Undo (⌘Z)"
             disabled={!editor.canUndo}
             onClick={editor.undo}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-panel text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:cursor-default disabled:opacity-40"
+            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-panel text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:cursor-default disabled:opacity-40 sm:h-7 sm:w-7"
           >
             <Undo2 className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -145,14 +159,21 @@ export function PythonBlockEditor({
             title="Redo (⇧⌘Z)"
             disabled={!editor.canRedo}
             onClick={editor.redo}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-panel text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:cursor-default disabled:opacity-40"
+            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-panel text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:cursor-default disabled:opacity-40 sm:h-7 sm:w-7"
           >
             <Redo2 className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      <div data-testid="python-workspace" className="min-w-0 px-2 py-2">
+      {/* The workspace is a drop surface too: a block released past the last card goes to the end.
+          On a phone the bottom padding keeps the last statement scrollable above the dock. */}
+      <div
+        data-testid="python-workspace"
+        data-drop-body=""
+        data-drop-index={editor.program.nodes.length}
+        className={`min-w-0 px-2 py-2 ${isPhone ? 'pb-[42vh]' : ''}`}
+      >
         {editor.program.nodes.length === 0 ? (
           <div
             data-testid="python-workspace-empty"
@@ -213,6 +234,9 @@ export function PythonBlockEditor({
 
       <PythonToolbox
         onInsert={(item) => editor.insert(item.template, item.id)}
+        onDropItem={onDropItem}
+        appearance={appearance}
+        dock={isPhone}
         recent={editor.recent}
       />
     </div>

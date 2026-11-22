@@ -232,6 +232,23 @@ async function main() {
     );
     const starterBlocks = await blockCount(page);
     assert.ok(starterBlocks > 0, 'the starter should draw at least one statement card');
+
+    // A desktop card opens with its verbs. The toggle is on every card, and folding it hides the
+    // five controls without touching the statement they act on.
+    const firstCard = page.locator('[data-testid="python-workspace-list"] > li').first();
+    await firstCard.getByTestId('block-actions-toggle').click();
+    assert.equal(
+      await firstCard.getByTestId('block-duplicate').count(),
+      0,
+      'folding a card should remove its controls'
+    );
+    assert.equal(
+      await firstCard.getByTestId('block-actions-toggle').getAttribute('aria-expanded'),
+      'false'
+    );
+    await firstCard.getByTestId('block-actions-toggle').click();
+    await firstCard.getByTestId('block-duplicate').waitFor({ state: 'visible' });
+    console.log('  ok a card folds and unfolds its five controls');
     await switchToCode(page);
     assert.equal(
       await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor()),
@@ -323,6 +340,68 @@ async function main() {
     );
     await page.getByTestId('toolbox-sort').selectOption('recommended');
     console.log('  ok the toolbox collapses, filters, steps, searches and sorts');
+
+    // ---- A toolbox block can be dragged onto a card ----
+    // The press starts on the item, so the drag is the toolbox's own pointer gesture; the target is
+    // the card under the pointer, and the statement lands after it rather than at the last tap.
+    const dragItem = page.getByTestId('toolbox-item-assignment');
+    // The last card, because the toolbox and the program's first card cannot both be on screen in
+    // a long program: the toolbox is brought into view, and the card nearest it is the target.
+    const dropTarget = page.locator('[data-testid="python-workspace-list"] > li').last();
+    // The program already gained the statement typed in Python Code above; the baseline is what is
+    // on screen now, not what the starter drew.
+    const beforeDrag = await blockCount(page);
+    // Read the target's id now: the locator is lazy, and after the drop `.last()` names the card
+    // the drop just added, not the one the pointer was released on.
+    const targetId = await dropTarget.getAttribute('data-block-id');
+    const idsBefore = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-block-id]')].map((node) =>
+        node.getAttribute('data-block-id')
+      )
+    );
+    await dragItem.scrollIntoViewIfNeeded();
+    const from = await dragItem.boundingBox();
+    const to = await dropTarget.boundingBox();
+    assert.ok(from && to, 'the dragged item and the drop card should both be on screen');
+    assert.ok(
+      from.y >= 0 && from.y + from.height <= 900,
+      `the dragged item should be inside the viewport, got y ${Math.round(from.y)}`
+    );
+    const dropX = to.x + Math.min(to.width / 3, 200);
+    const dropY = Math.min(Math.max(to.y + 16, 40), 860);
+    assert.ok(to.y < 880, `the drop card should be on screen, got y ${Math.round(to.y)}`);
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(from.x + from.width / 2 + 24, from.y + from.height / 2, { steps: 3 });
+    await page.getByTestId('toolbox-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    await page.mouse.move(dropX, dropY, { steps: 10 });
+    await page.mouse.up();
+    assert.equal(await blockCount(page), beforeDrag + 1, 'the drop should insert one statement');
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-block-id]')].map((node) =>
+        node.getAttribute('data-block-id')
+      )
+    );
+    const droppedId = order.find((id) => !idsBefore.includes(id));
+    assert.ok(droppedId, 'the drop should add a card that was not there before');
+    assert.equal(
+      await page
+        .locator(`[data-testid="python-block-assign"][data-block-id="${droppedId}"]`)
+        .count(),
+      1,
+      'the dropped card should be the toolbox assignment'
+    );
+    assert.ok(
+      order.indexOf(droppedId) > order.indexOf(targetId),
+      'the dropped statement must sit below (or inside) the card it was released on'
+    );
+    assert.ok(
+      (await getEditorCode(page)).includes('name = "Alex"'),
+      'the dropped assignment should reach main.py'
+    );
+    await page.getByTestId('block-undo').click();
+    assert.equal(await blockCount(page), beforeDrag, 'the drop is one undo step');
+    console.log('  ok a dragged toolbox block lands after the card it was released on');
 
     await page.getByTestId('block-add-statement').click();
     await page.getByTestId('toolbox-item-print').click();
@@ -508,7 +587,19 @@ async function main() {
 
     // ---- 5. Appearance is real and remembered ----
     const beforeColorful = await getEditorCode(page);
+    // The toolbox previews the look too: a Colorful item wears the ink its card will wear.
+    const toolboxInk = () =>
+      page
+        .getByTestId('toolbox-item-print')
+        .evaluate((element) => getComputedStyle(element).backgroundColor);
+    const normalToolbox = await toolboxInk();
     await page.getByTestId('block-appearance-colorful').click();
+    const colorfulToolbox = await toolboxInk();
+    assert.notEqual(
+      colorfulToolbox,
+      normalToolbox,
+      'Colorful should repaint the toolbox, not only the cards'
+    );
     assert.equal(
       await page.getByTestId('python-block-editor').getAttribute('data-appearance'),
       'colorful',
@@ -566,6 +657,45 @@ async function main() {
       overflow.toolboxRight <= overflow.width + 1,
       `the toolbox ends ${Math.round(overflow.toolboxRight)}px into a ${overflow.width}px phone`
     );
+
+    // The toolbox is a dock on a phone: pinned to the bottom edge, about a third of the screen,
+    // and folded to one row by a downward swipe of its grabber (or opened by an upward one).
+    const dock = page.getByTestId('python-toolbox');
+    assert.equal(await dock.getAttribute('data-dock'), '1', 'a phone should get the docked toolbox');
+    const dockBox = await dock.boundingBox();
+    assert.ok(dockBox, 'the dock should be laid out');
+    const phoneBarBox = await page.getByTestId('phone-bar').boundingBox();
+    assert.ok(phoneBarBox, 'the phone should draw its Study bar');
+    assert.ok(
+      Math.abs(dockBox.y + dockBox.height - phoneBarBox.y) <= 2,
+      `the dock should sit on the Study bar, not ${Math.round(dockBox.y + dockBox.height)}px vs ${Math.round(phoneBarBox.y)}px`
+    );
+    assert.ok(
+      dockBox.height <= 844 * 0.45,
+      `the dock should take about a third of the screen, not ${Math.round(dockBox.height)}px`
+    );
+    const grabber = page.getByTestId('toolbox-grabber');
+    const grabBox = await grabber.boundingBox();
+    assert.ok(grabBox, 'the dock should draw its grabber');
+    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2 + 90, {
+      steps: 8,
+    });
+    await page.mouse.up();
+    assert.equal(
+      await page.getByTestId('toolbox-search').count(),
+      0,
+      'a downward swipe on the grabber should fold the dock to one row'
+    );
+    const foldedBox = await dock.boundingBox();
+    assert.ok(
+      foldedBox && foldedBox.height < dockBox.height,
+      'the folded dock should be shorter than the open one'
+    );
+    // A tap on the grabber is the other way in, for a learner who does not think to swipe.
+    await grabber.click();
+    await page.getByTestId('toolbox-search').waitFor({ state: 'visible', timeout: 5000 });
 
     // A touch tap, not a synthesized mouse click: the phone's primary interaction is tapping a
     // toolbox element and having the statement appear.

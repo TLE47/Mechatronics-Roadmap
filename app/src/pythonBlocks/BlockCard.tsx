@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Copy, CornerDownRight, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowDown, ArrowUp, ChevronUp, Copy, CornerDownRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { KIND_LABELS, type BlockFields, type BlockNode, isContainer } from './ast.ts';
 import { blockColors, type BlockAppearance } from './appearance.ts';
 import { InlineField } from './InlineField';
@@ -24,6 +25,14 @@ import { InlineField } from './InlineField';
 export interface BlockCardHandlers {
   appearance: BlockAppearance;
   selectedId: string | null;
+  /**
+   * Whether a card opens with its five controls drawn.
+   *
+   * Desktop has the width for them and a learner can see what a card can do; a phone's card is the
+   * code and nothing else until the learner asks for the controls, which is room a 390 px screen
+   * cannot spend on five 24 px buttons. The toggle is on every card either way.
+   */
+  actionsOpenByDefault: boolean;
   insertionHere: (bodyId: string | null, index: number) => boolean;
   onSelect: (nodeId: string | null, bodyId: string | null, index: number) => void;
   onField: (id: string, fields: Partial<BlockFields>) => void;
@@ -160,6 +169,7 @@ export function BlockCard({
   handlers: BlockCardHandlers;
 }) {
   const colors = blockColors(node.kind, handlers.appearance);
+  const [actionsOpen, setActionsOpen] = useState(handlers.actionsOpenByDefault);
   const selected = handlers.selectedId === node.id;
   const container = isContainer(node.kind);
   const raw = node.kind === 'raw' || node.kind === 'import';
@@ -202,6 +212,10 @@ export function BlockCard({
       <div
         role="group"
         aria-label={`${label} statement ${position}`}
+        // A dragged toolbox element released here lands directly below this statement. The suite's
+        // own body publishes a deeper target, so a drop inside a container reaches the container.
+        data-drop-body={bodyId ?? ''}
+        data-drop-index={index + 1}
         onClick={() => handlers.onSelect(node.id, bodyId, index)}
         style={{
           background: colors.background,
@@ -239,46 +253,76 @@ export function BlockCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
-            {action(
-              'Insert after',
-              'Insert a toolbox statement after this one',
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />,
-              () => handlers.onSelect(node.id, bodyId, index + 1),
-              'block-insert-after'
+            {actionsOpen && (
+              <>
+                {action(
+                  'Insert after',
+                  'Insert a toolbox statement after this one',
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />,
+                  () => handlers.onSelect(node.id, bodyId, index + 1),
+                  'block-insert-after'
+                )}
+                {action(
+                  'Move up',
+                  'Move this statement up',
+                  <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />,
+                  () => handlers.onMove(node.id, -1),
+                  'block-move-up'
+                )}
+                {action(
+                  'Move down',
+                  'Move this statement down',
+                  <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />,
+                  () => handlers.onMove(node.id, 1),
+                  'block-move-down'
+                )}
+                {action(
+                  'Duplicate',
+                  'Duplicate this statement',
+                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />,
+                  () => handlers.onDuplicate(node.id),
+                  'block-duplicate'
+                )}
+                {action(
+                  'Delete',
+                  'Delete this statement',
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />,
+                  () => handlers.onRemove(node.id),
+                  'block-remove'
+                )}
+              </>
             )}
-            {action(
-              'Move up',
-              'Move this statement up',
-              <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />,
-              () => handlers.onMove(node.id, -1),
-              'block-move-up'
-            )}
-            {action(
-              'Move down',
-              'Move this statement down',
-              <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />,
-              () => handlers.onMove(node.id, 1),
-              'block-move-down'
-            )}
-            {action(
-              'Duplicate',
-              'Duplicate this statement',
-              <Copy className="h-3.5 w-3.5" aria-hidden="true" />,
-              () => handlers.onDuplicate(node.id),
-              'block-duplicate'
-            )}
-            {action(
-              'Delete',
-              'Delete this statement',
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />,
-              () => handlers.onRemove(node.id),
-              'block-remove'
-            )}
+            {/* One control always visible: a card with no way back to its buttons would hide the
+                only way to move or delete the statement. */}
+            <button
+              type="button"
+              data-testid="block-actions-toggle"
+              aria-expanded={actionsOpen}
+              aria-label={`${actionsOpen ? 'Hide' : 'Show'} controls for ${label} statement ${position}`}
+              title={
+                actionsOpen
+                  ? 'Hide the controls and give the code the room'
+                  : 'Insert, move, copy or delete this statement'
+              }
+              onClick={(event) => {
+                event.stopPropagation();
+                setActionsOpen((value) => !value);
+              }}
+              className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded border border-transparent text-faint transition-colors hover:border-line-soft hover:bg-raise hover:text-ink"
+            >
+              {actionsOpen ? (
+                <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+            </button>
           </div>
         </div>
 
         {container && (
           <div
+            data-drop-body={node.id}
+            data-drop-index={node.body.length}
             className="mt-1.5 min-w-0 pl-2"
             style={{ borderLeft: `2px solid ${colors.border}` }}
           >

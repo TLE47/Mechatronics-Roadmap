@@ -1,4 +1,5 @@
 import React from 'react';
+import { Info } from 'lucide-react';
 
 /**
  * The punctuation a phone keyboard hides (`components/PythonKeys.tsx`).
@@ -31,13 +32,24 @@ const KEYS: { label: string; insert: string; name: string }[] = [
 ];
 
 export const PythonKeys: React.FC<{ onInsert: (text: string) => void }> = ({ onInsert }) => (
-  <div
-    data-testid="python-keys"
-    role="group"
-    aria-label="Python punctuation keys"
-    className="flex flex-wrap items-center gap-1 border-b border-line-soft bg-canvas px-2 py-1.5"
-  >
-    {KEYS.map((key) => (
+  <div className="border-b border-line-soft bg-canvas">
+    {/* The one tip this strip exists to give: the keyboard's own speed features are faster than
+        hunting for a colon. The title is for a pointer; the line is for the phone that has none. */}
+    <p
+      data-testid="typing-tip"
+      title="Dictate code with your keyboard's microphone, or slide across the letters instead of tapping each one"
+      className="flex items-center gap-1 border-b border-line-soft/60 px-2 py-1 text-[10.5px] leading-snug text-muted"
+    >
+      <Info className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
+      Faster typing: dictate it with the mic key, or swipe across the letters.
+    </p>
+    <div
+      data-testid="python-keys"
+      role="group"
+      aria-label="Python punctuation keys"
+      className="flex flex-wrap items-center gap-1 px-2 py-1.5"
+    >
+      {KEYS.map((key) => (
       <button
         key={`${key.label}-${key.insert}`}
         type="button"
@@ -46,10 +58,11 @@ export const PythonKeys: React.FC<{ onInsert: (text: string) => void }> = ({ onI
         aria-label={key.name}
         title={key.name}
         data-testid={`python-key-${key.label === '→' ? 'indent' : key.label === ':' ? 'colon' : key.label}`}
-        className="min-h-[40px] min-w-[40px] rounded-md border border-line bg-panel px-2 font-mono text-[14px] font-semibold text-body hover:bg-raise active:bg-accent/15 active:text-accent cursor-pointer"
-      >
-        {key.label}
-      </button>
-    ))}
+          className="min-h-[40px] min-w-[40px] rounded-md border border-line bg-panel px-2 font-mono text-[14px] font-semibold text-body hover:bg-raise active:bg-accent/15 active:text-accent cursor-pointer"
+        >
+          {key.label}
+        </button>
+      ))}
+    </div>
   </div>
 );

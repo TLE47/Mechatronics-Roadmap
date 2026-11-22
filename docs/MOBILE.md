@@ -43,7 +43,8 @@ flowchart LR
    needs `:`, `(`, `)`, `"`, `_`, `#`, brackets and indentation on nearly every line, and each trip to
    the symbol pane loses the caret's place. `components/PythonKeys.tsx` inserts at the caret through
    the editor's own handle; every key is 40 px square, above the app's 28 px floor, because these are
-   hit repeatedly and without looking.
+   hit repeatedly and without looking. The strip's one line above the keys says the faster way:
+   dictate with the keyboard's mic key, or swipe across the letters.
 6. **A plot opens at its own resolution.** A 320 px Bode card cannot be read for a phase margin.
    `components/PlotExpander.tsx` snapshots the live canvas with `toDataURL` and shows it in a sheet
    that scrolls both ways; the snapshot is taken when the sheet opens, because the canvas redraws every
@@ -53,6 +54,15 @@ flowchart LR
    Share-sheet words on iOS (which has no prompt event), nothing on a laptop. "Not now" is a thirty-day
    snooze. Accepted installs need no record — the next launch is `standalone` and the first rule hides
    the row.
+
+**Visual blocks dock on a phone.** `EditorCodePane`'s Visual face draws the same `main.py` as cards.
+Its Python Toolbox is a **dock**, not the panel at the end of the workspace: fixed above the fixed
+Study bar (measured, so it sits on the bar rather than under it), a grabber that swipes down to one
+row or up to about a third of the screen, and the catalog scrolling inside it. The workspace keeps
+42vh of bottom padding so the last card can still be scrolled above the dock. A card opens with its
+five controls folded on a phone and unfolded on desktop; the toolbar above the code is one compact
+row below `sm` and the full bar with its sentence above that. From `sm` up the toolbox is the inline
+panel, so Visual is not a phone-only face.
 
 **The workflow rides in Code.** The editor's output views — Predict, Run output, Expected, Workflow — are
 tabs of one card, and the Workflow canvas is born in one column: the same flow is legible in a 380 px

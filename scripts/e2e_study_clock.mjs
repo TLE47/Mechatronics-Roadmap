@@ -84,6 +84,54 @@ try {
   console.log(
     '  ok   every Start, Pause and Resume prints its time + study clock; the session 0:09:00 is separate'
   );
+
+  // ---- The log folds and clears without touching the digits ----
+  // A long session's presses can be longer than the brief; the header keeps the total in sight and
+  // folds the list. The fold is the log's own, not Log & reset: the digits stay where they were.
+  const log = page.getByTestId('study-clock-log');
+  const entries = page.getByTestId('study-clock-entry');
+  assert.equal(await entries.count(), 6, 'every press is drawn before the fold');
+  await page.getByTestId('study-clock-log-toggle').first().click();
+  assert.equal(
+    await entries.first().isVisible(),
+    false,
+    'folding the log should hide the presses'
+  );
+  assert.equal(
+    (await page.getByTestId('study-clock-session').first().innerText()).trim(),
+    '0:09:00',
+    'the session total stays visible when the presses are folded'
+  );
+  assert.equal(
+    (await page.getByTestId('study-clock-log-toggle').first().getAttribute('aria-expanded')),
+    'false',
+    'the fold control should say the log is closed'
+  );
+  await page.getByTestId('study-clock-log-toggle').first().click();
+  assert.equal(await entries.first().isVisible(), true, 'unfolding brings the presses back');
+
+  // The clear is the log's own too: the digits and the session's ended stretches are facts about
+  // study time, and clearing a list of presses must not un-file them.
+  await page.getByTestId('study-clock-log-clear').first().click();
+  await page.waitForFunction(
+    () => document.querySelectorAll('[data-testid="study-clock-entry"]').length === 0,
+    undefined,
+    { timeout: 5000 }
+  );
+  assert.equal(await log.count(), 0, 'a cleared log leaves nothing to fold');
+  assert.equal(
+    (await page.getByTestId('study-timer-elapsed').first().innerText()).trim(),
+    '0:09:00',
+    'clearing the log must not zero the digits'
+  );
+  const afterClear = JSON.parse(
+    await page.evaluate(() => localStorage.getItem('mechalab_study_timer_v1'))
+  );
+  assert.deepEqual(afterClear.log, [], 'the stored session has no presses after the clear');
+  assert.equal(afterClear.bankedMs, 9 * MINUTE, 'the stored digits keep their stretch');
+  // This context seeds the store on every navigation, so the reload check for the clear lives in
+  // the store assertion above: what is written is what the next visit reads.
+  console.log('  ok   the log folds to its total and clears without zeroing the clock');
   // ---- The completion survives Log & reset and a reload ----
   // The clock used to forget, on reset, that this lesson had been finished: the digits came back at
   // 0:00:00 (right) and the chip fell back to "in progress" (wrong) on the next visit. Seeding the

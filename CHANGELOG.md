@@ -16,6 +16,33 @@ flowchart LR
 
 ---
 
+## [2026-11-21] — The visual blocks get a phone dock, drag and drop, and a quieter toolbar
+
+The Visual face is no longer phone-first furniture that a desktop learner has to hunt for. The
+**Python Toolbox** is a docked sheet on a phone — pinned above the fixed Study bar, about a third of
+the screen, a grabber that swipes up or down (or taps) between one row and the catalog — and stays
+the inline panel at tablet and desktop widths. A desktop learner whose stored mode is `visual` opens
+Study with the editor body unfolded instead of one press away from the face they chose.
+
+**Every toolbox element can be dragged.** A mouse drag in any direction, or a sideways touch drag,
+carries an element over the workspace; the card under the pointer is the drop target, and the
+statement lands in that card's body at that index (a suite's own body is a deeper target, so dropping
+onto a loop drops inside it). Taps still insert at the current point. **Colorful** now paints the
+toolbox cards with the same kind ink their cards will wear, so the catalog previews the workspace's
+look instead of sitting beside it in neutral grey. **Normal** leaves them neutral.
+
+Two controls make the card and the toolbox smaller without removing anything. Each statement card has
+a **fold** beside its five verbs — desktop opens them, a phone opens folded so the code gets the
+width — and the bar above the workspace is one compact row on a phone (no sentence, a tighter
+appearance switch, a smaller count) and the full bar from `sm` up. The phone's punctuation strip now
+says the one tip worth saying above it: **dictate with the mic key, or swipe across the letters**,
+to type Python faster.
+
+The study clock's session log gains the two controls its header was missing: a **fold** that keeps
+the session total and hides the presses, and a **clear** that empties the log while the digits, the
+banked time and the completed-lesson record stay exactly where they were. Both are the log's own —
+Log & reset is still the one press that zeroes the session.
+
 ## [2026-11-21] — The Python editor gets a Visual face over the same `main.py`
 
 `python-runner-editor`'s main pane now has a **Visual / Python Code** switch. Python Code is the

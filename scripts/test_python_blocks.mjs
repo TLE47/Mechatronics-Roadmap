@@ -267,6 +267,27 @@ check('generated Python parses, and parsing it back renders the same text', () =
   assert.equal(renderProgram(parseProgram(text)), text);
 });
 
+check('a dropped block lands at the index the drop target named', () => {
+  // A drag names a body and an index, not "the last tap's spot": the statement appears between
+  // its neighbours, the library under it stays where it was, and the rendered code says so.
+  const program = parseProgram('first = 1\nsecond = 2\nthird = 3\n');
+  const dropped = insertNode(program, { bodyId: null, index: 1 }, item('print').template);
+  const lines = renderProgram(dropped.program).trim().split('\n');
+  assert.deepEqual(lines, ['first = 1', 'print("Hello")', 'second = 2', 'third = 3']);
+  assert.ok(dropped.id, 'the dropped statement gets a fresh id');
+  assertPython(renderProgram(dropped.program), 'a dropped root statement');
+
+  // Dropping into a suite goes into that suite, at its own index, not at the program's end.
+  const loop = parseProgram('items = [1]\nfor item in items:\n    print(item)\n');
+  const suite = loop.nodes[1];
+  const inside = insertNode(loop, { bodyId: suite.id, index: 0 }, item('print').template);
+  assert.equal(inside.program.nodes.length, 2, 'the suite is still one root statement');
+  assert.equal(inside.program.nodes[1].body.length, 2, 'the suite gained one statement');
+  const nested = renderProgram(inside.program);
+  assert.ok(nested.includes('for item in items:\n    print("Hello")\n    print(item)'), nested);
+  assertPython(nested, 'a dropped statement inside a suite');
+});
+
 check('all nine toolbox categories exist in the plan’s order', () => {
   assert.deepEqual(
     TOOLBOX_CATEGORIES.map((category) => category.label),

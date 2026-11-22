@@ -46,6 +46,8 @@ interface BlockEditor {
   select: (nodeId: string | null, bodyId: string | null, index: number) => void;
   /** Put the next statement at the end of a suite (or the program's own body for null). */
   insertAtEnd: (bodyId: string | null) => void;
+  /** Put a statement at one exact point, which is what a dragged toolbox block names. */
+  insertAt: (bodyId: string | null, index: number, template: BlockNode, itemId?: string) => void;
   insert: (template: BlockNode, itemId?: string) => void;
   editField: (id: string, fields: Partial<BlockFields>) => void;
   remove: (id: string) => void;
@@ -163,6 +165,27 @@ export function useBlockEditor(
     setInsertion({ bodyId, index: body?.length ?? 0 });
   };
 
+  /**
+   * Insert where a dragged element was released.
+   *
+   * The point is the drop target's, not the last tap's: a learner who drops a `print` between the
+   * loop and the call is asking for that line, and making them tap again would be the editor asking
+   * twice. The follow-up insertion point moves below the new statement, so a tap after a drop
+   * continues where the drop ended.
+   */
+  const insertAt = (
+    bodyId: string | null,
+    index: number,
+    template: BlockNode,
+    itemId?: string
+  ) => {
+    const result = insertNode(programRef.current, { bodyId, index }, template);
+    const length = bodyOf(result.program, bodyId)?.length ?? 0;
+    commit(result.program, result.id);
+    setInsertion({ bodyId, index: Math.max(0, Math.min(index + 1, length)) });
+    if (itemId) remember(itemId);
+  };
+
   const editField = (id: string, fields: Partial<BlockFields>) =>
     commit(updateNode(programRef.current, id, fields), id);
 
@@ -186,6 +209,7 @@ export function useBlockEditor(
     canRedo,
     select,
     insertAtEnd,
+    insertAt,
     insert,
     editField,
     remove,

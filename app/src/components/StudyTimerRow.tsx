@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronDown, Pause, Play, Timer, TimerReset } from 'lucide-react';
+import { ChevronDown, Pause, Play, Timer, TimerReset, Trash2 } from 'lucide-react';
 import {
   clearedTimer,
   elapsedMs,
@@ -8,6 +8,7 @@ import {
   heartbeat,
   newerClock,
   pauseTimer,
+  clearedClockLog,
   readTimer,
   TIMER_STORAGE_KEY,
   resumeTimer,
@@ -84,9 +85,12 @@ export const StudyTimerRow: React.FC<{
   const [todayMs, setTodayMs] = useState(() => sittingTotals(readSittings()).todayMs);
   const [lesson, setLesson] = useState(() => lessonTotals(readSittings(), lessonId));
   const [logOpen, setLogOpen] = useState(false);
+  /** The session log's own fold. The session total and its controls stay in sight. */
+  const [logFolded, setLogFolded] = useState(false);
   // Two rows can be mounted at once (the phone strip's compact clock and the brief's full one);
-  // the panel id has to name this row's panel, not whichever rendered first.
+  // the panel ids have to name this row's panels, not whichever rendered first.
   const logPanelId = useId();
+  const logListId = useId();
   /** Bumped once a second: only the digits move, the store moves on a heartbeat. */
   const [, setTick] = useState(0);
   const timerRef = useRef(timer);
@@ -214,6 +218,19 @@ export const StudyTimerRow: React.FC<{
         ? pauseTimer(base, now)
         : startTimer(base, now, lessonId, at > 0 ? 'resume' : 'start')
     );
+  };
+
+  /** Empty the presses and keep the digits: clearing a log is not a reset. */
+  const onClearLog = () => {
+    const base = currentRecord();
+    persist(clearedClockLog(base, Date.now()));
+    // The reminder and the phone strip hold the same record; without the announcement they would
+    // keep the log they read at mount and write it back on their next press.
+    try {
+      window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+    } catch {
+      // A blocked window costs the announcement, not the clear.
+    }
   };
 
   const onReset = () => {
@@ -370,11 +387,40 @@ export const StudyTimerRow: React.FC<{
             >
               {formatClock(elapsed)}
             </span>
+            {/* The two things a learner wants from a session log: less of it on screen, or gone.
+                Both stay in the header, so a folded log still shows its total and its buttons. */}
+            <div className="ml-auto flex items-center gap-0.5">
+              <button
+                type="button"
+                data-testid="study-clock-log-toggle"
+                aria-expanded={!logFolded}
+                aria-controls={logListId}
+                aria-label={logFolded ? 'Show the session log' : 'Hide the session log'}
+                title={logFolded ? 'Show every press' : 'Fold the presses away; the digits stay'}
+                onClick={() => setLogFolded((folded) => !folded)}
+                className="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-transparent text-faint transition-colors hover:border-line-soft hover:bg-canvas hover:text-body"
+              >
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform ${logFolded ? '' : 'rotate-180'}`}
+                  aria-hidden="true"
+                />
+              </button>
+              <button
+                type="button"
+                data-testid="study-clock-log-clear"
+                aria-label="Clear the session log"
+                title="Clear the session log — the digits keep counting"
+                onClick={onClearLog}
+                className="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-transparent text-faint transition-colors hover:border-line-soft hover:bg-canvas hover:text-rose"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
           </div>
           {/* One line per press, in the clock's own monospace: the time of day, what was pressed,
               the digits at that moment, and the stretch a pause closed. The dot and the coloured
               word carry the action, so a paused session reads down the left edge at a glance. */}
-          <ol className="px-3 py-1.5">
+          <ol id={logListId} hidden={logFolded} className="px-3 py-1.5">
             {timer.log.map((press, index) => (
               <li
                 key={`${press.at}-${index}`}

@@ -276,6 +276,25 @@ export function clearedTimer(lesson = '', completed: string[] = [], at = 0): Stu
 }
 
 /**
+ * The session's presses, cleared, with everything else the clock holds left alone.
+ *
+ * This is the log's own clear, not Log & reset: the digits keep counting, the banked time stays, and
+ * the lessons the clock has seen finished stay finished. Only the list of presses goes.
+ *
+ * `at` is stamped as the heartbeat for the same reason `clearedTimer` stamps its reset: sync keeps
+ * the copy with the later `lastTick`, so an empty log written without a stamp would lose to another
+ * device's copy of the same session and come back on the next pull.
+ */
+export function clearedClockLog(timer: StudyTimer, at: number = Date.now()): StudyTimer {
+  return {
+    ...timer,
+    lastTick: Math.max(Math.round(at), timer.runningSince ?? 0, timer.lastTick || 0),
+    completed: Array.isArray(timer.completed) ? timer.completed : [],
+    log: [],
+  };
+}
+
+/**
  * A stored clock, trusted as far as its last heartbeat.
  *
  * A running stretch whose heartbeat is older than a sitting's break means the page was gone, not

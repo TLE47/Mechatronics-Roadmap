@@ -12,6 +12,7 @@ import {
   readEditorSettings,
   writeEditorSettings,
 } from '../../../editor/editorSettings';
+import { readBlockSettings } from '../../../pythonBlocks/settings.ts';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
   EDITOR_TAB_DRAG_TYPE,
@@ -200,9 +201,13 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   // Study and Read open folded: their job is the reading, and the editor is one press away. Write
   // and Debug open the body because those presets exist for typing and for reading a failure. A
   // phone's Code surface is the exception: there the editor is the whole task.
-  const [bodyCollapsed, setBodyCollapsed] = useState(
-    (layout === 'study' || layout === 'read') && !isPhone
-  );
+  //
+  // A desktop learner who chose Visual is the other exception. Blocks are not a phone-only face:
+  // remembering Visual and then being handed a folded card on the next visit made the choice look
+  // forgotten, so a stored `visual` opens the body with it in front.
+  const startsFolded = (preset: WorkspaceLayout | null | undefined, phone: boolean) =>
+    (preset === 'study' || preset === 'read') && !phone && readBlockSettings().mode !== 'visual';
+  const [bodyCollapsed, setBodyCollapsed] = useState(startsFolded(layout, isPhone));
   const [editorSettingsOpen, setEditorSettingsOpen] = useState(false);
   const [editorTooltips, setEditorTooltips] = useState(() => readEditorSettings().tooltips);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
@@ -231,7 +236,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     return () => window.removeEventListener(EDITOR_SETTINGS_EVENT, refresh);
   }, []);
   useEffect(() => {
-    setBodyCollapsed((layout === 'study' || layout === 'read') && !isPhone);
+    setBodyCollapsed(startsFolded(layout, isPhone));
   }, [layout, isPhone]);
   // Opening the trace from More is a request for the editor body even when Study folded it.
   useEffect(() => {

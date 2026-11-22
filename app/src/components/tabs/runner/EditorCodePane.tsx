@@ -181,7 +181,7 @@ export function EditorCodePane({
                 type="button"
                 data-testid="editor-mode-code"
                 aria-pressed={mode === 'code'}
-                title="Edit the Python source directly"
+                title="Edit the Python source directly — dictate it with your keyboard's mic, or swipe across the letters, to type faster"
                 onClick={() => chooseMode('code')}
                 className={`flex min-h-7 cursor-pointer items-center gap-1 rounded-md px-1.5 font-mono text-[11.5px] transition-colors ${
                   mode === 'code'
@@ -221,6 +221,7 @@ export function EditorCodePane({
                   code={code}
                   onCode={commitCode}
                   active={mode === 'visual'}
+                  isPhone={isPhone}
                 />
               </Suspense>
             )}
