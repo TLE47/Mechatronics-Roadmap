@@ -23,7 +23,19 @@ import React, {
   useLayoutEffect,
   useRef,
 } from 'react';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import {
+  defaultKeymap,
+  deleteCharBackward,
+  deleteLine as deleteLineCommand,
+  history,
+  historyKeymap,
+  indentLess,
+  indentMore,
+  indentWithTab,
+  insertNewlineAndIndent,
+  redo as redoCommand,
+  undo as undoCommand,
+} from '@codemirror/commands';
 import { bracketMatching, foldGutter, indentOnInput } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
 import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search';
@@ -142,6 +154,17 @@ function breakpointKey(entries: readonly Breakpoint[]): string {
 /** `useLayoutEffect` on the browser, `useEffect` during SSR: React warns about the former on a server. */
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+/**
+ * The contenteditable's keyboard contract, as a CodeMirror facet.
+ *
+ * `inputmode=none` is what keeps a phone from sliding its OS keyboard over a code editor that has
+ * its own keys. It is a content attribute, so it has to travel through CodeMirror's facet rather
+ * than a direct `setAttribute`: the view reconciles that facet's attributes on its own updates and
+ * would otherwise remove an attribute no facet knows about.
+ */
+const keyboardAttributes = (mode: 'off' | 'custom' | 'native') =>
+  EditorView.contentAttributes.of(mode === 'custom' ? { inputmode: 'none' } : {});
+
 const PYTHON_WORDS = [
   'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif',
   'else', 'except', 'False', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
@@ -236,6 +259,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       runLine,
       errorLine = null,
       tooltipsEnabled = true,
+      keyboardMode = 'off',
     },
     ref
   ) {
@@ -268,6 +292,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // Hover and signature help live in a compartment so the editor-settings switch can remove them
     // without rebuilding the state — the document, the caret and the undo history all survive it.
     const tooltipSlot = useRef(new Compartment());
+    const keyboardSlot = useRef(new Compartment());
     const analysisAvailable = Boolean(getAnalysis);
     const buildAnalysisTips = useCallback(
       () => [
@@ -386,6 +411,93 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           view.dispatch(view.state.replaceSelection(text));
           view.focus();
         },
+        backspace: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          deleteCharBackward(view);
+          view.focus();
+        },
+        indent: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          indentMore(view);
+          view.focus();
+        },
+        dedent: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          indentLess(view);
+          view.focus();
+        },
+        insertNewLine: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          // The command, not a bare `\n`: the new line keeps the suite's indentation, which is the
+          // one thing a phone keyboard cannot see to type.
+          insertNewlineAndIndent(view);
+          view.focus();
+        },
+        insertTab: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          view.dispatch(view.state.replaceSelection('    '));
+          view.focus();
+        },
+        undo: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          undoCommand(view);
+          view.focus();
+        },
+        redo: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          redoCommand(view);
+          view.focus();
+        },
+        duplicate: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          const selection = view.state.selection.main;
+          if (selection.from !== selection.to) {
+            // A selected phrase is copied directly after itself, so the caret lands after the copy.
+            const text = view.state.sliceDoc(selection.from, selection.to);
+            view.dispatch({
+              changes: { from: selection.to, insert: text },
+              selection: { anchor: selection.to + text.length },
+            });
+          } else {
+            // Nothing selected means the whole line, the operation a phone has no chord for. The
+            // insertion starts at the line's end, so the current line stays where it is.
+            const line = view.state.doc.lineAt(selection.head);
+            view.dispatch({
+              changes: { from: line.to, insert: `\n${line.text}` },
+              selection: { anchor: line.to + line.text.length + 1 },
+            });
+          }
+          view.focus();
+        },
+        deleteLine: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          const selection = view.state.selection.main;
+          if (selection.from !== selection.to) {
+            view.dispatch({ changes: { from: selection.from, to: selection.to } });
+          } else {
+            deleteLineCommand(view);
+          }
+          view.focus();
+        },
+        blur: () => viewRef.current?.contentDOM.blur(),
+        openNativeKeyboard: () => {
+          const view = viewRef.current;
+          if (!view) return;
+          view.contentDOM.removeAttribute('inputmode');
+          // A fresh focus is what a phone listens for; the attribute alone only decides whether the
+          // next focus may open the OS keyboard.
+          view.contentDOM.blur();
+          view.focus();
+        },
       }),
       [value]
     );
@@ -431,6 +543,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           EditorState.readOnly.of(readOnly),
           EditorView.editable.of(!readOnly),
           EditorView.contentAttributes.of({ 'aria-label': ariaLabel, 'data-testid': testId }),
+          keyboardSlot.current.of(keyboardAttributes(keyboardMode)),
           // ⌘-click, the other half of the gesture: the caret moves to the clicked name and the
           // runner is asked for its definition. A plain click is left entirely to CodeMirror.
           EditorView.domEventHandlers({
@@ -589,6 +702,20 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       // The document is synced by the effect below; mounting once per editor instance is the point.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [testId, readOnly, ariaLabel]);
+
+    /**
+     * The phone keyboard's claim on the OS keyboard.
+     *
+     * `inputmode=none` is the only way to focus a contenteditable without a phone sliding its own
+     * keyboard over the code — the custom keyboard is the keyboard in that state. Asking for the
+     * native one removes the attribute and takes focus again, which is what a fresh focus does on
+     * iOS and Android; before this, switching keyboards would have left the OS keyboard shut.
+     */
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view) return;
+      view.dispatch({ effects: keyboardSlot.current.reconfigure(keyboardAttributes(keyboardMode)) });
+    }, [keyboardMode]);
 
     // A jump asked for while this editor was still arriving comes as a *changed* `initialLine`: the
     // mount above applies the number the editor was born with, and this applies the ones that land

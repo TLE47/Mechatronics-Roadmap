@@ -1,7 +1,10 @@
 import {
+  forwardRef,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
+  type FocusEvent as ReactFocusEvent,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
@@ -21,6 +24,32 @@ import { useBlockEditor } from './useBlockEditor';
 const HOLD_MS = 320;
 /** How far a pointer travels before a press is a drag rather than a tap (or a scroll, on touch). */
 const MOVE_SLOP = 8;
+
+export type BlockKeyboardMode = 'off' | 'custom' | 'native';
+
+/**
+ * What the shared keyboard can ask of the visual editor.
+ *
+ * The keyboard is drawn by the pane above both faces, so the visual face answers through this
+ * handle: text goes to whichever block field has the caret, and the block verbs go to the selected
+ * statement. It is the visual half of the keyboard's adapter, not a second keyboard.
+ */
+export interface PythonBlockEditorHandle {
+  insertText: (text: string) => void;
+  backspace: () => void;
+  indent: () => void;
+  dedent: () => void;
+  newStatement: () => void;
+  insertTab: () => void;
+  undo: () => void;
+  redo: () => void;
+  duplicate: () => void;
+  deleteSelected: () => void;
+  focusField: () => void;
+  blurField: () => void;
+  /** Remove the custom keyboard's inputmode and raise the OS keyboard inside the press's gesture. */
+  openNativeKeyboard: () => void;
+}
 
 /** The point a card drag would land on, and the way the card is travelling to reach it. */
 type CardDropTarget = InsertionPoint & { direction: 'up' | 'down' };
@@ -49,20 +78,36 @@ interface CardPress {
  * because the workspace is the instrument. Appearance and undo history are device-local; the code
  * is not.
  */
-export function PythonBlockEditor({
-  code,
-  onCode,
-  active = true,
-  isPhone = false,
-}: {
-  code: string;
-  onCode: (next: string) => void;
-  /** False while Python Code is the face on screen; the model then waits for the next switch. */
-  active?: boolean;
-  /** The phone's dock: the toolbox is pinned under the code instead of ending the workspace. */
-  isPhone?: boolean;
-}) {
+export const PythonBlockEditor = forwardRef<
+  PythonBlockEditorHandle,
+  {
+    code: string;
+    onCode: (next: string) => void;
+    /** False while Python Code is the face on screen; the model then waits for the next switch. */
+    active?: boolean;
+    /** The phone's dock: the toolbox is pinned under the code instead of ending the workspace. */
+    isPhone?: boolean;
+    /** How the shared phone keyboard is drawing: suppress the OS keyboard unless native is asked for. */
+    keyboardMode?: BlockKeyboardMode;
+    /** A block field took the caret, so the keyboard belongs on screen. */
+    onFieldFocus?: () => void;
+    /** The caret left every block field, so the keyboard can give the workspace back. */
+    onFieldBlur?: () => void;
+  }
+>(function PythonBlockEditor(
+  {
+    code,
+    onCode,
+    active = true,
+    isPhone = false,
+    keyboardMode = 'off',
+    onFieldFocus,
+    onFieldBlur,
+  },
+  ref
+) {
   const editor = useBlockEditor(code, onCode, active);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [appearance, setAppearance] = useState<BlockAppearance>(
     () => readBlockSettings().appearance
   );
@@ -302,6 +347,145 @@ export function PythonBlockEditor({
     editor.insertAt(target.bodyId, target.index, item.template, item.id);
   };
 
+  /** The block field with the caret, if a field inside this workspace has it. */
+  const activeField = (): HTMLInputElement | HTMLTextAreaElement | null => {
+    const active = document.activeElement;
+    if (
+      (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) &&
+      rootRef.current?.contains(active)
+    ) {
+      return active;
+    }
+    return null;
+  };
+
+  /**
+   * Write a field the way its own keyboard would.
+   *
+   * `InlineField` is a controlled input: assigning `.value` directly would be reverted by the next
+   * render, and React's value tracker would not see a change at all. The native setter plus an
+   * `input` event is the supported route through that tracker, so the draft, the width of the field
+   * and the commit on blur all follow a custom-key press exactly as they follow a typed one.
+   */
+  const writeField = (
+    field: HTMLInputElement | HTMLTextAreaElement,
+    next: string,
+    caret: number
+  ) => {
+    const prototype =
+      field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype, 'value')?.set?.call(field, next);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.setSelectionRange(caret, caret);
+    field.focus();
+  };
+
+  const insertIntoField = (text: string) => {
+    const field = activeField();
+    if (!field) return;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? start;
+    writeField(field, field.value.slice(0, start) + text + field.value.slice(end), start + text.length);
+  };
+
+  const backspaceField = () => {
+    const field = activeField();
+    if (!field) return;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? start;
+    if (start === end && start === 0) return;
+    const from = start === end ? start - 1 : start;
+    writeField(field, field.value.slice(0, from) + field.value.slice(end), from);
+  };
+
+  /**
+   * The keyboard's New statement: one assignment, where the toolbox's first item would go.
+   *
+   * A statement needs a shape, and the empty workspace's own button already decided what a
+   * beginner's first one is. Inserting after the current point is the promise of a "new" line; the
+   * `insertAt` clamp keeps a press at the very end of the program from naming an index past it.
+   */
+  const addStatement = () => {
+    const assignment = itemById('assignment');
+    if (!assignment) return;
+    editor.insertAt(
+      editor.insertion.bodyId,
+      editor.insertion.index + 1,
+      assignment.template,
+      assignment.id
+    );
+  };
+
+  /** A field taking the caret brings the keyboard; the field asks the OS keyboard to stay away. */
+  const onFieldFocusIn = (event: ReactFocusEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+    if (keyboardMode !== 'native') target.setAttribute('inputmode', 'none');
+    onFieldFocus?.();
+    // The keyboard takes the bottom third of the screen. Centring the field after it opens keeps
+    // the word being edited above the keys instead of under them; the document scroll also folds
+    // the phone's tall top chrome, which is what makes the band tall enough.
+    window.setTimeout(() => {
+      if (!target.isConnected) return;
+      target.scrollIntoView({ block: 'center' });
+    }, 60);
+  };
+
+  /**
+   * The caret left a field. The check is deferred by one task because a tap on another field fires
+   * the old field's blur before the new field's focus; if a field is still active then, the keyboard
+   * should stay, and only a tap on a card or the workspace closes it.
+   */
+  const onFieldFocusOut = (event: ReactFocusEvent<HTMLDivElement>) => {
+    const next = event.relatedTarget;
+    if (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement) return;
+    window.setTimeout(() => {
+      if (activeField()) return;
+      onFieldBlur?.();
+    }, 0);
+  };
+
+  /** Follow the shared keyboard's mode on the field that has the caret. */
+  useEffect(() => {
+    const field = activeField();
+    if (!field) return;
+    if (keyboardMode === 'custom') {
+      field.setAttribute('inputmode', 'none');
+      return;
+    }
+    field.removeAttribute('inputmode');
+  }, [keyboardMode]);
+
+  useImperativeHandle(ref, () => ({
+    insertText: insertIntoField,
+    backspace: backspaceField,
+    indent: () => editor.nest(editor.selectedId),
+    dedent: () => editor.unnest(editor.selectedId),
+    newStatement: addStatement,
+    insertTab: () => insertIntoField('    '),
+    undo: editor.undo,
+    redo: editor.redo,
+    duplicate: () => {
+      if (editor.selectedId) editor.duplicate(editor.selectedId);
+    },
+    deleteSelected: () => {
+      if (editor.selectedId) editor.remove(editor.selectedId);
+    },
+    focusField: () => activeField()?.focus(),
+    blurField: () => activeField()?.blur(),
+    openNativeKeyboard: () => {
+      const field = activeField();
+      if (!field) return;
+      // The field's blur is allowed to pass without committing this once: otherwise the input would
+      // unmount before the focus that raises the OS keyboard. `InlineField` reads the flag.
+      field.dataset.nativeKeyboard = '1';
+      field.removeAttribute('inputmode');
+      field.blur();
+      field.focus();
+      delete field.dataset.nativeKeyboard;
+    },
+  }));
+
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!(event.metaKey || event.ctrlKey)) return;
     const target = event.target as HTMLElement;
@@ -325,9 +509,12 @@ export function PythonBlockEditor({
 
   return (
     <div
+      ref={rootRef}
       data-testid="python-block-editor"
       data-appearance={appearance}
       onKeyDown={onKeyDown}
+      onFocusCapture={onFieldFocusIn}
+      onBlurCapture={onFieldFocusOut}
       className="flex min-w-0 flex-col bg-panel"
     >
       {/* Phone budget: this bar is above the code a learner came for, so it is one compact row
@@ -497,12 +684,14 @@ export function PythonBlockEditor({
           setDropTarget(target ? { ...target, direction: 'down' } : null)
         }
         appearance={appearance}
-        dock={isPhone}
+        // While the shared keyboard is up it owns the bottom of the screen; the dock would only
+        // leave its grabber peeking above the keys. Tapping a card (or Done) brings the dock back.
+        dock={isPhone && keyboardMode === 'off'}
         recent={editor.recent}
       />
     </div>
   );
-}
+});
 
 function countStatements(nodes: readonly BlockNode[]): number {
   return nodes.reduce((total, node) => total + 1 + countStatements(node.body), 0);

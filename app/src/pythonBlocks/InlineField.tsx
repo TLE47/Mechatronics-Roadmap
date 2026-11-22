@@ -81,7 +81,12 @@ export function InlineField({
       spellCheck={false}
       autoComplete="off"
       onChange={(event) => setDraft(event.target.value)}
-      onBlur={() => finish(true)}
+      // A native-keyboard switch blurs and re-focuses the field to raise the OS keyboard. That
+      // blur is not the learner leaving: committing now would unmount the input before focus.
+      onBlur={() => {
+        if (inputRef.current?.dataset.nativeKeyboard === '1') return;
+        finish(true);
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {
           event.preventDefault();

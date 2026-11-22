@@ -54,11 +54,40 @@ export interface PythonEditorHandle {
   /**
    * Insert text at the caret and put the caret back in the document.
    *
-   * The phone key strip (`PythonKeys.tsx`) is outside the editable surface, so a tap otherwise
-   * leaves focus on the button and the next keyboard press goes nowhere. Going through the view
-   * keeps React's `value` and the document in step, the same reason the suites use the bridge.
+   * The phone keyboard (`components/MobilePythonKeyboard.tsx`) is outside the editable surface, so
+   * a tap otherwise leaves focus on the button and the next keyboard press goes nowhere. Going
+   * through the view keeps React's `value` and the document in step, the same reason the suites use
+   * the bridge.
    */
   insertText: (text: string) => void;
+  /** Delete the selection, or one character before the caret when nothing is selected. */
+  backspace: () => void;
+  /** Indent the caret's line, or every line a selection touches. */
+  indent: () => void;
+  /** Remove one indentation step from the caret's line or the selected lines. */
+  dedent: () => void;
+  /** Insert a newline and the indentation the new line needs. */
+  insertNewLine: () => void;
+  /** Insert four spaces at the caret, the project's one tab width. */
+  insertTab: () => void;
+  /** Undo through CodeMirror's history. */
+  undo: () => void;
+  /** Redo through CodeMirror's history. */
+  redo: () => void;
+  /** Copy the selected text, or the caret's whole line, directly after itself. */
+  duplicate: () => void;
+  /** Delete the selection, or the caret's whole line when nothing is selected. */
+  deleteLine: () => void;
+  /** Let go of the editing surface, so the phone's own keyboard can close. */
+  blur: () => void;
+  /**
+   * Ask for the phone's own keyboard inside the press that chose it.
+   *
+   * The `keyboardMode` prop removes `inputmode=none` on the next render, but a focus taken
+   * outside the tap's gesture may not raise the OS keyboard on iOS. This does the removal and the
+   * focus synchronously, while the tap still counts as the user's.
+   */
+  openNativeKeyboard: () => void;
 }
 
 export interface PythonEditorProps {
@@ -155,6 +184,14 @@ export interface PythonEditorProps {
    * analyzers could not be installed: the source then answers from the keywords it always had.
    */
   getAnalysis?: () => AnalysisSession | null;
+  /**
+   * How the phone keyboard is drawing this editor.
+   *
+   * `custom` suppresses the OS keyboard with `inputmode=none`, because the custom keys are the
+   * keyboard; `native` removes that and focuses the surface so the OS keyboard can open; `off`
+   * leaves the surface exactly as it was before the keyboard existed.
+   */
+  keyboardMode?: 'off' | 'custom' | 'native';
   className?: string;
 }
 

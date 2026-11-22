@@ -16,6 +16,49 @@ flowchart LR
 
 ---
 
+## [2026-11-22] — One mobile keyboard writes both faces
+
+The phone's punctuation strip is now a full coding keyboard ([`components/MobilePythonKeyboard.tsx`](app/src/components/MobilePythonKeyboard.tsx)),
+drawn once by `EditorCodePane` and shared by Python Code and Visual: the indentation actions, the
+programming symbols, QWERTY with its number labels, Shift, the operator row, and `123` / native /
+space / Done on the bottom row. **Fn** turns the top row into block verbs (Indent, Dedent, New
+statement, Insert tab, Duplicate, Delete) and the QWERTY row into digits; **123** replaces the letter
+rows with digits, punctuation and arithmetic; Shift is one-shot. `components/PythonKeys.tsx` is
+retired rather than kept beside the new keys.
+
+The keyboard is fixed above the phone's Study bar and measured, so the pane reserves the height at
+its end: at 390 px the Study page is taller than the screen, and an in-flow keyboard would sit
+thousands of pixels below the editor. It suppresses the OS keyboard with `inputmode=none`; the
+native key removes that attribute and focuses the real editor, and the mode bar's key button is the
+way back. **Python Code's adapter** extends the editor handle with CodeMirror's indent, dedent,
+newline-with-indentation, tab, backspace, undo, redo, line/selection duplicate and delete-line
+commands. **Visual's adapter** is the block editor's imperative handle: a key writes the focused
+field through React's own `input` event, Fn duplicates or deletes the selected block, and
+Indent/Dedent nest or unnest it into the container above (new `nest`/`unnest` in `useBlockEditor`,
+`locateNode` in `operations.ts`). The toolbox dock folds while the keyboard is up and returns when
+the learner taps a card or Done.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run check:weight`, `npm run test:e2e:mobile`
+(the full 60-key keyboard, Fn digits, 123/ABC, newline, undo/redo, native and return, Done) and
+`npm run test:e2e:blocks` (the shared keyboard types into a block field and drives duplicate/delete).
+
+---
+
+## [2026-11-22] — A held toolbox element can be carried out of the dock
+
+A touch that rests on a Python Toolbox element for about a third of a second now lifts it, the same
+gesture a statement card uses, and from there the finger can carry it in any direction onto a card
+or the workspace. A quick vertical drag still scrolls the catalog, and a tap still inserts at the
+insertion point, so browsing the toolbox is unchanged. While an element is in the hand it declines
+the browser's scroll, selection and long-press menu, and it plays the interface's `row` tick when it
+lifts and `chip` tick when it lands. The browser gate drives the hold, the carry and the drop with
+real touch input at 390 px and asserts no scroll or selection, the intended landing card, one
+inserted statement, both ticks and one undo step.
+
+Verification: `npx tsc -b`, `npm run test:e2e:blocks`.
+
+---
+
 ## [2026-11-22] — The arrow points the way the card is going, and every block gets its own face
 
 The snap arrow is no longer always a downward triangle. A card in the air draws it at the gap a
@@ -35,8 +78,8 @@ audit checks both block surfaces and all four inks per palette; `npm run test:th
 opens one sentence about the kind — what an `if` runs, what a `return` hands back — and closes
 without touching the program. The same button is available while the five verbs are folded.
 
-**Dragging has a voice when sound is on.** Lifting a card reuses the interface's `row` brush and a
-landed card reuses its `chip` tick, through the existing sound bus rather than a second audio
+**Dragging has a voice when sound is on.** Lifting a card or a toolbox element reuses the interface's
+`row` brush and a landed move reuses its `chip` tick, through the existing sound bus rather than a second audio
 context; the browser gate records both dispatched events. The engine is still silent until the
 learner turns sound on in the header.
 

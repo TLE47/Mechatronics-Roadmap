@@ -16,9 +16,12 @@
  *      sheet closes on Escape and on a choice, and focus returns to the control that opened it.
  *   3. A lab's plot opens at its own resolution in a sheet that scrolls both ways — the reason the
  *      expander exists — and the page behind it neither moves nor scrolls sideways.
- *   4. Study is one surface at a time. Lesson opens on the text, Code mounts the editor, a punctuation
- *      key inserts at the caret, every key is at least 40 px, the fixed bar sits on the bottom edge
- *      with a 44 px Run, and a sheet hides that bar instead of covering its last row.
+ *   4. Study is one surface at a time. Lesson opens on the text, Code mounts the editor and the
+ *      shared coding keyboard — a symbol key inserts at the caret, Fn makes digits, 123 opens the
+ *      number page, undo/redo walk the history, native switching removes `inputmode` and the mode
+ *      bar's key button brings the Python keys back, and Done folds them. Every key is at least
+ *      40 px tall, the fixed bar sits on the bottom edge with a 44 px Run, and a sheet hides that
+ *      bar instead of covering its last row.
  *   5. A reload inside Code comes back to Code; switching to Lesson hides the editor without
  *      losing it.
  *   6. The lesson sheet is the chooser: another entry opens, the sheet closes, the title follows.
@@ -450,22 +453,106 @@ async function main() {
         !(await page.getByTestId('lesson-reader').isVisible()),
         'the Code surface must not keep the lesson text below the editor'
       );
+      const keyboard = page.getByTestId('python-keyboard');
+      check(await keyboard.isVisible(), 'the Code surface must draw the Python keyboard');
       const keys = page.locator('[data-testid^="python-key-"]');
-      check((await keys.count()) >= 10, `the punctuation strip has only ${await keys.count()} keys`);
-      for (let index = 0; index < (await keys.count()); index += 1) {
+      const keyCount = await keys.count();
+      check(keyCount >= 60, `the Python keyboard has only ${keyCount} keys`);
+      for (let index = 0; index < keyCount; index += 1) {
         const key = await keys.nth(index).boundingBox();
         check(
-          Boolean(key) && key.height >= 40 && key.width >= 40,
-          `punctuation key ${index} is ${key?.width}x${key?.height}, below the 40 px floor`
+          Boolean(key) && key.height >= 40,
+          `keyboard key ${index} is ${key?.width}x${key?.height}, below the 40 px floor`
         );
+        check(Boolean(key) && key.width >= 20, `keyboard key ${index} is only ${key?.width}px wide`);
       }
-      const before = await getEditorCode(page);
-      await page.getByTestId('python-key-colon').click();
-      const after = await getEditorCode(page);
-      check(after.length === before.length + 1, 'a punctuation key must insert one character');
-      check(after.includes(':'), 'the colon key did not insert a colon');
       await assertNoSidewaysScroll(page, 'the Code surface');
-      ok('lesson → code by choice, 40 px keys, a bottom Run bar, no sideways scroll');
+
+      const before = await getEditorCode(page);
+      const caret = await page.evaluate(() =>
+        window.__mechalabEditors['editor-main'].getCursor()
+      );
+      await page.getByTestId('python-key-colon').click();
+      let after = await getEditorCode(page);
+      check(after.length === before.length + 1, 'a punctuation key must insert one character');
+      check(after.slice(caret, caret + 1) === ':', 'the colon key did not insert at the caret');
+      await page.getByTestId('python-key-backspace').click();
+      after = await getEditorCode(page);
+      check(after === before, 'Backspace did not remove the character the keyboard inserted');
+
+      await page.getByTestId('python-key-fn').click();
+      check(
+        (await keyboard.getAttribute('data-fn')) === '1',
+        'Fn must change the legends on the action and number rows'
+      );
+      await page.getByTestId('python-key-q').click();
+      after = await getEditorCode(page);
+      check(after.slice(caret, caret + 1) === '1', 'Fn must turn the QWERTY row into digits');
+      await page.getByTestId('python-key-fn').click();
+      await page.getByTestId('python-key-backspace').click();
+
+      await page.getByTestId('python-key-layout').click();
+      check((await keyboard.getAttribute('data-page')) === '123', '123 must open the number page');
+      await page.getByTestId('python-key-digit-7').click();
+      after = await getEditorCode(page);
+      check(after.slice(caret, caret + 1) === '7', 'the number page did not insert 7');
+      await page.getByTestId('python-key-backspace').click();
+      await page.getByTestId('python-key-layout').click();
+      check((await keyboard.getAttribute('data-page')) === 'abc', 'ABC must restore the letters');
+
+      const beforeNewline = await getEditorCode(page);
+      await page.getByTestId('python-key-newline').click();
+      check(
+        (await getEditorCode(page)).length > beforeNewline.length,
+        'New line must add a line at the caret'
+      );
+      await page.getByTestId('python-key-undo').click();
+      check((await getEditorCode(page)) === beforeNewline, 'Undo must remove the new line');
+      await page.getByTestId('python-key-redo').click();
+      check(
+        (await getEditorCode(page)).length > beforeNewline.length,
+        'Redo must put the new line back'
+      );
+      await page.getByTestId('python-key-undo').click();
+
+      await page.getByTestId('python-key-native').click();
+      await keyboard.waitFor({ state: 'hidden', timeout: 5000 });
+      check(
+        (await page.getByTestId('keyboard-toggle').getAttribute('aria-label') ?? '').includes(
+          'phone keyboard'
+        ),
+        'native mode must leave a way back to the Python keys'
+      );
+      await page.waitForFunction(
+        () =>
+          (document
+            .querySelector('[data-editor="editor-main"] .cm-content')
+            ?.getAttribute('inputmode') ?? null) === null,
+        undefined,
+        { timeout: 5000 }
+      );
+      await page.getByTestId('keyboard-toggle').click();
+      await keyboard.waitFor({ state: 'visible', timeout: 5000 });
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('[data-editor="editor-main"] .cm-content')
+            ?.getAttribute('inputmode') === 'none',
+        undefined,
+        { timeout: 5000 }
+      );
+
+      await page.getByTestId('python-key-done').click();
+      await keyboard.waitFor({ state: 'hidden', timeout: 5000 });
+      check(
+        (await page.getByTestId('keyboard-toggle').getAttribute('aria-label') ?? '').includes(
+          'Show the Python keyboard'
+        ),
+        'Done must leave the way back to the keyboard'
+      );
+      await page.getByTestId('keyboard-toggle').click();
+      await keyboard.waitFor({ state: 'visible', timeout: 5000 });
+      ok('lesson → code by choice, a full 60-key keyboard, Fn and 123, native switching, no sideways scroll');
 
       console.log('\nthe surface survives a reload');
       await page.reload({ waitUntil: 'domcontentloaded' });

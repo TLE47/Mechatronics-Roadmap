@@ -39,12 +39,25 @@ flowchart LR
    mounts CodeMirror and starts warming Pyodide; going back to Lesson hides the editor but does not
    unmount it, so the document, caret and undo history survive the round trip. A phone that only reads
    never pays the editor's 149 kB or the interpreter's 10 MB.
-5. **The punctuation strip.** A phone keyboard's first pane has letters, a space and return. Python
+5. **The coding keyboard.** A phone keyboard's first pane has letters, a space and return. Python
    needs `:`, `(`, `)`, `"`, `_`, `#`, brackets and indentation on nearly every line, and each trip to
-   the symbol pane loses the caret's place. `components/PythonKeys.tsx` inserts at the caret through
-   the editor's own handle; every key is 40 px square, above the app's 28 px floor, because these are
-   hit repeatedly and without looking. The strip's one line above the keys says the faster way:
-   dictate with the keyboard's mic key, or swipe across the letters.
+   the symbol pane loses the caret's place. `components/MobilePythonKeyboard.tsx` is one full
+   keyboard drawn once by `EditorCodePane` and shared by Python Code and Visual: indentation actions,
+   the programming symbols, QWERTY with number labels, Shift, the operator row, and `123` / native /
+   space / Done. **Fn** makes the top row block verbs and the QWERTY row digits; **123** opens the
+   digits and arithmetic page; Shift is one-shot. Keys clear the app's 28 px floor at 40 px, because
+   they are hit repeatedly and without looking. A key cancels its pointer default, so the caret, the
+   field and the open keyboard stay put.
+
+   The keyboard is **fixed above the Study bar**, not in the page's flow: at 390 px the editor card
+   is taller than the screen, and an in-flow keyboard sits thousands of pixels below the editor. The
+   pane measures it and reserves the same height at its end, so the last lines can still be scrolled
+   out from under it. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
+   block field, which is the only way to keep the OS keyboard shut while the custom one is the
+   keyboard; the **native** key removes it and focuses the real editor, and the mode bar's key
+   button is the way back without losing the caret. **Done** folds the keyboard and leaves that
+   button in its place. In Visual the toolbox dock folds while the keyboard is up, and a focused
+   field is scrolled into the band above the keys.
 6. **A plot opens at its own resolution.** A 320 px Bode card cannot be read for a phase margin.
    `components/PlotExpander.tsx` snapshots the live canvas with `toDataURL` and shows it in a sheet
    that scrolls both ways; the snapshot is taken when the sheet opens, because the canvas redraws every
@@ -69,14 +82,16 @@ release will snap to, with a small accent arrow in the gap the statement will la
 down for a drop below its old place, up for a drag above it, or into an empty suite's dashed
 target. When sound is on, the lift and the landing reuse the interface's quiet `row` and `chip`
 ticks; a muted phone loses only the sound, not the card, the chip or the arrow. A small info button
-on every card names the kind and explains it without opening the five verbs. A touch that moves sooner scrolls instead, and
+on every card names the kind and explains it without opening the five verbs. The dock's elements
+take the same hold: rest a finger on one and it lifts out of the catalog with the row tick, then
+lands on a card with the chip; a quicker vertical drag still scrolls the list. A touch that moves sooner scrolls instead, and
 `npm run test:e2e:snap-arrow` screenshots the paused drag at 390 px and proves the arrow's pixels
 are painted. No browser long-press gesture claims that finger:
 the card declines text selection and the iOS callout in CSS, and the editor attaches its non-passive
 `touchmove` and `contextmenu` guards when the finger goes down (so the first move cannot be taken as
-a scroll) while only `preventDefault`ing once the hold has lifted. The gate drives both the card drag
-and the grabber swipe with CDP touch input rather than a mouse, and measures that the page does not
-scroll or select under either gesture. The toolbar above the code is one compact row below
+a scroll) while only `preventDefault`ing once the hold has lifted. The gate drives the card drag, the
+toolbox hold and the grabber swipe with CDP touch input rather than a mouse, and measures that the
+page does not scroll or select under any of them. The toolbar above the code is one compact row below
 `sm` and the full bar with its sentence above that. From `sm` up the toolbox is the inline panel, so
 Visual is not a phone-only face.
 

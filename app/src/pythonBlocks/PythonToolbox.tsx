@@ -6,6 +6,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search } from 'lucide-react';
+import { panFromX } from '../audio/clickMap.ts';
+import { playUi } from '../audio/facade.ts';
 import { blockColors, type BlockAppearance } from './appearance.ts';
 import {
   SORT_LABELS,
@@ -40,11 +42,12 @@ import { readBlockSettings, writeBlockSettings } from './settings.ts';
  * the workspace could not promise on a 390 px screen. At tablet and desktop widths the same catalog
  * stays the inline panel under the workspace, so Visual is not a phone-only face.
  *
- * **Every element can be dragged.** A mouse drag (any direction) or a sideways touch drag on an item
- * carries it over the workspace; the card under the pointer is highlighted by the drop targets the
- * cards publish (`data-drop-body` / `data-drop-index`), and releasing inserts the statement in that
- * body at that index. A tap still inserts at the current insertion point, because that is the
- * gesture that has to keep working for a beginner.
+ * **Every element can be dragged.** A mouse drag (any direction), a sideways touch drag, or a
+ * touch that rests on an item until it lifts and then moves any direction carries it over the
+ * workspace; the card under the pointer is highlighted by the drop targets the cards publish
+ * (`data-drop-body` / `data-drop-index`), and releasing inserts the statement in that body at that
+ * index. A quick vertical touch drag still scrolls the catalog, and a tap still inserts at the
+ * current insertion point, because those are the gestures that have to keep working for a beginner.
  *
  * **Colourful colours the blocks too.** An item takes the same four colours its card will have
  * (`appearance.ts`), so the toolbox previews the palette the workspace is using instead of looking
@@ -62,8 +65,22 @@ export interface ToolboxDropTarget {
   index: number;
 }
 
+/** A press on a toolbox element: a tap until it travels far enough or a touch rests long enough. */
+interface ToolboxPress {
+  item: ToolboxItem;
+  x: number;
+  y: number;
+  pointerId: number;
+  /** The item button that took the press and the capture, and the only one that acts on it. */
+  element: HTMLButtonElement;
+  active: boolean;
+  timer: number | null;
+}
+
 /** How far a pointer has to travel before a press becomes a drag rather than a tap. */
 const DRAG_THRESHOLD = 10;
+/** How long a touch rests on an element before it is in the learner's hand, as on a card. */
+const HOLD_MS = 320;
 /** The open dock's height: a third of the screen, the share the Shortcuts sheet gives its actions. */
 const DOCK_SHARE = 0.36;
 const dockHeight = () => Math.round(window.innerHeight * DOCK_SHARE);
@@ -133,16 +150,37 @@ export function PythonToolbox({
   }, [dock]);
 
   /** A press on an item, promoted to a drag once the pointer has travelled far enough. */
-  const dragRef = useRef<{
-    item: ToolboxItem;
-    x: number;
-    y: number;
-    active: boolean;
-  } | null>(null);
+  const dragRef = useRef<ToolboxPress | null>(null);
   /** True between a drag's release and the click the browser synthesises after it. */
   const draggedRef = useRef(false);
   /** The grabber's own gesture, so a swipe does not also read as a tap. */
   const swipeRef = useRef<{ y: number } | null>(null);
+
+  /**
+   * The browser's own long-press and scroll gestures, declined once an element is in hand.
+   *
+   * Both listeners go on when a finger goes down, before its first move, because the browser
+   * decides at the start of a gesture whether its moves may scroll. They decline their defaults
+   * only after the hold has lifted, so a finger that scrolls the catalog sooner still scrolls and
+   * a long-press menu after a tap still opens.
+   */
+  const touchScrollGuard = useRef((event: TouchEvent) => {
+    if (dragRef.current?.active) event.preventDefault();
+  }).current;
+  const longPressGuard = useRef((event: Event) => {
+    if (dragRef.current?.active) event.preventDefault();
+  }).current;
+
+  // A toolbox that unmounts mid-press must not leave a hold armed or a document guard installed.
+  useEffect(
+    () => () => {
+      const drag = dragRef.current;
+      if (drag && drag.timer !== null) window.clearTimeout(drag.timer);
+      document.removeEventListener('touchmove', touchScrollGuard);
+      document.removeEventListener('contextmenu', longPressGuard);
+    },
+    [touchScrollGuard, longPressGuard]
+  );
 
   const items = toolboxItems({ category, query, sort, recent });
 
@@ -207,46 +245,97 @@ export function PythonToolbox({
     toggleOpen();
   };
 
+  /** The hold completed, or a mouse passed the slop: the element now follows the pointer. */
+  const beginDrag = (drag: ToolboxPress, x: number, y: number) => {
+    if (drag.active || dragRef.current !== drag) return;
+    drag.active = true;
+    if (drag.timer !== null) {
+      window.clearTimeout(drag.timer);
+      drag.timer = null;
+    }
+    draggedRef.current = true;
+    setGhost({ label: drag.item.label, x, y });
+    onDragTargetChange?.(targetAt(x, y));
+    // The same row brush a card drag plays when it leaves its place, so the two ways of picking
+    // up a block sound alike.
+    playUi('row', panFromX(x, window.innerWidth));
+    navigator.vibrate?.(8);
+  };
+
   const onItemDown = (event: ReactPointerEvent<HTMLButtonElement>, item: ToolboxItem) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    // One finger owns a press; a second one must not overwrite the element in the air.
+    if (dragRef.current) return;
     // A new press is a new gesture: the guard left by the previous drag must not swallow a tap.
     draggedRef.current = false;
-    dragRef.current = { item, x: event.clientX, y: event.clientY, active: false };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const element = event.currentTarget;
+    const drag: ToolboxPress = {
+      item,
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+      element,
+      active: false,
+      timer: null,
+    };
+    dragRef.current = drag;
+    // Capture at the press, not at the lift: a toolbox element has no field whose click a capture
+    // could steal, and a sideways touch drag can leave the item before the hold completes.
+    element.setPointerCapture?.(event.pointerId);
+    if (event.pointerType !== 'mouse') {
+      // Attach before the first move, not after the hold: see `touchScrollGuard`.
+      document.addEventListener('touchmove', touchScrollGuard, { passive: false });
+      document.addEventListener('contextmenu', longPressGuard);
+      drag.timer = window.setTimeout(() => beginDrag(drag, drag.x, drag.y), HOLD_MS);
+    }
   };
 
   const onItemMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const drag = dragRef.current;
-    if (!drag) return;
-    const dx = event.clientX - drag.x;
-    const dy = event.clientY - drag.y;
+    if (!drag || event.pointerId !== drag.pointerId) return;
     if (!drag.active) {
+      const dx = event.clientX - drag.x;
+      const dy = event.clientY - drag.y;
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-      // A touch's vertical drag is the list scrolling, not a block leaving the toolbox. A sideways
-      // drag is unambiguous, which is why the items declare `touch-action: pan-y`.
+      // A touch's quick vertical drag is the list scrolling, not a block leaving the toolbox. A
+      // sideways drag is unambiguous, and a hold has already lifted the element before it moves.
       if (event.pointerType !== 'mouse' && Math.abs(dx) <= Math.abs(dy)) {
-        dragRef.current = null;
+        endDrag(event, false, true);
         return;
       }
-      drag.active = true;
-      draggedRef.current = true;
+      beginDrag(drag, event.clientX, event.clientY);
     }
     setGhost({ label: drag.item.label, x: event.clientX, y: event.clientY });
     onDragTargetChange?.(targetAt(event.clientX, event.clientY));
   };
 
-  const endDrag = (event: ReactPointerEvent<HTMLButtonElement>, dropped: boolean) => {
+  const endDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    dropped: boolean,
+    travelled = false
+  ) => {
     const drag = dragRef.current;
+    // A second end (a quick scroll's cancel followed by the browser's pointerup) must not clear the
+    // click guard the first one set, or the release would insert a statement after scrolling.
+    if (!drag) return;
     dragRef.current = null;
+    if (drag.timer !== null) window.clearTimeout(drag.timer);
+    document.removeEventListener('touchmove', touchScrollGuard);
+    document.removeEventListener('contextmenu', longPressGuard);
     setGhost(null);
     onDragTargetChange?.(null);
-    if (!drag?.active) {
-      draggedRef.current = false;
+    if (!drag.active) {
+      // A press that stayed put is a tap, and its click still inserts. A press that travelled and
+      // gave the gesture back to the scroll must swallow the click the browser may still send.
+      draggedRef.current = travelled;
       return;
     }
     if (dropped && onDropItem) {
       const target = targetAt(event.clientX, event.clientY);
-      if (target) onDropItem(drag.item, target);
+      if (target) {
+        onDropItem(drag.item, target);
+        playUi('chip', panFromX(event.clientX, window.innerWidth));
+      }
     }
     // The click that follows the release belongs to the drag, not to the item. The flag is cleared
     // by the next press (or by that click), never on a timer: a timer can run before the click the
@@ -466,6 +555,8 @@ export function PythonToolbox({
                           borderColor: colors.border,
                           borderLeft: `3px solid ${colors.rule}`,
                           touchAction: 'pan-y',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
                         } as CSSProperties
                       }
                       className="block w-full min-w-0 cursor-grab rounded-lg border px-2 py-1.5 text-left transition-[filter] hover:brightness-105 active:cursor-grabbing"

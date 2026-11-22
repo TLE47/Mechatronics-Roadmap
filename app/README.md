@@ -1514,9 +1514,11 @@ one surface at a time — the prose or the code, remembered per lesson in
 away. The editor mounts only when Code is opened, which is also when Pyodide's warm-up starts: a phone
 that only reads pays for neither. Every dialog is the one sheet
 ([`src/components/Sheet.tsx`](src/components/Sheet.tsx)), a lab's plot opens at its own resolution
-([`src/components/PlotExpander.tsx`](src/components/PlotExpander.tsx)), and the punctuation strip
-([`src/components/PythonKeys.tsx`](src/components/PythonKeys.tsx)) supplies the colon a phone keyboard
-hides. The manifest is `standalone` with icons rendered from `favicon.svg` (`npm run icons`), so the
+([`src/components/PlotExpander.tsx`](src/components/PlotExpander.tsx)), and one coding keyboard
+([`src/components/MobilePythonKeyboard.tsx`](src/components/MobilePythonKeyboard.tsx)) supplies
+Python's symbols and editing verbs in both Python Code and Visual, keeping the OS keyboard shut
+until its native key asks for it. The manifest is `standalone` with icons rendered from
+`favicon.svg` (`npm run icons`), so the
 installed app owns the whole display and `env(safe-area-inset-*)` keeps it clear of the notch. The
 map, the measured numbers and the deliberate limits are in
 [`../docs/MOBILE.md`](../docs/MOBILE.md).
@@ -1596,7 +1598,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/Sheet.tsx`](src/components/Sheet.tsx) | The one dialog: a bottom sheet on a phone, focus trap, Escape, focus restore, a locked page. |
 | [`src/components/PhoneTabPicker.tsx`](src/components/PhoneTabPicker.tsx) | The phone's one-row tab picker and the sheet that lists all fifteen tabs. |
 | [`src/components/PlotExpander.tsx`](src/components/PlotExpander.tsx) | A lab canvas at its own resolution, in a sheet that scrolls both ways. |
-| [`src/components/PythonKeys.tsx`](src/components/PythonKeys.tsx) | The punctuation a phone keyboard hides, inserted at the caret through the editor's own handle. |
+| [`src/components/MobilePythonKeyboard.tsx`](src/components/MobilePythonKeyboard.tsx) | The phone's one coding keyboard: symbols, QWERTY, Fn, 123, native switching and Done, shared by Python Code and Visual. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |

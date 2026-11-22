@@ -17,7 +17,13 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { type BlockFields, type BlockNode, type BlockProgram, renderProgram } from './ast.ts';
+import {
+  type BlockFields,
+  type BlockNode,
+  type BlockProgram,
+  isContainer,
+  renderProgram,
+} from './ast.ts';
 import { parseProgram } from './parser.ts';
 import {
   type InsertionPoint,
@@ -25,6 +31,7 @@ import {
   bodyOf,
   duplicateNode,
   insertNode,
+  locateNode,
   moveNode,
   moveNodeTo,
   removeNode,
@@ -56,6 +63,10 @@ interface BlockEditor {
   /** Move a statement to the point a dragged card named; false when that is its own place. */
   moveTo: (id: string, bodyId: string | null, index: number) => boolean;
   duplicate: (id: string) => void;
+  /** Move a statement into the suite of the container just above it. */
+  nest: (id: string | null) => void;
+  /** Move a statement out of its suite, directly below the container that held it. */
+  unnest: (id: string | null) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -212,6 +223,48 @@ export function useBlockEditor(
     setInsertion({ ...insertion, index: insertion.index + 1 });
   };
 
+  /**
+   * The keyboard's Indent: put the statement inside the container above it.
+   *
+   * The previous sibling has to be a suite — `if`, `for`, `while`, `def`, `try` — because there is
+   * no other place "inside" could mean. Anything else leaves the program alone and, because the
+   * program is returned unchanged, it costs no undo step.
+   */
+  const nest = (id: string | null) => {
+    if (!id) return;
+    const located = locateNode(programRef.current, id);
+    if (!located || located.index === 0) return;
+    const siblings = bodyOf(programRef.current, located.bodyId);
+    const above = siblings?.[located.index - 1];
+    if (!above || !isContainer(above.kind)) return;
+    const next = moveNodeTo(programRef.current, id, {
+      bodyId: above.id,
+      index: above.body.length,
+    });
+    if (next === programRef.current) return;
+    commit(next, id);
+  };
+
+  /**
+   * The keyboard's Dedent: lift the statement out of its suite, just below its container.
+   *
+   * A statement already at the program's own level has no suite to leave, so the press does nothing
+   * and no undo step appears for an operation that never happened.
+   */
+  const unnest = (id: string | null) => {
+    if (!id) return;
+    const located = locateNode(programRef.current, id);
+    if (!located || located.bodyId === null) return;
+    const parent = locateNode(programRef.current, located.bodyId);
+    if (!parent) return;
+    const next = moveNodeTo(programRef.current, id, {
+      bodyId: parent.bodyId,
+      index: parent.index + 1,
+    });
+    if (next === programRef.current) return;
+    commit(next, id);
+  };
+
   return {
     program,
     selectedId,
@@ -228,6 +281,8 @@ export function useBlockEditor(
     move,
     moveTo,
     duplicate,
+    nest,
+    unnest,
     undo,
     redo,
   };

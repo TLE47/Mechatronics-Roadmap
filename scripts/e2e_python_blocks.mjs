@@ -416,13 +416,42 @@ async function main() {
     const dropX = to.x + Math.min(to.width / 3, 200);
     const dropY = Math.min(Math.max(to.y + 16, 40), 860);
     assert.ok(to.y < 880, `the drop card should be on screen, got y ${Math.round(to.y)}`);
+    // The toolbox drag speaks through the same sound bus as a card drag: a row brush when the
+    // element lifts and a chip when it lands. Sound may be off; the events still describe what
+    // happened, and counting them proves neither gesture plays twice.
+    await page.evaluate(() => {
+      window.__toolboxDragSounds = [];
+      window.addEventListener('mechalab:sound', (event) =>
+        window.__toolboxDragSounds.push(event.detail)
+      );
+    });
     await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
     await page.mouse.down();
     await page.mouse.move(from.x + from.width / 2 + 24, from.y + from.height / 2, { steps: 3 });
     await page.getByTestId('toolbox-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await page.evaluate(
+        () =>
+          window.__toolboxDragSounds.filter(
+            (message) => message.kind === 'ui' && message.role === 'row'
+          ).length
+      ),
+      1,
+      'lifting a toolbox element should play the interface row tick once'
+    );
     await page.mouse.move(dropX, dropY, { steps: 10 });
     await page.mouse.up();
     assert.equal(await blockCount(page), beforeDrag + 1, 'the drop should insert one statement');
+    assert.equal(
+      await page.evaluate(
+        () =>
+          window.__toolboxDragSounds.filter(
+            (message) => message.kind === 'ui' && message.role === 'chip'
+          ).length
+      ),
+      1,
+      'a landed toolbox element should play the interface chip tick once'
+    );
     const order = await page.evaluate(() =>
       [...document.querySelectorAll('[data-block-id]')].map((node) =>
         node.getAttribute('data-block-id')
@@ -829,6 +858,77 @@ async function main() {
     const grabber = page.getByTestId('toolbox-grabber');
     assert.ok(await grabber.boundingBox(), 'the dock should draw its grabber');
 
+    // ---- The shared keyboard types into a block field ----
+    // One keyboard, two adapters: the visual face has no textarea of its own, so a custom key has
+    // to reach the field that has the caret. The field selects its value on entry, which is also
+    // how a typed key replaces it, and Escape puts the program back.
+    const fieldButton = page.locator('[data-testid^="block-field-"]').first();
+    const fieldId = await fieldButton.getAttribute('data-testid');
+    const fieldBefore = (await fieldButton.textContent())?.trim();
+    // The phone has a sticky header above and the dock below; only the band between them takes a
+    // press, so the field is centred in it rather than left where the scroll happened to stop.
+    await fieldButton.evaluate((field) => field.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(250);
+    // A programmatic click opens the field's editor: the press this gate is about is the key that
+    // follows, and Playwright's own scroll would leave the field under the sticky header.
+    await fieldButton.evaluate((field) => field.click());
+    const fieldInput = page.getByTestId(`${fieldId}-input`);
+    await fieldInput.waitFor({ state: 'visible', timeout: 5000 });
+    const visualKeyboard = page.getByTestId('python-keyboard');
+    await visualKeyboard.waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await visualKeyboard.getAttribute('data-mode'),
+      'visual',
+      'the visual face should get the keyboard in visual mode'
+    );
+    await page.getByTestId('python-key-z').click();
+    assert.equal(
+      await fieldInput.inputValue(),
+      'z',
+      'a custom key must replace the selected value in the block field'
+    );
+    await page.keyboard.press('Escape');
+    assert.equal(
+      (await fieldButton.textContent())?.trim(),
+      fieldBefore,
+      'Escape must put the committed value back'
+    );
+
+    // The block verbs are reachable without a caret: the selected statement is still the field's
+    // statement. Escape may leave the keyboard up (Done is the way it folds), so the mode bar is
+    // only asked to open it when the press that ended the edit took it away. Fn + Undo duplicates
+    // the block, Fn + Redo deletes the copy, so the program returns to exactly the cards it had.
+    if (!(await visualKeyboard.isVisible())) {
+      await page
+        .getByTestId('keyboard-toggle')
+        .evaluate((toggle) => toggle.scrollIntoView({ block: 'center' }));
+      await page.waitForTimeout(250);
+      await page
+        .getByTestId('keyboard-toggle')
+        .evaluate((toggle) => toggle.click());
+    }
+    await visualKeyboard.waitFor({ state: 'visible', timeout: 5000 });
+    const cardsBeforeKeyboard = await page.locator('[data-block-id]').count();
+    await page.getByTestId('python-key-fn').click();
+    await page.getByTestId('python-key-undo').click();
+    await page.waitForTimeout(150);
+    const cardsDuplicated = await page.locator('[data-block-id]').count();
+    assert.ok(
+      cardsDuplicated > cardsBeforeKeyboard,
+      `Fn + Undo should duplicate the selected block, not ${cardsBeforeKeyboard} → ${cardsDuplicated} cards`
+    );
+    await page.getByTestId('python-key-redo').click();
+    await page.waitForTimeout(150);
+    assert.equal(
+      await page.locator('[data-block-id]').count(),
+      cardsBeforeKeyboard,
+      'Fn + Redo should delete the duplicated block'
+    );
+    await page.getByTestId('python-key-fn').click();
+    await page.getByTestId('python-key-done').click();
+    await visualKeyboard.waitFor({ state: 'hidden', timeout: 5000 });
+    console.log('  ok the shared keyboard types into block fields and drives duplicate/delete');
+
     // ---- The two gestures, with a finger ----
     // A mouse drag never meets the browser's own touch gestures, so the phone paths are driven
     // through CDP's touchscreen input from here: the page sees a `pointerType: 'touch'` press and
@@ -1157,6 +1257,171 @@ async function main() {
       'a touch drag should be one undo step'
     );
     console.log('  ok a touch long-press carries a card onto another and snaps it there');
+
+    // ---- A toolbox element can be lifted with a finger too ----
+    // A quick vertical drag on an item is the dock's scroll. The hold is the other way to pick one
+    // up: rest until the element rises, then move any direction. It must not scroll the catalog or
+    // the page, select the label or open a menu, and it must speak like a card drag.
+    const toolboxTargetId = touchIds[0];
+    const toolboxTarget = touchCards.first();
+    const toolboxTargetBox = await toolboxTarget.boundingBox();
+    assert.ok(toolboxTargetBox, 'the toolbox drag needs a card above the dock');
+    const toolboxBand = await page.evaluate(() => {
+      const header = document.querySelector('[data-chrome="header"]');
+      const rail = document.querySelector('[data-chrome="rail"]');
+      const dock = document.querySelector('[data-testid="python-toolbox"]');
+      return {
+        top: Math.max(
+          header ? header.getBoundingClientRect().bottom : 0,
+          rail ? rail.getBoundingClientRect().bottom : 0
+        ),
+        bottom: dock ? dock.getBoundingClientRect().top : window.innerHeight,
+      };
+    });
+    assert.ok(
+      toolboxTargetBox.y > toolboxBand.top &&
+        toolboxTargetBox.y + toolboxTargetBox.height < toolboxBand.bottom,
+      `the toolbox target card should be in the band above the dock, got ${Math.round(toolboxTargetBox.y)}+${Math.round(toolboxTargetBox.height)} vs ${Math.round(toolboxBand.top)}..${Math.round(toolboxBand.bottom)}`
+    );
+    const touchItem = page.getByTestId('toolbox-item-print');
+    await touchItem.scrollIntoViewIfNeeded();
+    const touchItemBox = await touchItem.boundingBox();
+    assert.ok(touchItemBox, 'the print element should be laid out in the dock');
+    await page.evaluate(() => {
+      window.__toolboxTouchSounds = [];
+      window.addEventListener('mechalab:sound', (event) =>
+        window.__toolboxTouchSounds.push(event.detail)
+      );
+    });
+    const scrollBeforeToolboxDrag = await scrollSnapshot();
+    const beforeToolboxDrag = await blockCount(page);
+    await touch.start(
+      touchItemBox.x + touchItemBox.width / 2,
+      touchItemBox.y + touchItemBox.height / 2
+    );
+    await page.getByTestId('toolbox-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await page.evaluate(
+        () =>
+          window.__toolboxTouchSounds.filter(
+            (message) => message.kind === 'ui' && message.role === 'row'
+          ).length
+      ),
+      1,
+      'a touch that holds a toolbox element should play the row tick once'
+    );
+    assert.equal(
+      await scrollSnapshot(),
+      scrollBeforeToolboxDrag,
+      'the hold that lifts a toolbox element must not scroll the catalog or the page'
+    );
+    assert.equal(
+      await page.evaluate(() => window.getSelection()?.toString() ?? ''),
+      '',
+      'holding a toolbox element must not select its label'
+    );
+    assert.equal(
+      await touchItem.evaluate((item) => {
+        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        item.dispatchEvent(event);
+        return event.defaultPrevented;
+      }),
+      true,
+      "a live toolbox drag must decline the browser's long-press menu"
+    );
+
+    let toolboxDropX = toolboxTargetBox.x + 16;
+    let toolboxDropY = toolboxTargetBox.y + toolboxTargetBox.height - 3;
+    await touch.move(toolboxDropX, toolboxDropY, { steps: 12 });
+    // The sticky rows can compact while the finger travels, so follow the card under the finger
+    // until it is the one the test means to drop on; the finger stays down throughout.
+    let toolboxUnder = null;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      toolboxUnder = await page.evaluate(
+        ({ x, y }) =>
+          document
+            .elementFromPoint(x, y)
+            ?.closest('[data-block-id]')
+            ?.getAttribute('data-block-id') ?? null,
+        { x: toolboxDropX, y: toolboxDropY }
+      );
+      if (toolboxUnder === toolboxTargetId) break;
+      await stableFirstCard();
+      await page.waitForTimeout(120);
+      const box = await toolboxTarget.boundingBox();
+      assert.ok(box, 'the toolbox target card should still be laid out');
+      toolboxDropX = box.x + 16;
+      toolboxDropY = box.y + box.height - 3;
+      await touch.move(toolboxDropX, toolboxDropY, { steps: 3 });
+    }
+    assert.equal(
+      toolboxUnder,
+      toolboxTargetId,
+      'the card under the finger should be the one the toolbox element is dropped on'
+    );
+    await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    await page.getByTestId('block-snap-arrow').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await page.getByTestId('block-snap-arrow').getAttribute('data-direction'),
+      'down',
+      'a toolbox element dragged down with a finger should point its arrow down'
+    );
+    assert.equal(
+      await scrollSnapshot(),
+      scrollBeforeToolboxDrag,
+      'the toolbox drag must not pan the page or its pane'
+    );
+    await touch.end();
+    assert.equal(
+      await page.getByTestId('block-snap-arrow').count(),
+      0,
+      'the snap arrow should clear when the toolbox element lands'
+    );
+    const itemBoxAfterDrag = await touchItem.boundingBox();
+    assert.ok(
+      itemBoxAfterDrag && Math.abs(itemBoxAfterDrag.y - touchItemBox.y) <= 1,
+      'lifting and carrying a toolbox element must not scroll the catalog under it'
+    );
+    assert.equal(
+      await blockCount(page),
+      beforeToolboxDrag + 1,
+      'the toolbox drop should insert exactly one statement'
+    );
+    assert.equal(
+      await page.evaluate(
+        () =>
+          window.__toolboxTouchSounds.filter(
+            (message) => message.kind === 'ui' && message.role === 'chip'
+          ).length
+      ),
+      1,
+      'a landed toolbox element should play the chip tick once'
+    );
+    const orderAfterToolbox = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-block-id]')].map((node) =>
+        node.getAttribute('data-block-id')
+      )
+    );
+    const addedByToolbox = orderAfterToolbox.find((id) => !touchIds.includes(id));
+    assert.ok(addedByToolbox, 'the toolbox drop should add a card that was not there before');
+    assert.equal(
+      orderAfterToolbox.indexOf(addedByToolbox),
+      orderAfterToolbox.indexOf(toolboxTargetId) + 1,
+      'the toolbox statement should land directly below the card it was released on'
+    );
+    const droppedToolboxCard = page.locator(`[data-block-id="${addedByToolbox}"]`);
+    assert.equal(
+      await droppedToolboxCard.getAttribute('data-testid'),
+      'python-block-call',
+      'the dropped toolbox card should be the Print element, a call statement'
+    );
+    assert.ok(
+      (await droppedToolboxCard.textContent())?.includes('print'),
+      'the dropped card should show its print call'
+    );
+    await page.getByTestId('block-undo').tap();
+    assert.equal(await blockCount(page), beforeToolboxDrag, 'a toolbox drop is one undo step');
+    console.log('  ok a touch long-press carries a toolbox element onto a card');
 
     // The dock's swipe is the same finger: the sheet follows it before it settles, and moving the
     // grabber never scrolls the page under it.

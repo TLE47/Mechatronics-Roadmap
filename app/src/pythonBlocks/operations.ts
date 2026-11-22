@@ -199,6 +199,17 @@ function findLocation(nodes: BlockNode[], id: string, bodyId: string | null): No
   return null;
 }
 
+/**
+ * Where a statement sits in the tree, or null when the id is not in this program.
+ *
+ * The block keyboard's indent and dedent are moves, and a move needs the statement's own body and
+ * index — the same pair `moveNodeTo` takes. Keeping the walk here means the hook does not grow a
+ * second tree of its own.
+ */
+export function locateNode(program: BlockProgram, id: string): NodeLocation | null {
+  return findLocation(program.nodes, id, null);
+}
+
 /** Whether `id` is `node` itself or sits anywhere inside its suites. */
 function containsId(node: BlockNode, id: string): boolean {
   return node.id === id || node.body.some((child) => containsId(child, id));

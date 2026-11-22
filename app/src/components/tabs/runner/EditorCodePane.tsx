@@ -1,7 +1,8 @@
-import { Suspense, lazy, useState, type RefObject } from 'react';
-import { Blocks, Code2 } from 'lucide-react';
+import { Suspense, lazy, useEffect, useRef, useState, type RefObject } from 'react';
+import { Blocks, Code2, Keyboard } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
-import { PythonKeys } from '../../PythonKeys';
+import { MobilePythonKeyboard } from '../../MobilePythonKeyboard';
+import type { PythonBlockEditorHandle } from '../../../pythonBlocks/PythonBlockEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import type { AnalysisSession } from '../../../analysisClient';
 import { readBlockSettings, writeBlockSettings, type BlockMode } from '../../../pythonBlocks/settings.ts';
@@ -48,8 +49,10 @@ interface CodePaneDraft {
  * used. The choice is remembered on this device beside the editor's other preferences.
  *
  * A helper file has no toggle: it is a read-only module the lesson imports, not a program to
- * construct. A phone's punctuation strip belongs to the code face, where there is a caret to insert
- * at; the visual face has fields.
+ * construct. On a phone both faces share one keyboard (`components/MobilePythonKeyboard.tsx`),
+ * drawn once at the bottom of this pane: the code face sends its keys to CodeMirror's caret, the
+ * visual face sends them to the block field that has it, and the key caps, Fn, 123 and Done are the
+ * same in both. The block face's adapter is the `PythonBlockEditorHandle` below.
  */
 export function EditorCodePane({
   draft,
@@ -97,10 +100,113 @@ export function EditorCodePane({
   // `mode` is written only by the saved initializer or by `chooseMode`; the latter sets
   // `visualOpened` in the same event, so an effect watching `mode` would only repeat that write.
   const [visualOpened, setVisualOpened] = useState(mode === 'visual');
+  // The shared keyboard is open on a phone from the start, because that is how a phone writes
+  // Python. `native` means the OS keyboard owns the bottom of the screen and the custom keys are
+  // folded away; the mode bar's key button is the way back from both that and Done.
+  const [keyboardOpen, setKeyboardOpen] = useState(isPhone);
+  const [keyboardNative, setKeyboardNative] = useState(false);
+  const keyboardMode = !isPhone
+    ? 'off'
+    : keyboardNative
+      ? 'native'
+      : keyboardOpen
+        ? 'custom'
+        : 'off';
+  const visualRef = useRef<PythonBlockEditorHandle | null>(null);
+  const modeBarRef = useRef<HTMLDivElement | null>(null);
+  const keyboardShellRef = useRef<HTMLDivElement | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  // The keyboard is fixed above the phone bar, so the pane reserves the same height at its end:
+  // without that space the last lines of the editor could never be scrolled out from under it.
+  useEffect(() => {
+    const shell = keyboardShellRef.current;
+    if (!isPhone || !keyboardOpen || !shell) {
+      setKeyboardHeight(0);
+      return;
+    }
+    const measure = () => setKeyboardHeight(shell.getBoundingClientRect().height);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(shell);
+    return () => observer.disconnect();
+  }, [isPhone, keyboardOpen, mode]);
+
+  // When Code opens with the keyboard showing, the mode bar is put under the sticky header. The
+  // editor then fills the band between the two, instead of starting below the fold.
+  useEffect(() => {
+    if (!isPhone || !keyboardOpen || mode !== 'code' || keyboardHeight === 0) return;
+    const bar = modeBarRef.current;
+    if (!bar) return;
+    const header = document.querySelector('header[data-chrome="header"]');
+    const headerHeight = header?.getBoundingClientRect().height ?? 0;
+    const top = bar.getBoundingClientRect().top;
+    if (top >= headerHeight && top <= window.innerHeight - 76 - keyboardHeight - 60) return;
+    window.scrollBy({ top: top - headerHeight - 4, behavior: 'auto' });
+  }, [isPhone, keyboardOpen, mode, keyboardHeight]);
+
   const chooseMode = (next: BlockMode) => {
+    if (next === mode) return;
     setMode(next);
     if (next === 'visual') setVisualOpened(true);
     writeBlockSettings({ mode: next });
+    // The keyboard follows the caret, not the face: Visual opens with it folded (a field opens it),
+    // Code opens with it showing, which is the face it was first useful on.
+    setKeyboardNative(false);
+    setKeyboardOpen(next === 'code');
+    if (next === 'visual') mainEditorRef.current?.blur();
+  };
+
+  const openNativeKeyboard = () => {
+    // While the tap is still a gesture, hand the focus to the real editor: the property change that
+    // hides the custom keys renders afterwards, and a focus taken then may not raise the OS keyboard.
+    if (mode === 'visual') visualRef.current?.openNativeKeyboard();
+    else mainEditorRef.current?.openNativeKeyboard();
+    setKeyboardNative(true);
+    setKeyboardOpen(false);
+  };
+
+  const closeKeyboard = () => {
+    setKeyboardNative(false);
+    setKeyboardOpen(false);
+    if (mode === 'visual') visualRef.current?.blurField();
+    else mainEditorRef.current?.blur();
+  };
+
+  const toggleKeyboard = () => {
+    // Native feels closed (the custom keys are gone) but the way back has to open them, not run
+    // the close a third time. Only a showing, non-native keyboard closes on this press.
+    if (keyboardOpen && !keyboardNative) {
+      closeKeyboard();
+      return;
+    }
+    setKeyboardNative(false);
+    setKeyboardOpen(true);
+  };
+
+  // One keyboard, two adapters: every key asks the face on screen. The code face's adapter is the
+  // editor handle (CodeMirror commands own the document), the visual face's is the block handle.
+  const on = (codeAction: () => void, visualAction: () => void) =>
+    mode === 'visual' ? visualAction() : codeAction();
+  const keyboardActions = {
+    onInsertText: (text: string) =>
+      on(() => mainEditorRef.current?.insertText(text), () => visualRef.current?.insertText(text)),
+    onBackspace: () =>
+      on(() => mainEditorRef.current?.backspace(), () => visualRef.current?.backspace()),
+    onIndent: () => on(() => mainEditorRef.current?.indent(), () => visualRef.current?.indent()),
+    onDedent: () => on(() => mainEditorRef.current?.dedent(), () => visualRef.current?.dedent()),
+    onNewLine: () =>
+      on(
+        () => mainEditorRef.current?.insertNewLine(),
+        () => visualRef.current?.newStatement()
+      ),
+    onTab: () => on(() => mainEditorRef.current?.insertTab(), () => visualRef.current?.insertTab()),
+    onUndo: () => on(() => mainEditorRef.current?.undo(), () => visualRef.current?.undo()),
+    onRedo: () => on(() => mainEditorRef.current?.redo(), () => visualRef.current?.redo()),
+    onDuplicate: () =>
+      on(() => mainEditorRef.current?.duplicate(), () => visualRef.current?.duplicate()),
+    onDelete: () =>
+      on(() => mainEditorRef.current?.deleteLine(), () => visualRef.current?.deleteSelected()),
   };
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
 
@@ -154,6 +260,7 @@ export function EditorCodePane({
       ) : (
         <>
           <div
+            ref={modeBarRef}
             data-testid="editor-mode-bar"
             className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-line-soft bg-canvas px-2 py-1"
           >
@@ -193,6 +300,36 @@ export function EditorCodePane({
                 Python Code
               </button>
             </div>
+            {isPhone && (
+              <button
+                type="button"
+                data-testid="keyboard-toggle"
+                aria-pressed={keyboardOpen && !keyboardNative}
+                aria-label={
+                  keyboardNative
+                    ? 'Show the Python keyboard instead of the phone keyboard'
+                    : keyboardOpen
+                      ? 'Hide the Python keyboard'
+                      : 'Show the Python keyboard'
+                }
+                title={
+                  keyboardNative
+                    ? 'The phone keyboard is showing — tap for the Python keys'
+                    : keyboardOpen
+                      ? 'Hide the Python keyboard and make the editor taller'
+                      : 'Show the Python keyboard'
+                }
+                onClick={toggleKeyboard}
+                className={`ml-auto flex min-h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md border px-1.5 font-mono text-[11px] transition-colors ${
+                  keyboardOpen && !keyboardNative
+                    ? 'border-accent/40 bg-accent-soft font-semibold text-accent'
+                    : 'border-line-soft bg-panel text-muted hover:text-body'
+                }`}
+              >
+                <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
+                {keyboardNative ? 'Python keys' : keyboardOpen ? 'Hide keys' : 'Python keys'}
+              </button>
+            )}
             <p className="hidden min-w-0 flex-1 truncate text-[11px] text-muted sm:block">
               {mode === 'visual'
                 ? 'Tap a value to edit it; the Python is generated as you build.'
@@ -218,10 +355,18 @@ export function EditorCodePane({
                 }
               >
                 <PythonBlockEditor
+                  ref={visualRef}
                   code={code}
                   onCode={commitCode}
                   active={mode === 'visual'}
                   isPhone={isPhone}
+                  keyboardMode={keyboardMode}
+                  onFieldFocus={() => {
+                    if (!keyboardNative) setKeyboardOpen(true);
+                  }}
+                  onFieldBlur={() => {
+                    if (!keyboardNative) setKeyboardOpen(false);
+                  }}
                 />
               </Suspense>
             )}
@@ -231,7 +376,6 @@ export function EditorCodePane({
             style={{ display: mode === 'code' ? undefined : 'none' }}
             className="flex min-h-0 flex-1 flex-col"
           >
-            {isPhone && <PythonKeys onInsert={(text) => mainEditorRef.current?.insertText(text)} />}
             <PythonEditor
               key={`main:${lessonId}`}
               ref={mainEditorRef}
@@ -252,9 +396,32 @@ export function EditorCodePane({
               vimMode={vimOn}
               onVimMode={onVimMode}
               initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
+              keyboardMode={keyboardMode}
             />
           </div>
         </>
+      )}
+
+      {/* One keyboard for both faces, on the bottom edge above the phone bar: an in-flow keyboard
+          at 390 px lands thousands of pixels below the editor, because the phone's Study page is
+          taller than the screen. The shell is measured so the pane can reserve the room the fixed
+          keys take; Visual's keyboard also rides over the toolbox dock it temporarily replaces. */}
+      {isPhone && !openHelperFile && !deferPhoneEditor && keyboardOpen && (
+        <div
+          ref={keyboardShellRef}
+          data-testid="mobile-keyboard-shell"
+          className="fixed inset-x-0 bottom-[calc(3.5625rem+env(safe-area-inset-bottom))] z-40"
+        >
+          <MobilePythonKeyboard
+            mode={mode}
+            {...keyboardActions}
+            onNativeKeyboard={openNativeKeyboard}
+            onDone={closeKeyboard}
+          />
+        </div>
+      )}
+      {isPhone && !openHelperFile && !deferPhoneEditor && keyboardOpen && (
+        <div aria-hidden="true" className="shrink-0" style={{ height: keyboardHeight }} />
       )}
     </div>
   );

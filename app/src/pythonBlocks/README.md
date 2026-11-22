@@ -62,12 +62,23 @@ buttons and the statement noun. A card's five controls open folded at every widt
 every card, and the code is what a card is for. The remembered `visual` mode also opens Study's
 editor body on a desktop instead of leaving the chosen face behind a collapsed card.
 
-Dragging is one pointer implementation, not HTML5 drag-and-drop: a mouse drag or a sideways touch
-drag on an element follows the pointer, and the release hit-tests the `data-drop-body` /
-`data-drop-index` attributes the cards and the workspace publish. Vertical touch drags stay with the
-list's scroll (`touch-action: pan-y`), so dragging a block never breaks scrolling the catalog. The
-click that pointer capture retargets at the element after a drop is swallowed, which is what keeps
-one drop from inserting twice.
+**The shared keyboard types into a card.** The phone's coding keyboard
+(`components/MobilePythonKeyboard.tsx`) is drawn by `EditorCodePane`, not by this workspace, and
+Visual answers it through `PythonBlockEditorHandle`: a key writes the field that has the caret
+through the native value setter and React's `input` event, so the draft, the field's width and the
+commit on blur are the same as typing. Fn's Undo/Redo positions duplicate and delete the selected
+statement; **Indent** and **Dedent** move it into the container above (the previous sibling suite)
+or out below the container that held it, and **New line** inserts the toolbox's assignment after the
+current point. The dock folds while the keyboard is up, a focused field is scrolled into the band
+above the keys, and Done gives the dock back.
+
+Dragging is one pointer implementation, not HTML5 drag-and-drop: a mouse drag, a sideways touch
+drag, or a touch that rests on an element for about a third of a second and then moves any direction
+follows the pointer, and the release hit-tests the `data-drop-body` / `data-drop-index` attributes
+the cards and the workspace publish. A quick vertical touch drag stays with the list's scroll
+(`touch-action: pan-y`), so browsing the catalog is never broken by the drag; the hold installs the
+same non-passive guards a card uses. The click that pointer capture retargets at the element after a
+drop is swallowed, which is what keeps one drop from inserting twice.
 
 **A card is draggable too**, and by the same targets. A touch rests on a card for about a third of a
 second, or a mouse travels past eight pixels, and the card follows the pointer behind a small label
@@ -87,7 +98,7 @@ tick; both go through the same sound bus as every other control, so a muted lear
 card and the arrow and loses no information. A small info button beside the controls toggle opens
 one sentence about the kind, whether the five verbs are folded or open.
 
-The browser's own long-press gestures are declined while a card is in hand. The non-passive
+The browser's own long-press gestures are declined while a card or a toolbox element is in hand. The non-passive
 `touchmove` guard goes on when the finger goes down, not when the hold lifts, because a browser
 decides at the start of a touch sequence whether that sequence may scroll; only once the card has
 lifted does the guard `preventDefault`, so a finger that scrolls sooner still scrolls. A
@@ -108,14 +119,19 @@ screen can still select the code it can see.
   Visual and returning leaves `main.py` untouched and keeps the code caret; a statement typed in
   Python Code draws as a block, and returning to code leaves that text byte-identical; the toolbox
   collapses, steps categories, searches across them, sorts and remembers Recently used; a mouse drag
-  from the toolbox lands after the card it is released on and is one undo step; a card opens folded,
+  from the toolbox lands after the card it is released on, plays the row tick on the lift and the
+  chip tick on the drop, and is one undo step; a card opens folded,
   and its toggle unfolds the five controls; a card is picked up, follows the pointer with its label
   chip riding above it and a small arrow in the gap a release would land in pointing down for a
   downward drag, and snaps to the drop point it was released on, as one undo step; the lift and the
   snap dispatch the row and chip ticks; the info button names the kind and closes again; a real
   touch long-press
   carries a card onto another card without scrolling the page, selecting text or opening the
-  long-press menu, and a real touch swipe on the dock grabber moves the sheet before it settles; a
+  long-press menu; the shared keyboard types into a focused block field and Fn duplicates then
+  deletes the selected block, with the dock returning after Done; another touch hold lifts a
+  toolbox element and carries it onto a card with the
+  same no-scroll/no-select guarantee, both ticks and one undo step; and a real touch swipe on the
+  dock grabber moves the sheet before it settles; a
   toolbox tap and an inline edit reach the code view; add-inside,
   insert-after, duplicate, delete and move up/down change the generated program; the interpreter runs
   it; the same history answers its buttons and ⌘Z/⇧⌘Z; Colorful repaints the toolbox and changes only
