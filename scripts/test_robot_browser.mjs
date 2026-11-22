@@ -54,7 +54,15 @@ async function openRobot(page, baseUrl, lessonId) {
   if (!(await page.getByTestId('editor-tab-robot').isVisible())) {
     await page.getByTestId('phone-surface-code').click();
   }
-  await page.getByTestId('editor-tab-robot').click();
+  // On a phone the Code surface puts the editor's mode bar under the sticky header, so the view tab
+  // sits above the fold; Playwright's own scroll would land it between that header and the fixed
+  // keys. A finger scrolls the card up and taps it, which is what this programmatic press stands
+  // for — the phone gate presses sticky chrome the same way.
+  if (await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)) {
+    await page.getByTestId('editor-tab-robot').evaluate((tab) => tab.click());
+  } else {
+    await page.getByTestId('editor-tab-robot').click();
+  }
   await page.getByTestId('robot-pane').waitFor({ timeout: 30_000 });
   await page.getByTestId('robot-stage').waitFor({ timeout: 30_000 });
 }
