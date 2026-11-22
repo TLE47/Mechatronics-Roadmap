@@ -75,7 +75,9 @@ flowchart LR
    the site keys back, with `inputmode=none` restored before the next focus. If the OS keyboard is
    put away while the field still has the caret, the visual viewport growing back to the height
    remembered when Native was chosen is the signal to raise the site keys again. That baseline is
-   used rather than `window.innerHeight` because Android shrinks both together. Number, date, range, colour and file controls keep the browser's own
+   used rather than `window.innerHeight` because Android shrinks both together. The touch gate stubs
+   `visualViewport` and sends its resize events to exercise that dismissal while the editor keeps
+   focus, so the path is covered without a real phone. Number, date, range, colour and file controls keep the browser's own
    keyboard — their keypads are the honest ones. Above 768 px the host renders nothing, and a phone
    that never types draws no second keyboard until a field first asks.
 

@@ -145,6 +145,43 @@ async function waitForEditor(page) {
 }
 
 /**
+ * Take over `visualViewport` with an EventTarget whose height the test controls.
+ *
+ * A real phone's OS keyboard changes only the visual viewport; a headless browser has no OS
+ * keyboard. This stub lets the gate send the same resize the phone would, without resizing the
+ * layout viewport, and restores the browser's own accessor afterwards.
+ */
+async function stubVisualViewport(page) {
+  return page.evaluate(() => {
+    const height = window.visualViewport?.height ?? window.innerHeight;
+    const stub = new EventTarget();
+    Object.defineProperty(stub, 'height', { value: height, writable: true, configurable: true });
+    const descriptor = Object.getOwnPropertyDescriptor(window, 'visualViewport');
+    Object.defineProperty(window, 'visualViewport', { configurable: true, get: () => stub });
+    window.__testVisualViewport = { stub, descriptor };
+    return height;
+  });
+}
+
+async function setStubVisualViewportHeight(page, height) {
+  await page.evaluate((next) => {
+    const stub = window.__testVisualViewport?.stub;
+    if (!stub) throw new Error('the visualViewport stub is not installed');
+    stub.height = next;
+    stub.dispatchEvent(new Event('resize'));
+  }, height);
+}
+
+async function restoreVisualViewport(page) {
+  await page.evaluate(() => {
+    const saved = window.__testVisualViewport;
+    if (!saved) return;
+    if (saved.descriptor) Object.defineProperty(window, 'visualViewport', saved.descriptor);
+    delete window.__testVisualViewport;
+  });
+}
+
+/**
  * A finger on the glass (`scripts/e2e_mobile.mjs`).
  *
  * Playwright's `click()` sends a mouse press even inside a `hasTouch` context, and every key on this
@@ -1360,6 +1397,43 @@ async function main() {
         (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
         'armed Shift survived the native handoff and reopened with the custom keys'
       );
+
+      // The OS keyboard can be put away while the caret stays. Stub the visual viewport so that
+      // dismissal — a grow back to the Native baseline while `innerHeight` is unchanged — is
+      // exercised directly, without needing a real phone's keyboard.
+      const stubBase = await stubVisualViewport(page);
+      check(
+        await page.evaluate(() => window.visualViewport === window.__testVisualViewport.stub),
+        'the visualViewport stub was not installed'
+      );
+      await press(editorShell, 'python-key-native');
+      await page.waitForTimeout(260);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'closed',
+        'the stubbed native keyboard did not fold the custom keys'
+      );
+      await setStubVisualViewportHeight(page, stubBase - 300);
+      await page.waitForTimeout(160);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'closed',
+        'the OS keyboard rising reopened the custom keys early'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'the OS keyboard rising took the editor caret away'
+      );
+      await setStubVisualViewportHeight(page, stubBase);
+      await page.waitForTimeout(420);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open',
+        'dismissing the OS keyboard while the editor stayed focused did not return the custom keys'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'the returning custom keys lost the editor caret after the OS keyboard was dismissed'
+      );
+      await restoreVisualViewport(page);
+
       await press(editorShell, 'python-key-native');
       await page.waitForTimeout(260);
       await page.evaluate(() => document.querySelector('.cm-content')?.blur());

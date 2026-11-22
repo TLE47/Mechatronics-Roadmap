@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.2`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,15 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-22] — The OS-keyboard dismissal is tested without a phone
+
+The physical-touch gate now replaces `window.visualViewport` with an `EventTarget` whose height the
+test owns. During a native session it shrinks that height and sends the `resize` the OS keyboard
+would send, then grows it back while the editor keeps focus and sends the dismissal. It asserts the
+custom keys stay folded while the OS keyboard is up, then return with the caret still in the editor,
+and restores the browser's own accessor afterwards. The Android both-heights case remains separately
+covered with a real viewport resize.
 
 ## [2026-11-22] — A closed keyboard no longer remembers Shift
 
