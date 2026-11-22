@@ -1681,3 +1681,128 @@ number-flow {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ============================================================================
+   The phone's Python keyboard: the slide, the press, and its lighting
+   ----------------------------------------------------------------------------
+   `components/tabs/runner/EditorCodePane.tsx` keeps the shell mounted and flips
+   `data-state`; the hidden state is a transform off the bottom edge, so closing
+   is a transition rather than a disappearance, and `visibility` changes only
+   after the movement (the `0s` delay) so the keys are still painted while they
+   leave. Keeping the keyboard mounted is also what preserves its page, Fn state
+   and lighting layer between two fields.
+
+   Every key is `.kb-key`: `isolation` keeps its light layer above the cap's own
+   background and below the letter, which is what lets the wash tint the keycap
+   without tinting the character. The lighting is one CSS custom property set on
+   the section (`MobilePythonKeyboard.tsx`); no JavaScript runs per frame.
+
+   The animations are stopped in three places on purpose: when the shell is
+   closed, because a hidden keyboard should not spend a phone's battery on a
+   loop nobody sees; under `prefers-reduced-motion`, where the press also stops
+   moving; and behind the `:active` rule for Reactive mode, which is a state
+   rather than a timeline.
+   ========================================================================== */
+.mobile-keyboard-shell {
+  transform: translateY(0);
+  transition:
+    transform var(--t-base) var(--ease-out),
+    visibility 0s linear 0s;
+}
+.mobile-keyboard-shell[data-state='closed'] {
+  transform: translateY(102%);
+  visibility: hidden;
+  transition:
+    transform var(--t-base) var(--ease-out),
+    visibility 0s linear var(--t-base);
+}
+.mobile-keyboard-shell[data-state='closed'] .kb-key::before {
+  animation-play-state: paused;
+}
+/* No transition on the Study bar's `bottom`: the keyboard it rides on is inside the editor card,
+   and a view switch hides that card for a frame, which reads as a zero height. A transition there
+   would leave the bar climbing for 200 ms after the keys are already back — a measured layout the
+   phone gate catches, and a bar that lags the keyboard it belongs to. */
+
+.kb-key {
+  position: relative;
+  isolation: isolate;
+}
+.kb-key::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+/* A lit key: the wash under the letter, plus a short spill past the cap's edge. */
+[data-rgb] .kb-key::before {
+  background: var(--kb-rgb);
+  opacity: var(--kb-light-alpha, 0.25);
+}
+[data-rgb] .kb-key {
+  box-shadow:
+    0 0 14px -6px var(--kb-rgb),
+    var(--shadow-btn);
+}
+
+/* Cycle and Rainbow share a hue rotation of the wash only, so no letter changes colour. */
+[data-rgb='cycle'] .kb-key::before {
+  animation: kb-hue var(--kb-cycle, 9s) linear infinite;
+}
+[data-rgb='rainbow'] .kb-key::before {
+  filter: hue-rotate(calc(var(--i, 0) * 26deg));
+  animation: kb-rainbow var(--kb-rainbow, 12s) linear infinite;
+}
+[data-rgb='breathing'] .kb-key::before {
+  animation: kb-breathe var(--kb-breathe, 3s) ease-in-out infinite;
+}
+[data-rgb='reactive'] .kb-key::before {
+  opacity: 0.03;
+  transition: opacity 340ms ease-out;
+}
+[data-rgb='reactive'] .kb-key:active::before {
+  opacity: var(--kb-light-alpha, 0.25);
+  transition-duration: 30ms;
+}
+
+@keyframes kb-hue {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+@keyframes kb-rainbow {
+  from {
+    filter: hue-rotate(calc(var(--i, 0) * 26deg));
+  }
+  to {
+    filter: hue-rotate(calc(360deg + var(--i, 0) * 26deg));
+  }
+}
+@keyframes kb-breathe {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: var(--kb-light-alpha, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-keyboard-shell,
+  .mobile-keyboard-shell[data-state='closed'],
+  .kb-key {
+    transition: none;
+  }
+  [data-rgb] .kb-key::before {
+    animation: none !important;
+  }
+  .kb-key:active {
+    transform: none;
+  }
+}

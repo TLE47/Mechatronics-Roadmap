@@ -47,7 +47,31 @@ flowchart LR
    space / Done. **Fn** makes the top row block verbs and the QWERTY row digits; **123** opens the
    digits and arithmetic page; Shift is one-shot. Keys clear the app's 28 px floor at 40 px, because
    they are hit repeatedly and without looking. A key cancels its pointer default, so the caret, the
-   field and the open keyboard stay put.
+   field and the open keyboard stay put. It also compresses under the finger (a transform, so no
+   neighbour moves), raises its character above the cap, and asks for a light vibration where the
+   device has one; Enter is a medium tap and the mode keys answer with two ticks. iOS Safari has no
+   Vibration API, so there the press animation is the feedback, and no copy promises otherwise.
+
+   **The caret is the switch.** A focus in CodeMirror or in a block field opens the keys; a focus
+   that lands on the lesson text, another tab or the page outside them folds them. The shell is kept
+   mounted and slides off the bottom edge with a transform — `visibility` changes only after the
+   movement — so closing is a transition rather than a disappearance, and the page, Fn state and
+   lighting layer are still there when a field takes the caret again. What keeps the keyboard is
+   named in `EditorCodePane` (the mode bar, the keys themselves, a sheet): a press on one of those is
+   not the learner leaving the editor, while tapping the prose is.
+
+   **Fn → 123 / ABC is the lighting layer**, not a second keyboard. The Fn row's `123` / `ABC` key
+   prints `RGB` while Fn is on; one press swaps the three non-letter rows for the six modes (off,
+   static, cycle, breathing, rainbow, reactive), six presets, a custom colour and brightness/speed
+   sliders, while the letter rows underneath stay as the live preview. The same key returns to the
+   typing page it kept. The lighting is CSS custom properties on the section and a `::before` wash
+   under each cap, so no JavaScript runs per frame; a loop pauses while the shell is folded and stops
+   under `prefers-reduced-motion`. The choice is stored with the editor's other device preferences.
+
+   Sizing is in CSS pixels inside the fixed shell and never reads the editor's `--editor-font-size`,
+   so zooming the code grows the code, not the keyboard; the keys keep their 40 px floor at every
+   viewport and `env(safe-area-inset-bottom)` keeps the last row clear of a home indicator. Pinch
+   zoom stays the browser's, as does the text-size setting it exists for.
 
    The keyboard is **fixed to the bottom edge**, not in the page's flow: at 390 px the editor card
    is taller than the screen, and an in-flow keyboard sits thousands of pixels below the editor. It
@@ -58,9 +82,10 @@ flowchart LR
    the safe-area inset alone. The pane measures the keyboard and reserves the same height at its
    end, so the last lines can still be scrolled out from under it. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
    block field, which is the only way to keep the OS keyboard shut while the custom one is the
-   keyboard; the **native** key removes it and focuses the real editor, and the mode bar's key
-   button is the way back without losing the caret. **Done** folds the keyboard and leaves that
-   button in its place. In Visual the toolbox dock folds while the keyboard is up, and a focused
+   keyboard; the **native** key removes it and focuses the real editor in the same gesture, so the
+   OS keyboard rises as the custom shell slides away. The mode bar's key button is the way back: it
+   re-applies `inputmode=none`, blurs and focuses the surface so the OS keyboard closes, and the
+   caret and selection never moved. **Done** folds the keyboard and leaves that button in its place. In Visual the toolbox dock folds while the keyboard is up, and a focused
    field is scrolled into the band above the keys.
 6. **A plot opens at its own resolution.** A 320 px Bode card cannot be read for a phase margin.
    `components/PlotExpander.tsx` snapshots the live canvas with `toDataURL` and shows it in a sheet
@@ -172,6 +197,7 @@ the top/left/right insets in `display-mode: standalone` and the Study bar by the
 | :--- | :--- | :--- |
 | `mechalab_phone_surface_v1` | `{lesson, surface}` — the half of Study last shown, for that lesson | `app/src/phoneSurface.ts` |
 | `mechalab_install_offer_v1` | the timestamp of "not now" | `app/src/installOffer.ts` |
+| `mechalab_keyboard_rgb_v1` | the keyboard lighting: mode, colour, brightness, speed | `app/src/keyboard/rgb.ts` |
 
 Both are shape-checked one field at a time: a store from an older build reads as "no record", never as
 a throw, and blocked storage leaves the switch working for the visit.

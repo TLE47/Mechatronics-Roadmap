@@ -89,6 +89,15 @@ export const PythonBlockEditor = forwardRef<
     isPhone?: boolean;
     /** How the shared phone keyboard is drawing: suppress the OS keyboard unless native is asked for. */
     keyboardMode?: BlockKeyboardMode;
+    /**
+     * Whether the shared keys are actually on screen.
+     *
+     * Not the same question as `keyboardMode`: on a phone the mode rests at `custom`, so a tap on
+     * a field raises the custom keyboard rather than the OS one, while the keys themselves may be
+     * folded away. The dock needs the visibility, not the mode — it is the surface the folded
+     * keyboard gives back.
+     */
+    keyboardShowing?: boolean;
     /** A block field took the caret, so the keyboard belongs on screen. */
     onFieldFocus?: () => void;
     /** The caret left every block field, so the keyboard can give the workspace back. */
@@ -101,6 +110,7 @@ export const PythonBlockEditor = forwardRef<
     active = true,
     isPhone = false,
     keyboardMode = 'off',
+    keyboardShowing = false,
     onFieldFocus,
     onFieldBlur,
   },
@@ -439,6 +449,17 @@ export const PythonBlockEditor = forwardRef<
   const onFieldFocusOut = (event: ReactFocusEvent<HTMLDivElement>) => {
     const next = event.relatedTarget;
     if (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement) return;
+    // A toolbar, a sheet or the shared keyboard taking the focus for the length of a press is not
+    // the learner leaving the field: folding the keys here would close the surface the button was
+    // about to use. Only a focus that lands back in the workspace (or nowhere) closes them.
+    if (
+      next instanceof Element &&
+      next.closest(
+        '[data-testid="editor-mode-bar"], [data-testid="mobile-keyboard-shell"], [role="dialog"]'
+      )
+    ) {
+      return;
+    }
     window.setTimeout(() => {
       if (activeField()) return;
       onFieldBlur?.();
@@ -686,7 +707,7 @@ export const PythonBlockEditor = forwardRef<
         appearance={appearance}
         // While the shared keyboard is up it owns the bottom of the screen; the dock would only
         // leave its grabber peeking above the keys. Tapping a card (or Done) brings the dock back.
-        dock={isPhone && keyboardMode === 'off'}
+        dock={isPhone && !keyboardShowing}
         recent={editor.recent}
       />
     </div>

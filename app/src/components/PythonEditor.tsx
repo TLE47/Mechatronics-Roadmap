@@ -192,6 +192,14 @@ export interface PythonEditorProps {
    * leaves the surface exactly as it was before the keyboard existed.
    */
   keyboardMode?: 'off' | 'custom' | 'native';
+  /**
+   * The editing surface took or lost the caret.
+   *
+   * The phone keyboard's visibility belongs to the pane, not to the editor: this reports the event
+   * only, and `EditorCodePane` decides whether what received the focus keeps the keys on screen.
+   * `related` is the element taking the focus on a blur, which is the one fact that decision needs.
+   */
+  onFocusChange?: (focused: boolean, related: EventTarget | null) => void;
   className?: string;
 }
 

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.16.2`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.17.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,31 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-22] — The phone keyboard follows the caret, and lights up
+
+The one coding keyboard now behaves like the keyboard it draws: it slides up when a learner taps
+into Python Code or a block field, slides away when the caret leaves the editor, and stays mounted
+while it is folded, so the page, the Fn state and the lighting layer are still there next time the
+caret arrives. A key compresses under the finger, raises its character above the cap the way a phone
+does, and asks for a light vibration where the device has one — Enter is a medium tap, a mode or
+Done answers with two ticks. iOS Safari has no Vibration API, so the press animation carries the
+feedback there and nothing promises otherwise.
+
+**Fn → 123 / ABC** now opens keyboard lighting on the same keys, not a second keyboard: six modes
+(off, static, cycle, breathing, rainbow, reactive), six presets, a custom colour and brightness and
+speed sliders, with the letter rows lit underneath as the live preview and the chosen typing page
+kept behind the same key. The lighting is CSS custom properties and a wash under each cap, so it
+runs no JavaScript per frame; loops pause while the keyboard is folded and stop under
+`prefers-reduced-motion`, and the choice is remembered on the device.
+
+The native key still hands the phone its own keyboard in the same gesture and the way back restores
+`inputmode=none` without moving the caret. The map is `docs/MOBILE.md` §5 and `app/README.md`.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run check:weight`, `npm run test:e2e:mobile`,
+`npm run test:e2e:blocks`.
 
 ---
 

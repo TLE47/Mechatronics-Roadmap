@@ -105,25 +105,55 @@ export function EditorCodePane({
   // folded away; the mode bar's key button is the way back from both that and Done.
   const [keyboardOpen, setKeyboardOpen] = useState(isPhone);
   const [keyboardNative, setKeyboardNative] = useState(false);
-  const keyboardMode = !isPhone
-    ? 'off'
-    : keyboardNative
-      ? 'native'
-      : keyboardOpen
-        ? 'custom'
-        : 'off';
+  // Custom is the phone's resting mode, not only its open state: with `inputmode=none` already on
+  // the editing surface, tapping code or a block field raises *this* keyboard instead of the OS
+  // one. Native is the one state that gives the OS keyboard the screen back.
+  const keyboardMode = !isPhone ? 'off' : keyboardNative ? 'native' : 'custom';
+  const nativeRef = useRef(keyboardNative);
+  nativeRef.current = keyboardNative;
   const visualRef = useRef<PythonBlockEditorHandle | null>(null);
   const modeBarRef = useRef<HTMLDivElement | null>(null);
   const keyboardShellRef = useRef<HTMLDivElement | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  /**
+   * The code editor's caret is the keyboard's switch.
+   *
+   * A focus opens the custom keys — unless the OS keyboard owns the screen, in which case a tap on
+   * the code must not silently swap keyboards under the finger. On a blur, what *takes* the focus
+   * decides: the workbench, the mode bar, the keyboard itself and a sheet all keep the keys; the
+   * lesson text, another tab or a tap on nothing close them. `relatedTarget` is read from the blur
+   * itself rather than from a deferred `activeElement` check, because a keyboard control (a
+   * lighting slider, say) can be unmounted by the very press that focused it; a timer would then
+   * see the page's body and fold the keys the learner is still using.
+   */
+  const onCodeFocusChange = (focused: boolean, related: EventTarget | null) => {
+    if (!isPhone) return;
+    if (focused) {
+      if (!nativeRef.current) setKeyboardOpen(true);
+      return;
+    }
+    if (nativeRef.current) return;
+    if (
+      related instanceof Element &&
+      related.closest(
+        '[data-testid="mobile-keyboard-shell"], [data-testid="editor-mode-bar"], [data-pane-main-body], [role="dialog"]'
+      )
+    ) {
+      return;
+    }
+    setKeyboardOpen(false);
+  };
+
   // The keyboard is fixed, so the pane reserves its height at its end: without that space the last
   // lines of the editor could never be scrolled out from under it. The same measurement is the
   // "actually on screen" flag `index.css` reads to lift the Study bar onto the keys (a pane mounted
-  // for another tab, or for the Lesson surface, measures 0 and leaves the bar on the edge).
+  // for another tab, or for the Lesson surface, measures 0 and leaves the bar on the edge). The
+  // shell stays mounted while it is folded away, so its height is measured even then — the reserved
+  // spacer is what collapses, and it can slide back with the keys.
   useEffect(() => {
     const shell = keyboardShellRef.current;
-    if (!isPhone || !keyboardOpen || !shell) {
+    if (!isPhone || !shell) {
       setKeyboardHeight(0);
       return;
     }
@@ -132,7 +162,7 @@ export function EditorCodePane({
     const observer = new ResizeObserver(measure);
     observer.observe(shell);
     return () => observer.disconnect();
-  }, [isPhone, keyboardOpen, mode, deferPhoneEditor]);
+  }, [isPhone, keyboardOpen, mode, deferPhoneEditor, openHelper]);
 
   // When Code opens with the keyboard showing, the mode bar is put under the sticky header. The
   // editor then fills the band between the two, instead of starting below the fold.
@@ -150,12 +180,15 @@ export function EditorCodePane({
   // The Study bar is outside this pane, so the one number it needs travels as a custom property:
   // the bar's `bottom` is this height, which puts it on top of the keys rather than under them.
   useEffect(() => {
-    if (!isPhone || keyboardHeight === 0) return;
+    if (!isPhone || !keyboardOpen || keyboardHeight === 0) {
+      document.body.style.removeProperty('--mobile-keyboard-height');
+      return;
+    }
     document.body.style.setProperty('--mobile-keyboard-height', `${keyboardHeight}px`);
     return () => {
       document.body.style.removeProperty('--mobile-keyboard-height');
     };
-  }, [isPhone, keyboardHeight]);
+  }, [isPhone, keyboardOpen, keyboardHeight]);
 
   const chooseMode = (next: BlockMode) => {
     if (next === mode) return;
@@ -192,8 +225,22 @@ export function EditorCodePane({
       closeKeyboard();
       return;
     }
+    const fromNative = keyboardNative;
     setKeyboardNative(false);
     setKeyboardOpen(true);
+    if (!fromNative) return;
+    // The OS keyboard is up because the editor has focus. Once `inputmode=none` is back on the
+    // surface, the blur is what makes a phone put its own keyboard away; the focus after it keeps
+    // the caret where the learner left it.
+    window.setTimeout(() => {
+      if (mode === 'visual') {
+        visualRef.current?.blurField();
+        visualRef.current?.focusField();
+      } else {
+        mainEditorRef.current?.blur();
+        mainEditorRef.current?.focus();
+      }
+    }, 40);
   };
 
   // One keyboard, two adapters: every key asks the face on screen. The code face's adapter is the
@@ -373,6 +420,7 @@ export function EditorCodePane({
                   active={mode === 'visual'}
                   isPhone={isPhone}
                   keyboardMode={keyboardMode}
+                  keyboardShowing={keyboardOpen && !keyboardNative}
                   onFieldFocus={() => {
                     if (!keyboardNative) setKeyboardOpen(true);
                   }}
@@ -409,6 +457,7 @@ export function EditorCodePane({
               onVimMode={onVimMode}
               initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
               keyboardMode={keyboardMode}
+              onFocusChange={onCodeFocusChange}
             />
           </div>
         </>
@@ -418,13 +467,19 @@ export function EditorCodePane({
           lands thousands of pixels below the editor, because the phone's Study page is taller than
           the screen. The shell is measured so the pane can reserve the room the fixed keys take;
           the Study bar rides on top of it while it is up, and Visual's keyboard also rides over
-          the toolbox dock it temporarily replaces. */}
-      {isPhone && !openHelperFile && !deferPhoneEditor && keyboardOpen && (
+          the toolbox dock it temporarily replaces.
+
+          The shell stays mounted while it is folded away and slides out of the bottom edge with a
+          transform, so closing is a transition rather than a disappearance, and the keyboard keeps
+          its page, Fn state and lighting layer for the next time a field takes the caret. */}
+      {isPhone && !openHelperFile && !deferPhoneEditor && (
         <div
           ref={keyboardShellRef}
           data-testid="mobile-keyboard-shell"
-          data-mobile-keyboard={keyboardHeight > 0 ? '1' : undefined}
-          className="fixed inset-x-0 bottom-0 z-40"
+          data-state={keyboardOpen ? 'open' : 'closed'}
+          data-mobile-keyboard={keyboardOpen && keyboardHeight > 0 ? '1' : undefined}
+          aria-hidden={!keyboardOpen}
+          className="mobile-keyboard-shell fixed inset-x-0 bottom-0 z-40"
         >
           <MobilePythonKeyboard
             mode={mode}
@@ -434,8 +489,12 @@ export function EditorCodePane({
           />
         </div>
       )}
-      {isPhone && !openHelperFile && !deferPhoneEditor && keyboardOpen && (
-        <div aria-hidden="true" className="shrink-0" style={{ height: keyboardHeight }} />
+      {isPhone && !openHelperFile && !deferPhoneEditor && (
+        <div
+          aria-hidden="true"
+          className="shrink-0 transition-[height] duration-200 ease-out motion-reduce:transition-none"
+          style={{ height: keyboardOpen ? keyboardHeight : 0 }}
+        />
       )}
     </div>
   );

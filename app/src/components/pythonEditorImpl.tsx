@@ -260,6 +260,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       errorLine = null,
       tooltipsEnabled = true,
       keyboardMode = 'off',
+      onFocusChange,
     },
     ref
   ) {
@@ -269,6 +270,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // mount knows to apply only a *later* request — a search hit picked before the chunk landed.
     const lineOnMountRef = useRef<number | undefined>(initialLine);
     const onChangeRef = useRef(onChange);
+    // The phone keyboard listens to the caret: a focus raises its keys, a blur lets the pane decide
+    // whether the caret landed somewhere that keeps them.
+    const onFocusChangeRef = useRef(onFocusChange);
+    onFocusChangeRef.current = onFocusChange;
     const onSliderRef = useRef(onSliderCommit);
     // A jump is asked for by the runner, which may change its mind between renders (a different
     // lesson's files); read through a ref so a mounted editor always calls the current one.
@@ -639,6 +644,13 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         if (typeof line === 'number') onToggleBreakpointRef.current?.(line);
       };
       view.dom.addEventListener(BREAKPOINT_TOGGLE_EVENT, onBreakpointToggle);
+      // `focus` and `blur` do not bubble, so the pane's caret report is listened for on the editable
+      // element itself. The view's own `focus()` and `blur()` go through this element, which is why
+      // the custom/native switch can rely on it.
+      const onFocus = () => onFocusChangeRef.current?.(true, null);
+      const onBlur = (event: FocusEvent) => onFocusChangeRef.current?.(false, event.relatedTarget);
+      view.contentDOM.addEventListener('focus', onFocus);
+      view.contentDOM.addEventListener('blur', onBlur);
       // The paint reading's third moment: the editor exists where the placeholder stood. `fcp` already
       // covered the lesson text and the code, so this is what the lazy boundary costs (`paintTiming.ts`).
       markPaintReady('editor');
@@ -693,6 +705,8 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         detachVim();
         view.dom.removeEventListener(CELL_RUN_EVENT, onCellRun);
         view.dom.removeEventListener(BREAKPOINT_TOGGLE_EVENT, onBreakpointToggle);
+        view.contentDOM.removeEventListener('focus', onFocus);
+        view.contentDOM.removeEventListener('blur', onBlur);
         view.destroy();
         viewRef.current = null;
         if (window.__mechalabEditors?.[testId] === bridge) {
