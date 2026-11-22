@@ -29,6 +29,10 @@
  *   7. The install row appears only when it can act (a browser prompt event, or iOS's Share sheet),
  *      calls the browser's prompt once, and leaves after the learner accepts.
  *   8. At 768 and 1024 the rail returns, the picker goes, and Predict still shares Run's row.
+ *   9. The keyboard answers a real finger, not a mouse: Chromium's touch events tap the editor's keys
+ *      and a page field's keys, hold one to raise its preview, type fast, read the haptics, retarget
+ *      between two fields without folding, and measure the slide up and the slide down at 390 and
+ *      360 px. A key that cancels `pointerdown` is exactly the place where a mouse-only gate lies.
  *
  * It is deliberately not a Pyodide suite: `npm run test:e2e` and `npm run test:predict` already own
  * running code, and a 10 MB interpreter on a throttled phone link would make this gate too slow to
@@ -138,6 +142,192 @@ async function waitForEditor(page) {
   );
 }
 
+/**
+ * A finger on the glass (`scripts/e2e_mobile.mjs`).
+ *
+ * Playwright's `click()` sends a mouse press even inside a `hasTouch` context, and every key on this
+ * keyboard cancels `pointerdown`. Whether a real touch still reaches the key's `click` is therefore
+ * the one thing a mouse-driven gate cannot prove. These helpers send Chromium's own touch events
+ * through CDP: a finger down, held for a moment, then lifted. `fingerDown`/`touchUp` are split so a
+ * test can look at the press — the character preview — before the finger leaves.
+ */
+async function fingerPoint(page, locator, { scroll = false, label = 'the touch target' } = {}) {
+  const target = locator.first();
+  // Scroll, then wait until the element has actually stopped. A finger put down while the page is
+  // still coasting is a drag, and Chromium will never synthesise the click.
+  const scrollToCentre = () =>
+    target.evaluate(
+      (element) =>
+        new Promise((resolve) => {
+          element.scrollIntoView({ block: 'center', inline: 'nearest' });
+          let last = element.getBoundingClientRect().top;
+          let stable = 0;
+          const started = performance.now();
+          const tick = () => {
+            const top = element.getBoundingClientRect().top;
+            if (Math.abs(top - last) <= 0.5) stable += 1;
+            else {
+              stable = 0;
+              last = top;
+            }
+            if (stable >= 4 || performance.now() - started > 1500) resolve();
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        })
+    );
+  if (scroll) await scrollToCentre();
+  let found = await target.boundingBox();
+  check(Boolean(found), `${label} has no box for a finger`);
+  const viewport = page.viewportSize();
+  const offScreen =
+    found.x + found.width < 0 ||
+    found.x > viewport.width ||
+    found.y + found.height < 0 ||
+    found.y > viewport.height;
+  if (offScreen) {
+    await scrollToCentre();
+    found = await target.boundingBox();
+    check(Boolean(found), `${label} has no box after scrolling to it`);
+  }
+  const x = found.x + found.width / 2;
+  const y = found.y + found.height / 2;
+  check(
+    x >= 0 && x <= viewport.width && y >= 0 && y <= viewport.height,
+    `${label} is off screen at ${Math.round(x)},${Math.round(y)}`
+  );
+  return { x, y };
+}
+
+async function fingerDown(page, cdp, locator, options = {}) {
+  const point = await fingerPoint(page, locator, options);
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: point.x, y: point.y, id: 1, radiusX: 5, radiusY: 5, force: 1 }],
+  });
+  return point;
+}
+
+async function touchUp(page, cdp) {
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
+
+async function touchTap(page, cdp, locator, options = {}) {
+  const hold = options.hold ?? 40;
+  await fingerDown(page, cdp, locator, options);
+  await page.waitForTimeout(hold);
+  await touchUp(page, cdp);
+  await page.waitForTimeout(45);
+}
+
+/**
+ * Record the shell's own rect every frame while `action` opens or folds it. The promise is created
+ * before the touch, so the first frame is the position the finger found, not the one it left.
+ */
+function recordKeyboardFrames(page, testId, duration) {
+  return page.evaluate(
+    ({ testId, duration }) =>
+      new Promise((resolve) => {
+        const shell = document.querySelector(`[data-testid="${testId}"]`);
+        const frames = [];
+        const started = performance.now();
+        const tick = () => {
+          const now = performance.now();
+          const rect = shell.getBoundingClientRect();
+          frames.push({
+            t: now - started,
+            y: rect.y,
+            height: rect.height,
+            state: shell.getAttribute('data-state'),
+            visibility: getComputedStyle(shell).visibility,
+          });
+          if (now - started < duration) requestAnimationFrame(tick);
+          else resolve(frames);
+        };
+        requestAnimationFrame(tick);
+      }),
+    { testId, duration }
+  );
+}
+
+async function sampleKeyboardSlide(page, testId, action, duration = 520) {
+  const recording = recordKeyboardFrames(page, testId, duration);
+  await action();
+  return recording;
+}
+
+/**
+ * A tap whose frames are recorded from *before* the finger lands. The element is scrolled and still
+ * first, so the recording covers the slide rather than a page that is still coasting.
+ */
+async function slideTap(page, cdp, testId, locator, options = {}, duration = 900) {
+  const point = await fingerPoint(page, locator, options);
+  const recording = recordKeyboardFrames(page, testId, duration);
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: point.x, y: point.y, id: 1, radiusX: 5, radiusY: 5, force: 1 }],
+  });
+  await page.waitForTimeout(options.hold ?? 40);
+  await touchUp(page, cdp);
+  return recording;
+}
+
+/** A slide is a journey: the shell has to be caught between the two edges on the way. */
+function assertKeyboardSlide(frames, label, direction, viewportHeight) {
+  check(frames.length >= 4, `${label}: no animation frames were captured`);
+  const height = frames[frames.length - 1].height;
+  check(height > 100, `${label}: the shell measured ${Math.round(height)}px tall`);
+  const atRest = viewportHeight - height;
+  const offEdge = viewportHeight + height * 0.02;
+  const targetY = direction === 'open' ? atRest : offEdge;
+  const staged = frames.filter(
+    (frame) =>
+      frame.state === (direction === 'open' ? 'open' : 'closed') &&
+      Math.abs(frame.height - height) <= 2
+  );
+  check(staged.length >= 3, `${label}: the shell was already at its destination in every frame`);
+  const first = staged[0];
+  const last = staged[staged.length - 1];
+  check(
+    Math.abs(last.y - targetY) <= 3,
+    `${label}: settled at ${last.y.toFixed(1)}px, not ${targetY.toFixed(1)}px`
+  );
+  check(
+    Math.abs(first.y - targetY) > 6,
+    `${label}: the first frame was already at the destination (${first.y.toFixed(1)}px)`
+  );
+  check(
+    staged.some(
+      (frame) =>
+        frame.y > Math.min(first.y, targetY) + 6 && frame.y < Math.max(first.y, targetY) - 6
+    ),
+    `${label}: the shell jumped between the edges instead of sliding`
+  );
+  check(
+    direction === 'open' ? last.visibility === 'visible' : last.visibility === 'hidden',
+    `${label}: it finished ${last.visibility}`
+  );
+}
+
+/** Every key's centre must hit that key, not the bar above it or a preview underneath. */
+async function assertKeyCentresHit(page, shellTestId, label) {
+  const misses = await page.evaluate((testId) => {
+    const shell = document.querySelector(`[data-testid="${testId}"]`);
+    return [...shell.querySelectorAll('[data-testid^="python-key-"]')].flatMap((key) => {
+      const rect = key.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return [];
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      if (hit === key || key.contains(hit)) return [];
+      return [
+        `${key.getAttribute('data-testid')} is covered by ${
+          hit?.getAttribute('data-testid') ?? hit?.tagName ?? 'nothing'
+        }`,
+      ];
+    });
+  }, shellTestId);
+  check(misses.length === 0, `${label}: ${misses.slice(0, 4).join('; ')}`);
+}
+
 async function openTabPicker(page) {
   await page.getByTestId('btn-tab-picker').click();
   await page.getByTestId('tab-picker-sheet').waitFor({ state: 'visible', timeout: 10000 });
@@ -218,6 +408,9 @@ async function main() {
       page.on('pageerror', (error) => pageErrors.push(error.message));
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
       await page.getByTestId('phone-tab-nav').waitFor({ state: 'visible', timeout: 30000 });
+      // The app scrolls smoothly; a finger put down mid-scroll is a drag, not a tap, and Chromium
+      // never synthesises its click. This gate is about the keyboard, so it scrolls instantly.
+      await page.addStyleTag({ content: '*, html { scroll-behavior: auto !important; }' });
 
       console.log('\nthe phone shell');
       check(
@@ -764,6 +957,565 @@ async function main() {
         `at ${size.width}px Predict is ${offset}px off Run's row`
       );
       ok(`${size.width}px: the rail is back and Predict shares Run's row`);
+      await context.close();
+    }
+
+    // ---- 9. The keyboard under a real finger: Chromium touch events, not mouse clicks ----
+    {
+      const context = await browser.newContext({
+        viewport: PHONE,
+        screen: PHONE,
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 3,
+      });
+      await seedTourSeen(context);
+      await context.addInitScript(() => {
+        window.__touch = { vibrations: [], focus: [], pointers: [] };
+        Object.defineProperty(navigator, 'vibrate', {
+          configurable: true,
+          value: (pattern) => {
+            window.__touch.vibrations.push(pattern);
+            return true;
+          },
+        });
+        document.addEventListener(
+          'focusin',
+          (event) => {
+            const field = event.target;
+            if (!(field instanceof HTMLElement)) return;
+            window.__touch.focus.push({
+              id: field.dataset.testid ?? field.id ?? field.tagName,
+              inputmode: field.getAttribute('inputmode'),
+            });
+          },
+          true
+        );
+        document.addEventListener(
+          'pointerdown',
+          (event) => {
+            if (event.pointerType) window.__touch.pointers.push(event.pointerType);
+          },
+          true
+        );
+      });
+      const page = await context.newPage();
+      const cdp = await context.newCDPSession(page);
+      const pageErrors = [];
+      page.on('pageerror', (error) => pageErrors.push(error.message));
+      await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+      await page.getByTestId('phone-tab-nav').waitFor({ state: 'visible', timeout: 30000 });
+
+      const editorShell = page.getByTestId('mobile-keyboard-shell');
+      const fieldShell = page.getByTestId('phone-field-keyboard');
+      const press = (keys, id, hold = 40) =>
+        touchTap(page, cdp, keys.getByTestId(id), { hold, label: id });
+      const vibrations = () => page.evaluate(() => window.__touch.vibrations);
+      const clearVibrations = () =>
+        page.evaluate(() => {
+          window.__touch.vibrations.length = 0;
+        });
+      const visibleKeyboards = () =>
+        page.evaluate(
+          () =>
+            [...document.querySelectorAll('[data-testid="python-keyboard"]')].filter((element) => {
+              const shell = element.closest(
+                '[data-testid="mobile-keyboard-shell"], [data-testid="phone-field-keyboard"]'
+              );
+              return shell?.getAttribute('data-state') === 'open';
+            }).length
+        );
+
+      console.log('\nthe editor keys under a finger');
+      await touchTap(page, cdp, page.getByTestId('btn-tab-picker'), {
+        hold: 40,
+        label: 'the tab picker',
+      });
+      await page.getByTestId('tab-picker-sheet').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(250);
+      await touchTap(page, cdp, page.getByTestId('tab-picker-item-tab-pyodide'), {
+        hold: 40,
+        label: 'the Study tab',
+      });
+      await page.getByTestId('tab-picker-sheet').waitFor({ state: 'hidden', timeout: 10000 });
+      await touchTap(page, cdp, page.getByTestId('phone-surface-code'), {
+        hold: 40,
+        label: 'the Code surface',
+      });
+      await page.locator('[data-testid="editor-panel"][data-phone-code="1"]').waitFor({
+        state: 'visible',
+        timeout: 20000,
+      });
+      await waitForEditor(page);
+      await editorShell.waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(320);
+      const editorBox = await editorShell.boundingBox();
+      check(
+        Math.abs(editorBox.y + editorBox.height - PHONE.height) <= 1,
+        `the editor keyboard ends at ${Math.round(editorBox.y + editorBox.height)}px, not ${PHONE.height}px`
+      );
+      check((await visibleKeyboards()) === 1, 'the editor surface must draw exactly one keyboard');
+      await assertKeyCentresHit(page, 'mobile-keyboard-shell', 'the editor keyboard');
+
+      const baseline = await getEditorCode(page);
+      const caret = await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor());
+      await press(editorShell, 'python-key-q');
+      let code = await getEditorCode(page);
+      check(
+        code.length === baseline.length + 1 && code.slice(caret, caret + 1) === 'q',
+        'a finger on Q did not type at the caret'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'a finger on a key took the caret away from the editor'
+      );
+      await press(editorShell, 'python-key-backspace');
+      check((await getEditorCode(page)) === baseline, 'Backspace under a finger did not remove the letter');
+
+      await press(editorShell, 'python-key-shift');
+      check(
+        (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'true',
+        'Shift must arm on a touch'
+      );
+      await press(editorShell, 'python-key-w');
+      code = await getEditorCode(page);
+      check(code.slice(caret, caret + 1) === 'W', `Shift + W typed ${JSON.stringify(code.slice(caret, caret + 1))}`);
+      check(
+        (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
+        'Shift must let go after one letter'
+      );
+      await press(editorShell, 'python-key-backspace');
+
+      const editorKeyboard = editorShell.getByTestId('python-keyboard');
+      await press(editorShell, 'python-key-fn');
+      check((await editorKeyboard.getAttribute('data-fn')) === '1', 'Fn must arm on a touch');
+      await press(editorShell, 'python-key-q');
+      code = await getEditorCode(page);
+      check(code.slice(caret, caret + 1) === '1', 'Fn + Q must type a 1');
+      await press(editorShell, 'python-key-fn');
+      await press(editorShell, 'python-key-backspace');
+
+      await press(editorShell, 'python-key-layout');
+      check(
+        (await editorKeyboard.getAttribute('data-page')) === '123',
+        '123 must open the numeric page on a touch'
+      );
+      await press(editorShell, 'python-key-digit-7');
+      code = await getEditorCode(page);
+      check(code.slice(caret, caret + 1) === '7', 'the numeric page did not type a 7');
+      await press(editorShell, 'python-key-layout');
+      check((await editorKeyboard.getAttribute('data-page')) === 'abc', 'ABC must restore the letters');
+      await press(editorShell, 'python-key-backspace');
+
+      await press(editorShell, 'python-key-space');
+      code = await getEditorCode(page);
+      check(code.slice(caret, caret + 1) === ' ', 'Space must type a space');
+      await press(editorShell, 'python-key-backspace');
+      await press(editorShell, 'python-key-colon');
+      code = await getEditorCode(page);
+      check(code.slice(caret, caret + 1) === ':', 'the colon key did not type under a finger');
+      await press(editorShell, 'python-key-backspace');
+
+      for (const letter of ['h', 'e', 'l', 'l', 'o']) {
+        await press(editorShell, `python-key-${letter}`, 18);
+      }
+      code = await getEditorCode(page);
+      check(
+        code.slice(caret, caret + 5) === 'hello',
+        `five quick touches typed ${JSON.stringify(code.slice(caret, caret + 5))}`
+      );
+      for (let index = 0; index < 5; index += 1) await press(editorShell, 'python-key-backspace', 18);
+      check((await getEditorCode(page)) === baseline, 'the quick touches did not clean up');
+
+      await fingerDown(page, cdp, editorShell.getByTestId('python-key-a'), { label: 'the A key' });
+      await page.waitForTimeout(180);
+      const preview = editorShell.getByTestId('python-key-preview');
+      check(await preview.isVisible(), 'holding a key must raise its character above the cap');
+      check(
+        (await preview.textContent())?.trim() === 'a',
+        `the held key previewed ${JSON.stringify(await preview.textContent())}`
+      );
+      check((await getEditorCode(page)) === baseline, 'a held key typed before the finger lifted');
+      await touchUp(page, cdp);
+      await page.waitForTimeout(140);
+      check((await preview.count()) === 0, 'the character preview stayed after the finger lifted');
+      code = await getEditorCode(page);
+      check(code.slice(caret, caret + 1) === 'a', 'lifting the finger did not type the held letter');
+      await press(editorShell, 'python-key-backspace');
+
+      await clearVibrations();
+      await press(editorShell, 'python-key-q');
+      check(
+        JSON.stringify(await vibrations()) === '[8]',
+        `a letter asked for ${JSON.stringify(await vibrations())}, not one 8 ms tap`
+      );
+      await press(editorShell, 'python-key-backspace');
+      await clearVibrations();
+      await press(editorShell, 'python-key-newline');
+      check(
+        JSON.stringify(await vibrations()) === '[18]',
+        `Return asked for ${JSON.stringify(await vibrations())}, not the medium tap`
+      );
+      await press(editorShell, 'python-key-backspace');
+      check((await getEditorCode(page)) === baseline, 'Return + Backspace did not restore the line');
+      await clearVibrations();
+      await press(editorShell, 'python-key-layout');
+      check(
+        JSON.stringify(await vibrations()) === '[[10,24,12]]',
+        `the layout key asked for ${JSON.stringify(await vibrations())}, not the confirmation`
+      );
+      await press(editorShell, 'python-key-layout');
+
+      const pointerTypes = await page.evaluate(() => window.__touch.pointers);
+      check(
+        pointerTypes.length >= 20 && pointerTypes.every((type) => type === 'touch'),
+        `the gate must drive touches, got ${JSON.stringify([...new Set(pointerTypes)])}`
+      );
+
+      await press(editorShell, 'python-key-fn');
+      const editorCloseFrames = await sampleKeyboardSlide(page, 'mobile-keyboard-shell', () =>
+        touchTap(page, cdp, editorShell.getByTestId('python-key-done'), { hold: 40, label: 'Done' })
+      );
+      assertKeyboardSlide(editorCloseFrames, 'the editor keyboard folding', 'close', PHONE.height);
+      await page.waitForTimeout(220);
+      check(
+        (await editorKeyboard.getAttribute('data-fn')) === '1',
+        'folding the editor keyboard must keep the Fn layer for the next open'
+      );
+      check(
+        (await page.evaluate(() => document.body.style.getPropertyValue('--mobile-keyboard-height'))) === '',
+        'a folded keyboard must release the height it lent the page'
+      );
+      const barHome = await box(page, 'phone-bar');
+      check(
+        Math.abs(barHome.y + barHome.height - PHONE.height) <= 1,
+        `Done must put the Study bar back on the edge, not at ${Math.round(barHome.y + barHome.height)}px`
+      );
+      const toggle = page.locator('[data-testid="keyboard-toggle"]:visible').first();
+      const editorOpenFrames = await slideTap(page, cdp, 'mobile-keyboard-shell', toggle, {
+        hold: 40,
+        scroll: true,
+        label: 'the Python keys button',
+      });
+      assertKeyboardSlide(editorOpenFrames, 'the editor keyboard rising', 'open', PHONE.height);
+      await page.waitForTimeout(220);
+      check(
+        (await editorKeyboard.getAttribute('data-fn')) === '1',
+        'the editor keyboard reopened without the Fn layer it had'
+      );
+      const barOnKeys = await box(page, 'phone-bar');
+      const risen = await editorShell.boundingBox();
+      check(
+        Math.abs(barOnKeys.y + barOnKeys.height - risen.y) <= 1,
+        'the Study bar must ride on the editor keyboard as it opens'
+      );
+      await press(editorShell, 'python-key-fn');
+      await press(editorShell, 'python-key-done');
+      await page.waitForTimeout(320);
+      ok('every editor key answers a touch, holds its preview, types fast, buzzes, and slides both ways');
+
+      console.log('\nthe page keyboard under a finger');
+      await touchTap(page, cdp, page.getByTestId('phone-surface-lesson'), {
+        hold: 40,
+        label: 'the Lesson surface',
+      });
+      await page.getByTestId('lesson-reader').waitFor({ state: 'visible', timeout: 10000 });
+      await touchTap(page, cdp, page.getByTestId('btn-lessons'), {
+        hold: 40,
+        label: 'the lesson list',
+      });
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
+      const search = page.getByTestId('lesson-sheet').getByTestId('input-lesson-search');
+      await touchTap(page, cdp, search, { hold: 60, scroll: true, label: 'the lesson search' });
+      await fieldShell.waitFor({ state: 'visible', timeout: 5000 });
+      await page.waitForTimeout(320);
+      const firstFieldBox = await fieldShell.boundingBox();
+      check(
+        Math.abs(firstFieldBox.y + firstFieldBox.height - PHONE.height) <= 1,
+        `the page keyboard ends at ${Math.round(firstFieldBox.y + firstFieldBox.height)}px, not ${PHONE.height}px`
+      );
+      check((await search.getAttribute('inputmode')) === 'none', 'a page field must suppress the OS keyboard');
+      const focusedSearch = await page.evaluate(() => window.__touch.focus.at(-1));
+      check(
+        focusedSearch.id === 'input-lesson-search' && focusedSearch.inputmode === 'none',
+        `the OS keyboard was not suppressed before focus: ${JSON.stringify(focusedSearch)}`
+      );
+      await assertKeyCentresHit(page, 'phone-field-keyboard', 'the page keyboard');
+
+      await press(fieldShell, 'python-key-p');
+      check((await search.inputValue()) === 'p', `the page keyboard typed ${JSON.stringify(await search.inputValue())}`);
+      await press(fieldShell, 'python-key-backspace');
+      check((await search.inputValue()) === '', 'Backspace did not clear the page field');
+      await press(fieldShell, 'python-key-fn');
+      await press(fieldShell, 'python-key-q');
+      check((await search.inputValue()) === '1', 'Fn + Q must type a digit into a page field');
+      await press(fieldShell, 'python-key-fn');
+      await press(fieldShell, 'python-key-backspace');
+      await press(fieldShell, 'python-key-layout');
+      check(
+        (await fieldShell.getByTestId('python-keyboard').getAttribute('data-page')) === '123',
+        '123 must open the numeric page for a page field'
+      );
+      await press(fieldShell, 'python-key-digit-7');
+      check((await search.inputValue()) === '7', 'the numeric page did not type 7 into the search');
+      await press(fieldShell, 'python-key-layout');
+      await press(fieldShell, 'python-key-backspace');
+      await press(fieldShell, 'python-key-shift');
+      await press(fieldShell, 'python-key-s');
+      check((await search.inputValue()) === 'S', 'Shift + S must type a capital into a page field');
+      check(
+        (await fieldShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
+        'Shift must let go after one letter in a page field'
+      );
+      await press(fieldShell, 'python-key-backspace');
+
+      for (const letter of ['s', 'e', 'a', 'r', 'c', 'h']) {
+        await press(fieldShell, `python-key-${letter}`, 18);
+      }
+      check(
+        (await search.inputValue()) === 'search',
+        `six quick touches typed ${JSON.stringify(await search.inputValue())}`
+      );
+      for (let index = 0; index < 6; index += 1) await press(fieldShell, 'python-key-backspace', 18);
+      check((await search.inputValue()) === '', 'the quick touches did not clear the search');
+
+      await page.setViewportSize({ width: 360, height: 740 });
+      await page.waitForTimeout(420);
+      const smallBox = await fieldShell.boundingBox();
+      check(
+        Math.abs(smallBox.y + smallBox.height - 740) <= 2,
+        `at 360px the page keyboard ends at ${Math.round(smallBox.y + smallBox.height)}px, not 740px`
+      );
+      await assertNoSidewaysScroll(page, 'the page keyboard at 360');
+      const smallKeys = await page.evaluate(() => {
+        const shell = document.querySelector('[data-testid="phone-field-keyboard"]');
+        const keys = [...shell.querySelectorAll('[data-testid^="python-key-"]')].map((key) =>
+          key.getBoundingClientRect()
+        );
+        return {
+          count: keys.length,
+          minHeight: Math.min(...keys.map((rect) => rect.height)),
+          minWidth: Math.min(...keys.map((rect) => rect.width)),
+        };
+      });
+      check(smallKeys.count >= 60, `the 360px keyboard has only ${smallKeys.count} keys`);
+      check(
+        smallKeys.minHeight >= 40 && smallKeys.minWidth >= 20,
+        `a 360px key measures ${smallKeys.minWidth}x${smallKeys.minHeight}, below the touch floor`
+      );
+      await assertKeyCentresHit(page, 'phone-field-keyboard', 'the 360px page keyboard');
+      await page.setViewportSize(PHONE);
+      await page.waitForTimeout(420);
+      const restoredBox = await fieldShell.boundingBox();
+      check(
+        Math.abs(restoredBox.y + restoredBox.height - PHONE.height) <= 2,
+        `back at 390px the page keyboard ends at ${Math.round(restoredBox.y + restoredBox.height)}px`
+      );
+
+      const fieldCloseFrames = await sampleKeyboardSlide(page, 'phone-field-keyboard', () =>
+        touchTap(page, cdp, fieldShell.getByTestId('python-key-done'), { hold: 40, label: 'Done' })
+      );
+      assertKeyboardSlide(fieldCloseFrames, 'the page keyboard folding', 'close', PHONE.height);
+      await page.waitForTimeout(220);
+      check((await search.getAttribute('inputmode')) === null, 'Done must hand the field its inputmode back');
+      check(
+        await search.evaluate((element) => element !== document.activeElement),
+        'Done must put the caret away'
+      );
+      const fieldOpenFrames = await slideTap(page, cdp, 'phone-field-keyboard', search, {
+        hold: 60,
+        scroll: true,
+        label: 'the lesson search',
+      });
+      assertKeyboardSlide(fieldOpenFrames, 'the page keyboard rising', 'open', PHONE.height);
+      await page.waitForTimeout(220);
+
+      const chip = page.getByTestId('lesson-sheet').locator('[data-testid="track-filters"] button').first();
+      await touchTap(page, cdp, chip, { hold: 40, label: 'a track filter' });
+      await page.waitForTimeout(320);
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'closed',
+        'a finger outside a field must fold the page keyboard'
+      );
+      check((await search.getAttribute('inputmode')) === null, 'a press outside must hand the inputmode back');
+      await touchTap(page, cdp, page.getByTestId('lesson-sheet-close'), {
+        hold: 40,
+        label: 'the lesson sheet close',
+      });
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: 10000 });
+      const barBack = await box(page, 'phone-bar');
+      check(
+        Math.abs(barBack.y + barBack.height - PHONE.height) <= 1,
+        'the Study bar must be back on the edge once the sheet and its keyboard are gone'
+      );
+      ok('a page field takes the same keys under a finger, fits 360px, and slides both ways');
+
+      console.log('\ntwo fields under one finger');
+      await page.evaluate(() => {
+        const tray = document.createElement('div');
+        tray.dataset.touchTray = '1';
+        tray.style.cssText =
+          'position:fixed;left:8px;top:150px;z-index:200;display:flex;gap:8px;padding:6px;background:var(--panel);border:1px solid var(--line)';
+        for (const [id, label] of [
+          ['touch-field-a', 'A'],
+          ['touch-field-b', 'B'],
+        ]) {
+          const input = document.createElement('input');
+          input.id = id;
+          input.setAttribute('aria-label', `Test field ${label}`);
+          input.style.cssText = 'width:132px;height:44px;border:1px solid var(--line);background:var(--canvas);color:var(--ink)';
+          tray.append(input);
+        }
+        document.body.append(tray);
+      });
+      const fieldA = page.locator('#touch-field-a');
+      const fieldB = page.locator('#touch-field-b');
+      await touchTap(page, cdp, fieldA, { hold: 60, scroll: true, label: 'the first test field' });
+      await page.waitForTimeout(240);
+      const beforeSwap = await fieldShell.boundingBox();
+      check((await fieldA.getAttribute('inputmode')) === 'none', 'the first field did not suppress its OS keyboard');
+      await touchTap(page, cdp, fieldB, { hold: 60, scroll: true, label: 'the second test field' });
+      await page.waitForTimeout(200);
+      const afterSwap = await fieldShell.boundingBox();
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'open',
+        'moving to a second field folded the keyboard'
+      );
+      check(
+        Math.abs(afterSwap.y - beforeSwap.y) <= 1,
+        `moving to a second field moved the keyboard ${Math.round(afterSwap.y - beforeSwap.y)}px`
+      );
+      check(
+        (await fieldA.getAttribute('inputmode')) === null,
+        'the field the finger left must get its inputmode back'
+      );
+      check((await fieldB.getAttribute('inputmode')) === 'none', 'the field the finger reached must suppress its OS keyboard');
+      const focusedSecond = await page.evaluate(() => window.__touch.focus.at(-1));
+      check(
+        focusedSecond.id === 'touch-field-b' && focusedSecond.inputmode === 'none',
+        `the second field was focused before it was suppressed: ${JSON.stringify(focusedSecond)}`
+      );
+      await press(fieldShell, 'python-key-z');
+      check((await fieldB.inputValue()) === 'z', 'the keys did not follow the finger to the second field');
+      await press(fieldShell, 'python-key-done');
+      await page.waitForTimeout(320);
+      await page.evaluate(() => document.querySelector('[data-touch-tray]')?.remove());
+      ok('the keys follow a finger from one field to the next without folding');
+
+      console.log('\nthe calculator and the note composer under a finger');
+      await touchTap(page, cdp, page.getByTestId('phone-surface-code'), {
+        hold: 40,
+        label: 'the Code surface',
+      });
+      await page.locator('[data-testid="editor-panel"][data-phone-code="1"]').waitFor({
+        state: 'visible',
+        timeout: 20000,
+      });
+      await waitForEditor(page);
+      if ((await editorShell.getAttribute('data-state')) === 'open') {
+        await touchTap(page, cdp, editorShell.getByTestId('python-key-done'), {
+          hold: 40,
+          label: 'Done on the editor keys',
+        });
+        await page.waitForTimeout(280);
+      }
+      await touchTap(page, cdp, page.getByTestId('editor-tab-calculator'), {
+        hold: 40,
+        scroll: true,
+        label: 'the Calculator view',
+      });
+      await page.getByTestId('calculator-pane').waitFor({ state: 'visible', timeout: 10000 });
+      const display = page.getByTestId('calculator-display');
+      await touchTap(page, cdp, display, { hold: 60, scroll: true, label: 'the calculator display' });
+      await fieldShell.waitFor({ state: 'visible', timeout: 5000 });
+      await page.waitForTimeout(300);
+      check((await display.getAttribute('inputmode')) === 'none', 'the calculator display kept the OS keyboard');
+      const focusedDisplay = await page.evaluate(() => window.__touch.focus.at(-1));
+      check(
+        focusedDisplay.id === 'calculator-display' && focusedDisplay.inputmode === 'none',
+        `the calculator was focused before it was suppressed: ${JSON.stringify(focusedDisplay)}`
+      );
+      await press(fieldShell, 'python-key-fn');
+      await press(fieldShell, 'python-key-q');
+      await press(fieldShell, 'python-key-w');
+      await press(fieldShell, 'python-key-fn');
+      await press(fieldShell, 'python-key-plus');
+      await press(fieldShell, 'python-key-fn');
+      await press(fieldShell, 'python-key-e');
+      await press(fieldShell, 'python-key-fn');
+      check(
+        (await display.inputValue()) === '12+3',
+        `the calculator received ${JSON.stringify(await display.inputValue())}`
+      );
+      // The keypad's = lives under the fixed keys; Done puts them away, the way a finger would.
+      await press(fieldShell, 'python-key-done');
+      await page.waitForTimeout(320);
+      check((await display.getAttribute('inputmode')) === null, 'Done must release the calculator display');
+      await touchTap(page, cdp, page.getByTestId('calculator-key-equals'), {
+        hold: 40,
+        label: 'equals',
+      });
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="calculator-result"]')?.textContent?.trim() === '15',
+        undefined,
+        { timeout: 3000 }
+      );
+
+      await touchTap(page, cdp, page.getByTestId('phone-surface-lesson'), {
+        hold: 40,
+        label: 'the Lesson surface',
+      });
+      await page.getByTestId('lesson-reader').waitFor({ state: 'visible', timeout: 10000 });
+      await page.evaluate(() => {
+        const reader = document.querySelector('[data-testid="lesson-reader"]');
+        const paragraph = reader.querySelector('p') ?? reader;
+        const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+        let node = null;
+        while ((node = walker.nextNode()) && !node.textContent.trim()) {}
+        const range = document.createRange();
+        range.setStart(node, 0);
+        range.setEnd(node, Math.min(24, node.textContent.length));
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+      });
+      await page.getByTestId('btn-sticky').waitFor({ state: 'visible', timeout: 5000 });
+      await touchTap(page, cdp, page.getByTestId('btn-sticky'), {
+        hold: 40,
+        scroll: true,
+        label: 'the Sticky button',
+      });
+      const note = page.getByTestId('sticky-note-text');
+      await note.waitFor({ state: 'visible', timeout: 5000 });
+      await touchTap(page, cdp, note, { hold: 60, label: 'the note composer' });
+      await page.waitForTimeout(300);
+      check((await note.getAttribute('inputmode')) === 'none', 'the note composer kept the OS keyboard');
+      const focusedNote = await page.evaluate(() => window.__touch.focus.at(-1));
+      check(
+        focusedNote.id === 'sticky-note-text' && focusedNote.inputmode === 'none',
+        `the note composer was focused before it was suppressed: ${JSON.stringify(focusedNote)}`
+      );
+      for (const letter of ['n', 'o', 't', 'e']) await press(fieldShell, `python-key-${letter}`, 25);
+      check(
+        (await note.textContent())?.trim() === 'note',
+        `the rich note received ${JSON.stringify(await note.textContent())}`
+      );
+      await press(fieldShell, 'python-key-backspace');
+      check((await note.textContent())?.trim() === 'not', 'Backspace did not edit the rich note');
+      await press(fieldShell, 'python-key-done');
+      await page.waitForTimeout(320);
+      check((await note.getAttribute('inputmode')) === null, 'Done must release the note composer');
+      await touchTap(page, cdp, page.getByTestId('btn-sticky-cancel'), {
+        hold: 40,
+        scroll: true,
+        label: 'the note close',
+      });
+      await page.waitForTimeout(200);
+      check((await note.count()) === 0, 'the note composer stayed open after its close');
+      ok('the calculator and the rich note composer both take the site keys under a finger');
+
+      check(pageErrors.length === 0, `the touch session threw: ${pageErrors.join('; ')}`);
       await context.close();
     }
 

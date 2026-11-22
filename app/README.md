@@ -1681,7 +1681,7 @@ npm run lint                 # types
 npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
 npm run test:reader          # the lesson pane without a browser: inline parsing, heading anchors, the payload guard, the position store
 npm run test:phone           # the phone's pure rules: the per-lesson surface store and the install offer's platform and snooze rules
-npm run test:e2e:mobile      # the phone gate: 390x844 touch shell, picker, Study surfaces, sheets, install row, and the 768/1024 handover
+npm run test:e2e:mobile      # the phone gate: 390x844, touch events on the keyboard, picker, Study surfaces, install row, and the 768/1024 handover
 npm run icons                # render the manifest and iOS icons from favicon.svg
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection

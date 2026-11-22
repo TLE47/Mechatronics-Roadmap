@@ -231,8 +231,14 @@ sheet hides it; a reload inside Code comes back to Code and Lesson hides the edi
 the lesson sheet closes from the list's own corner × and hands focus back, then selects another entry
 and the strip follows; the install row appears only with a
 prompt event (or the iOS UA) and calls the prompt exactly once; and at 768/1024 the rail is back with
-Predict sharing Run's row. It launches no interpreter: `test:e2e` and `test:predict` own running code,
-and 10 MB on a throttled phone link would make this too slow to gate every pull request.
+Predict sharing Run's row. Its last block drives the keyboard with Chromium's own touch events rather
+than mouse clicks, because every key cancels `pointerdown` and a mouse-only gate cannot see the
+difference: it taps the editor's keys and a page field's keys, holds one for its preview, types six
+letters at a finger's pace, reads the haptics, carries the keys between two fields without folding,
+and records the shell's position every frame so a slide cannot pass for a jump — at 390 and 360 px,
+including the calculator display and the rich note composer. It launches no interpreter: `test:e2e` and
+`test:predict` own running code, and 10 MB on a throttled phone link would make this too slow to gate
+every pull request.
 
 Measured on the run that added it: header 107.75 px (budget 112), picker rows 56 px, punctuation keys
 40 × 40, phone Run 44 px, Study bar flush with the 844 px edge, and no horizontal scroll on the shell,

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.18.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.18.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,31 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-22] — The phone keyboard is tested with a real finger
+
+The phone gate now drives the keyboard with Chromium's own touch events instead of mouse clicks.
+That distinction is the whole point: every key cancels `pointerdown` so a press cannot take the caret,
+and a mouse-driven test cannot see whether that still leaves a touch's `click` reachable. The new
+block sends `Input.dispatchTouchEvent` to the editor's keys and to a page field's keys, holds one so
+its character preview is measured before the finger lifts, types six letters at a finger's pace,
+stubs `navigator.vibrate` to read the light/medium/confirmation patterns, and carries the keys from
+one field to another without folding the shell. It also taps the calculator's display and types
+`12+3` through Fn and the operator row, then opens the sticky-note composer and types into its
+`contenteditable`, because those are the two fields a mouse-click gate kept missing.
+
+The slide is measured, not assumed: the suite records the shell's rect every animation frame while
+the keyboard rises and folds, and requires a frame between the two edges, the right resting edge, and
+`visibility: hidden` once folded. It runs at 390 px and again at 360 px, where every key still clears
+40 × 20 px and every key's centre resolves to that key. The field keyboard is focused at a tap with
+`inputmode="none"` already in place, proved by a `focusin` listener, and Done gives the attribute back.
+The two-field retarget uses a small pair of plain inputs appended for the check; the rest are real
+surfaces.
+
+Verification: `npm run test:e2e:mobile` (48 s, green, including the new block) and
+`python3 scripts/check_all.py --ci` (45/45).
 
 ---
 
