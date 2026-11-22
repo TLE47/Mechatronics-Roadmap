@@ -1313,6 +1313,25 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   }
 }
 
+/* A statement card is carried by a long press on a phone, so the browser's own long-press
+   gestures must not claim the same finger. Selection and iOS's callout are declined by the card,
+   not by the page: a field inside it keeps its own selection, because editing one token is what
+   the field is for, and a mouse on a wide screen can still select the code it can see. */
+[data-block-id] {
+  -webkit-touch-callout: none;
+}
+@media (pointer: coarse) {
+  [data-block-id] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  [data-block-id] input,
+  [data-block-id] textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
 /* A sheet owns the screen while it is open: the phone's fixed Study bar must not sit under its
    last row. The attribute is written by `components/Sheet.tsx`. */
 [data-sheet-open='1'] [data-phone-bar] {

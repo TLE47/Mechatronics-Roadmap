@@ -117,6 +117,7 @@
     "test:panes": "node --experimental-strip-types scripts/test_editor_panes.mjs",
     "test:blocks": "node --experimental-strip-types scripts/test_python_blocks.mjs",
     "test:e2e:blocks": "node scripts/e2e_python_blocks.mjs",
+    "test:e2e:snap-arrow": "node scripts/e2e_snap_arrow.mjs",
     "test:calculator": "node --experimental-strip-types scripts/test_calculator.mjs",
     "test:grapher": "node --experimental-strip-types scripts/test_grapher.mjs",
     "test:robot": "node --experimental-strip-types scripts/test_robot_sim.mjs",

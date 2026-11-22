@@ -161,6 +161,10 @@ export function PythonToolbox({
 
   const onGrabberDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    // A new press is a new gesture. A browser does not always synthesise the click that follows a
+    // touch swipe, so the guard that swallows it can still be set when the next tap begins; without
+    // this line that tap would be read as the previous swipe's click and would not toggle.
+    draggedRef.current = false;
     swipeRef.current = { y: event.clientY };
     // The finger starts from wherever the sheet is now: open drags it down, folded drags it up.
     setLive(open ? openPx : 0);
@@ -489,8 +493,14 @@ export function PythonToolbox({
         <div
           aria-hidden="true"
           data-testid="toolbox-drag-ghost"
-          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-accent bg-panel px-2 py-1 font-mono text-[11px] font-semibold text-accent shadow-lg"
-          style={{ left: ghost.x, top: ghost.y }}
+          // Like the card's chip, this rides above the pointer so it cannot cover the snap arrow
+          // drawn in the gap at the pointer.
+          className="pointer-events-none fixed z-50 rounded-lg border border-accent bg-panel px-2 py-1 font-mono text-[11px] font-semibold text-accent shadow-lg"
+          style={{
+            left: ghost.x,
+            top: ghost.y,
+            transform: 'translate(-50%, calc(-100% - 14px))',
+          }}
         >
           {ghost.label}
         </div>

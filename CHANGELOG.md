@@ -16,6 +16,49 @@ flowchart LR
 
 ---
 
+## [2026-11-22] — The gap a dragged block will land in gets a small arrow
+
+While a statement is in the air — lifted from the workspace or dragged out of the toolbox — the card
+under the pointer draws its snap point, and now also a small accent arrow just below itself,
+pointing into the gap the release will insert the statement into. An empty suite shows the same
+arrow just above its dashed target, because it has no card to draw it under. The label chip that
+follows the pointer now rides **above** it: centred on the finger it painted straight over the gap,
+which the first screenshot pass caught with the arrow's own pixels hidden. The arrow is
+`aria-hidden` and `pointer-events-none`, so the release still hit-tests the cards beneath it, and it
+clears with the drag. Both browser gates assert its place in the DOM: one arrow on the card the
+pointer is over, and none after the drop.
+
+**A paused drag is now photographed.** `npm run test:e2e:snap-arrow` holds a mouse drag and a real
+CDP touch long-press open at 1280 and 390 — over the gap below a card and over an empty suite — and
+writes the viewport, the crop and a 6× zoom to `artifacts/snap-arrow/`. To prove the marker is
+painted, not merely positioned, it screenshots the crop twice: once with the arrow visible and once
+with its own `visibility` hidden, and counts the accent pixels that only the arrow can contribute.
+A clipped or covered arrow fails there, and the after-release frame plus a zero DOM count prove it
+clears.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run check:weight`, `npm run test:e2e:blocks`,
+`npm run test:e2e:snap-arrow` (screenshots in `artifacts/snap-arrow/`).
+
+---
+
+## [2026-11-22] — The phone's drag and dock swipe are tested with a finger
+
+The two phone gestures from the previous entry are now exercised through CDP touch input, not
+`page.mouse`: the gate holds a statement card for the long press, carries it onto another card and
+checks the reorder is one undo step, then swipes the dock grabber and watches the sheet's height
+follow before it settles. A real finger also exposed the browser's own long-press gestures, so the
+editor now attaches its non-passive `touchmove` guard and its `contextmenu` guard when the finger
+goes down (a listener added only after the hold is too late for the gesture's first move), declines
+them only once the card has lifted, and keeps the `touchmove` handler's identity stable so the one
+that was added is the one removed. Cards decline text selection and the iOS callout in CSS under a
+coarse pointer, while their fields keep text selection and a mouse can still select code on a wide
+screen. The grabber also clears the swipe's click guard on every new press, because a browser does
+not always send the click after a touch swipe and the next tap must not be swallowed.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run test:e2e:blocks`.
+
+---
+
 ## [2026-11-22] — Cards you can pick up, a dock that follows the finger, and quieter cards
 
 A statement card is now something a learner can take hold of and put somewhere else, the way the iOS

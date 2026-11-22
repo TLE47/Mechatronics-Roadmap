@@ -63,8 +63,17 @@ live: the height follows the finger rather than deciding on release, and letting
 one short ease (or snaps back if the drag ended on the side it started). The workspace keeps 42vh of
 bottom padding so the last card can still be scrolled above the dock. A card opens with its five
 controls folded at every width — the toggle is on the card — and a touch that rests on a card for a
-third of a second lifts it to drag, with the card under the pointer drawn as the point it will snap
-to; a touch that moves sooner scrolls instead. The toolbar above the code is one compact row below
+third of a second lifts it to drag. The label chip that follows the finger rides just above it, so
+the finger (and the chip) never covers the landing point; the card under it draws the point a
+release will snap to, with a small down accent arrow in the gap the statement will land in — or
+just above an empty suite's dashed target. A touch that moves sooner scrolls instead, and
+`npm run test:e2e:snap-arrow` screenshots the paused drag at 390 px and proves the arrow's pixels
+are painted. No browser long-press gesture claims that finger:
+the card declines text selection and the iOS callout in CSS, and the editor attaches its non-passive
+`touchmove` and `contextmenu` guards when the finger goes down (so the first move cannot be taken as
+a scroll) while only `preventDefault`ing once the hold has lifted. The gate drives both the card drag
+and the grabber swipe with CDP touch input rather than a mouse, and measures that the page does not
+scroll or select under either gesture. The toolbar above the code is one compact row below
 `sm` and the full bar with its sentence above that. From `sm` up the toolbox is the inline panel, so
 Visual is not a phone-only face.
 

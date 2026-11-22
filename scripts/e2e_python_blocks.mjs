@@ -25,6 +25,11 @@
  * 9. **The code pane follows every app palette.** With Python Code open, the four palettes change the
  *    editor's syntax inks and surfaces through the app's tokens, including when the pane is closed
  *    for the change and reopened, and the chosen code/visual face survives that round trip.
+ * 10. **The two phone gestures are touch gestures.** A real touch long-press lifts a card and
+ *    carries it onto another card without scrolling the page, selecting text or offering a
+ *    long-press menu, and a touch swipe on the dock grabber moves the sheet before it settles.
+ *    These presses go through CDP's touchscreen input, not `page.mouse`, so the editor sees
+ *    `pointerType: 'touch'` and `touchmove` — the path a finger takes.
  *
  * Run: node --experimental-strip-types scripts/e2e_python_blocks.mjs
  */
@@ -34,6 +39,7 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { createTouch } from './touch_input.mjs';
 import { getEditorCode, waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -448,7 +454,29 @@ async function main() {
       steps: 10,
     });
     await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    const snapArrow = page.getByTestId('block-snap-arrow');
+    await snapArrow.waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(await snapArrow.count(), 1, 'one arrow should mark the gap a release will land in');
+    assert.equal(
+      await snapArrow.evaluate((arrow) =>
+        arrow.closest('[data-block-id]')?.getAttribute('data-block-id')
+      ),
+      rootIds[1],
+      'the arrow should point at the gap under the card the pointer is on'
+    );
+    const arrowBox = await snapArrow.boundingBox();
+    assert.ok(
+      arrowBox &&
+        arrowBox.y >= nextBox.y + nextBox.height - 1 &&
+        arrowBox.y + arrowBox.height <= nextBox.y + nextBox.height + 8,
+      `the arrow should sit in the gap under the card, got ${JSON.stringify(arrowBox)} for a card bottom of ${Math.round(nextBox.y + nextBox.height)}`
+    );
     await page.mouse.up();
+    assert.equal(
+      await page.getByTestId('block-snap-arrow').count(),
+      0,
+      'the arrow should clear once the card has landed'
+    );
     const orderAfterDrag = await rootCards.evaluateAll((cards) =>
       cards.map((card) => card.getAttribute('data-block-id'))
     );
@@ -746,13 +774,305 @@ async function main() {
       `the dock should take about a third of the screen, not ${Math.round(dockBox.height)}px`
     );
     const grabber = page.getByTestId('toolbox-grabber');
-    const grabBox = await grabber.boundingBox();
-    assert.ok(grabBox, 'the dock should draw its grabber');
-    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2 + 45, {
-      steps: 8,
-    });
+    assert.ok(await grabber.boundingBox(), 'the dock should draw its grabber');
+
+    // ---- The two gestures, with a finger ----
+    // A mouse drag never meets the browser's own touch gestures, so the phone paths are driven
+    // through CDP's touchscreen input from here: the page sees a `pointerType: 'touch'` press and
+    // `touchmove`s, and the browser's scroll and long-press recognisers get the same input a device
+    // sends. The page must not take any of those moves for a scroll, and the card must not let the
+    // browser start a selection, callout or long-press menu under the hold.
+    assert.ok(
+      await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches),
+      'the phone gates need a coarse pointer for the touch floors and the card CSS'
+    );
+    const touch = await createTouch(page);
+    const touchCards = page.locator('[data-testid="python-workspace-list"] > li[data-block-id]');
+    const touchIds = await touchCards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute('data-block-id'))
+    );
+    assert.ok(touchIds.length >= 3, 'the touch drag needs a few root statements to reorder');
+    assert.equal(
+      await touchCards.first().evaluate((card) => getComputedStyle(card).userSelect),
+      'none',
+      'a card on a touch device must decline text selection, which would fight the long press'
+    );
+    // Put the pair in the band between the sticky chrome and the dock. Centring the second card in
+    // the whole viewport would put its bottom edge behind the dock, so the scroll is measured
+    // against those two edges, and the scrollable element that owns the workspace is found rather
+    // than assuming the page is what moves.
+    //
+    // The phone's top rows compact on the first scroll — measured here as a ~57 px shift — which
+    // pushes the cards back down after a placement that was right when it was made. Place, let the
+    // layout settle, then place again if the pair slipped out; and read the band the assertions use
+    // from the settled layout, not from before it moved.
+    const stableFirstCard = () =>
+      page.waitForFunction(
+        () =>
+          new Promise((resolve) => {
+            const card = document.querySelector(
+              '[data-testid="python-workspace-list"] > li[data-block-id]'
+            );
+            if (!card) return resolve(false);
+            const before = card.getBoundingClientRect().top;
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() =>
+                resolve(Math.abs(card.getBoundingClientRect().top - before) < 0.5)
+              )
+            );
+          }),
+        undefined,
+        { timeout: 3000 }
+      );
+    let band = null;
+    let pressCardBox = null;
+    let dropCardBox = null;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const placement = await page.evaluate(() => {
+        const cards = [
+          ...document.querySelectorAll(
+            '[data-testid="python-workspace-list"] > li[data-block-id]'
+          ),
+        ];
+        const dock = document.querySelector('[data-testid="python-toolbox"]');
+        const header = document.querySelector('[data-chrome="header"]');
+        // A phone has two sticky rows at the top: the header and the tab picker under it. The band
+        // starts below both, or a card is placed under a control that eats the press.
+        const tabRow = document.querySelector('[data-chrome="rail"]');
+        const chromeBottom = Math.max(
+          header ? header.getBoundingClientRect().bottom : 0,
+          tabRow ? tabRow.getBoundingClientRect().bottom : 0
+        );
+        const bandTop = (chromeBottom || 84) + 8;
+        const bandBottom = (dock ? dock.getBoundingClientRect().top : window.innerHeight) - 8;
+        const first = cards[0].getBoundingClientRect();
+        const second = cards[1].getBoundingClientRect();
+        const height = second.bottom - first.top;
+        const desiredTop = bandTop + Math.max(0, (bandBottom - bandTop - height) / 2);
+        const delta = first.top - desiredTop;
+        if (Math.abs(delta) > 1) {
+          let node = cards[0].parentElement;
+          let scroller = null;
+          while (node && node !== document.body) {
+            const overflow = getComputedStyle(node).overflowY;
+            if (
+              (overflow === 'auto' || overflow === 'scroll') &&
+              node.scrollHeight > node.clientHeight + 1
+            ) {
+              scroller = node;
+              break;
+            }
+            node = node.parentElement;
+          }
+          // The app asks for smooth scrolling in CSS, and a bare `scrollTop` write still animates
+          // under it. An inline `auto` makes this one scroll instant, so the cards are measured
+          // where they will actually be when the finger goes down.
+          const target = scroller ?? document.scrollingElement ?? document.documentElement;
+          const previous = target.style.scrollBehavior;
+          target.style.scrollBehavior = 'auto';
+          target.scrollTop += delta;
+          target.style.scrollBehavior = previous;
+        }
+        return { delta: Math.round(delta) };
+      });
+      await stableFirstCard();
+      // The sticky rows react to the scroll a frame or two after it lands; give that reaction the
+      // time to move the cards before the placement is judged.
+      await page.waitForTimeout(120);
+      pressCardBox = await touchCards.nth(0).boundingBox();
+      dropCardBox = await touchCards.nth(1).boundingBox();
+      band = await page.evaluate((delta) => {
+        const header = document.querySelector('[data-chrome="header"]');
+        const tabRow = document.querySelector('[data-chrome="rail"]');
+        const dock = document.querySelector('[data-testid="python-toolbox"]');
+        const chromeBottom = Math.max(
+          header ? header.getBoundingClientRect().bottom : 0,
+          tabRow ? tabRow.getBoundingClientRect().bottom : 0
+        );
+        return {
+          bandTop: Math.round((chromeBottom || 84) + 8),
+          bandBottom: Math.round(
+            (dock ? dock.getBoundingClientRect().top : window.innerHeight) - 8
+          ),
+          delta,
+        };
+      }, placement.delta);
+      if (
+        pressCardBox &&
+        dropCardBox &&
+        pressCardBox.y + pressCardBox.height > band.bandTop &&
+        dropCardBox.y + dropCardBox.height < band.bandBottom
+      ) {
+        break;
+      }
+    }
+    assert.ok(pressCardBox && dropCardBox, 'the two cards should be laid out for the touch drag');
+    assert.ok(
+      pressCardBox.y + pressCardBox.height > band.bandTop,
+      `the press should be below the sticky header, got ${Math.round(pressCardBox.y)}+${Math.round(pressCardBox.height)} vs band top ${band.bandTop}`
+    );
+    assert.ok(
+      dropCardBox.y + dropCardBox.height < band.bandBottom,
+      `the release should be above the dock, got ${Math.round(dropCardBox.y)}+${Math.round(dropCardBox.height)} vs band bottom ${band.bandBottom} (scroll delta ${band.delta})`
+    );
+    // The bottom padding, not a field or a verb: this is a press on the card itself.
+    const pressX = pressCardBox.x + 16;
+    const pressY = pressCardBox.y + pressCardBox.height - 3;
+    const touchDropX = dropCardBox.x + 16;
+    const touchDropY = dropCardBox.y + dropCardBox.height - 3;
+    /** Every position a gesture could move: the page, the document, and each card ancestor. */
+    const scrollSnapshot = () =>
+      page.evaluate(() => {
+        const card = document.querySelector(
+          '[data-testid="python-workspace-list"] > li[data-block-id]'
+        );
+        const elements = [];
+        let node = card?.parentElement ?? null;
+        while (node) {
+          elements.push(node.scrollTop);
+          node = node.parentElement;
+        }
+        return JSON.stringify({
+          page: window.scrollY,
+          document: document.scrollingElement?.scrollTop ?? 0,
+          elements,
+        });
+      });
+    const scrollBeforeDrag = await scrollSnapshot();
+    assert.equal(
+      await page.evaluate(
+        ({ x, y }) =>
+          document
+            .elementFromPoint(x, y)
+            ?.closest('[data-block-id]')
+            ?.getAttribute('data-block-id'),
+        { x: pressX, y: pressY }
+      ),
+      touchIds[0],
+      'the touch press should start on the card the test means to drag'
+    );
+
+    await touch.start(pressX, pressY);
+    await page.getByTestId('block-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await touchCards.nth(0).getAttribute('data-dragging'),
+      '1',
+      'a touch that rests on a card should lift that card'
+    );
+    assert.equal(
+      await scrollSnapshot(),
+      scrollBeforeDrag,
+      'nothing may scroll under the hold that lifts a card'
+    );
+    assert.equal(
+      await page.evaluate(() => window.getSelection()?.toString() ?? ''),
+      '',
+      'the hold must not start a text selection'
+    );
+    assert.equal(
+      await touchCards.nth(0).evaluate((card) => {
+        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        card.dispatchEvent(event);
+        return event.defaultPrevented;
+      }),
+      true,
+      'a live drag must decline the browser\'s long-press menu'
+    );
+    console.log('  ok a touch hold lifts a card without scrolling, selecting or opening a menu');
+
+    // The chip follows the finger, not the card's old place, and rides above it: the pointer is
+    // exactly where the snap arrow is drawn, so a centred chip would cover the landing gap.
+    const firstMoveX = pressX + 6;
+    const firstMoveY = pressY - 18;
+    await touch.move(firstMoveX, firstMoveY, { steps: 3 });
+    await page.waitForFunction(
+      ({ x, y }) => {
+        const ghost = document.querySelector('[data-testid="block-drag-ghost"]');
+        if (!ghost) return false;
+        const box = ghost.getBoundingClientRect();
+        return (
+          Math.abs(box.left + box.width / 2 - x) <= 2 && Math.abs(box.bottom - (y - 14)) <= 2
+        );
+      },
+      { x: firstMoveX, y: firstMoveY },
+      { timeout: 3000 }
+    );
+
+    await touch.move(touchDropX, touchDropY, { steps: 12 });
+    await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await page.locator('[data-drop-active="1"]').first().evaluate((target) =>
+        target.closest('[data-block-id]')?.getAttribute('data-block-id')
+      ),
+      touchIds[1],
+      'the card under the finger should be the one drawn as the drop point'
+    );
+    await page.getByTestId('block-snap-arrow').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await page.getByTestId('block-snap-arrow').evaluate((arrow) =>
+        arrow.closest('[data-block-id]')?.getAttribute('data-block-id')
+      ),
+      touchIds[1],
+      'the arrow should point at the gap a lifted finger will snap the card into'
+    );
+    assert.equal(
+      await scrollSnapshot(),
+      scrollBeforeDrag,
+      'the drag must not pan the page or its pane under the card'
+    );
+    assert.equal(
+      await page.evaluate(() => window.getSelection()?.toString() ?? ''),
+      '',
+      'the drag must not leave a selection behind'
+    );
+    await touch.end();
+    assert.equal(
+      await page.getByTestId('block-snap-arrow').count(),
+      0,
+      'the snap arrow should clear when the finger lets go'
+    );
+
+    const orderAfterTouchDrag = await touchCards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute('data-block-id'))
+    );
+    assert.deepEqual(
+      orderAfterTouchDrag,
+      [touchIds[1], touchIds[0], ...touchIds.slice(2)],
+      'the card released under a finger should sit directly under the card it was dropped on'
+    );
+    assert.equal(
+      await scrollSnapshot(),
+      scrollBeforeDrag,
+      'letting go of the card must not move the page or its pane'
+    );
+    assert.equal(
+      await page.locator('[data-testid="python-workspace-list"] > li[data-block-id]').first().evaluate((card) => {
+        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        card.dispatchEvent(event);
+        return event.defaultPrevented;
+      }),
+      false,
+      'after the drop the card should allow its normal context menu again'
+    );
+    await page.getByTestId('block-undo').tap();
+    assert.deepEqual(
+      await touchCards.evaluateAll((cards) => cards.map((card) => card.getAttribute('data-block-id'))),
+      touchIds,
+      'a touch drag should be one undo step'
+    );
+    console.log('  ok a touch long-press carries a card onto another and snaps it there');
+
+    // The dock's swipe is the same finger: the sheet follows it before it settles, and moving the
+    // grabber never scrolls the page under it.
+    await page.waitForTimeout(300);
+    const swipeBox = await grabber.boundingBox();
+    assert.ok(swipeBox, 'the dock should still draw its grabber');
+    const grabCenterX = swipeBox.x + swipeBox.width / 2;
+    const grabCenterY = swipeBox.y + swipeBox.height / 2;
+    const scrollBeforeSwipe = await scrollSnapshot();
+    await touch.start(grabCenterX, grabCenterY);
+    await page.waitForTimeout(60);
+    await touch.move(grabCenterX, grabCenterY + 45, { steps: 8 });
     // The sheet follows the finger: part way down it is part way folded, not already folded.
     await page.waitForFunction(
       (openHeight) => {
@@ -767,10 +1087,8 @@ async function main() {
       midBox && midBox.height < dockBox.height - 20 && midBox.height > dockBox.height - 70,
       `the dock should follow the finger, got ${Math.round(midBox?.height ?? 0)}px of ${Math.round(dockBox.height)}px`
     );
-    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2 + 160, {
-      steps: 8,
-    });
-    await page.mouse.up();
+    await touch.move(grabCenterX, grabCenterY + 160, { steps: 8 });
+    await touch.end();
     // The fold eases to nothing; the body is still mounted, so the assertion is its height, not its
     // presence. (A clipped input still reports a box, so `isVisible` would lie about a folded dock.)
     await page.waitForFunction(
@@ -783,7 +1101,12 @@ async function main() {
     assert.equal(
       await page.getByTestId('python-toolbox-body').getAttribute('data-state'),
       'closed',
-      'a downward swipe on the grabber should fold the dock to one row'
+      'a downward touch swipe on the grabber should fold the dock to one row'
+    );
+    assert.equal(
+      await scrollSnapshot(),
+      scrollBeforeSwipe,
+      'swiping the grabber must not scroll the page or its pane'
     );
     await page.waitForTimeout(300);
     const foldedBox = await dock.boundingBox();
@@ -791,8 +1114,14 @@ async function main() {
       foldedBox && foldedBox.height < dockBox.height,
       'the folded dock should be shorter than the open one'
     );
-    // A tap on the grabber is the other way in, for a learner who does not think to swipe.
-    await grabber.click();
+    // A tap on the grabber is the other way in, for a learner who does not think to swipe. This is
+    // a real touch tap, and it also proves a swipe's stale click guard did not swallow it.
+    const foldedGrabBox = await grabber.boundingBox();
+    assert.ok(foldedGrabBox, 'the folded dock should still draw its grabber');
+    await touch.tap(
+      foldedGrabBox.x + foldedGrabBox.width / 2,
+      foldedGrabBox.y + foldedGrabBox.height / 2
+    );
     await page.waitForFunction(
       () =>
         (document.querySelector('[data-testid="python-toolbox-body"]')?.getBoundingClientRect()
@@ -800,6 +1129,12 @@ async function main() {
       undefined,
       { timeout: 5000 }
     );
+    assert.equal(
+      await page.getByTestId('python-toolbox-body').getAttribute('data-state'),
+      'open',
+      'a touch tap on the grabber should open the dock'
+    );
+    console.log('  ok a touch swipe moves the dock with the finger, and a touch tap reopens it');
 
     // A touch tap, not a synthesized mouse click: the phone's primary interaction is tapping a
     // toolbox element and having the statement appear.

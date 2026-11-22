@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react';
-import { useState, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { ArrowDown, ArrowUp, ChevronUp, Copy, CornerDownRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { KIND_LABELS, type BlockFields, type BlockKind, type BlockNode, isContainer } from './ast.ts';
 import { blockColors, type BlockAppearance } from './appearance.ts';
@@ -166,6 +170,31 @@ function Tokens({
   }
 }
 
+/**
+ * A small arrow at the gap a lifted block will snap into (`app/src/pythonBlocks/BlockCard.tsx`).
+ *
+ * The highlighted card says which statement the pointer is over; the arrow says exactly where the
+ * statement lands — the gap just below that card, or the top of an empty suite. It is drawn only
+ * while something is in the air, and it never takes a pointer event: the release still hit-tests
+ * the cards underneath it.
+ */
+function SnapArrow({ style }: { style: CSSProperties }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-testid="block-snap-arrow"
+      className="pointer-events-none absolute z-10 block h-0 w-0"
+      style={{
+        borderLeft: '5px solid transparent',
+        borderRight: '5px solid transparent',
+        borderTop: '6px solid var(--accent)',
+        filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))',
+        ...style,
+      }}
+    />
+  );
+}
+
 export function BlockCard({
   node,
   bodyId,
@@ -225,6 +254,8 @@ export function BlockCard({
       data-dragging={dragging ? '1' : undefined}
       className={`relative list-none ${dragging ? 'opacity-40' : ''}`}
     >
+      {/* The exact slot a release would land in: below this card, above the next one. */}
+      {dropAfter && <SnapArrow style={{ bottom: -6, left: 10 }} />}
       {handlers.insertionHere(bodyId, index + 1) && (
         <div
           aria-hidden="true"
@@ -363,7 +394,7 @@ export function BlockCard({
             data-drop-body={node.id}
             data-drop-index={node.body.length}
             data-drop-active={dropInside ? '1' : undefined}
-            className="mt-1.5 min-w-0 pl-2"
+            className="relative mt-1.5 min-w-0 pl-2"
             style={{
               borderLeft: `2px solid ${colors.border}`,
               ...(dropInside
@@ -371,6 +402,10 @@ export function BlockCard({
                 : {}),
             }}
           >
+            {/* An empty suite has no card to draw the arrow under, so it points into the body —
+                just above the dashed target outline, so the two accent marks do not merge into
+                one another. */}
+            {dropInside && node.body.length === 0 && <SnapArrow style={{ top: -9, left: 10 }} />}
             {node.body.length > 0 ? (
               <ol className="m-0 flex list-none flex-col gap-1 p-0">
                 {node.body.map((child, childIndex) => (

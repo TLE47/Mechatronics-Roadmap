@@ -76,6 +76,28 @@ export function PythonBlockEditor({
   const pressRef = useRef<CardPress | null>(null);
 
   /**
+   * The browser's own long-press gestures, declined while a card is in hand.
+   *
+   * These are refs, not per-render closures: the listener added when a finger goes down has to be
+   * the one removed when that press ends, and an identity that changed with the drag's state would
+   * leave a non-passive `touchmove` on the document forever. Both read the ref, so they always see
+   * the press that is current rather than the one from the render that installed them.
+   */
+  const touchScrollGuard = useRef((event: TouchEvent) => {
+    if (pressRef.current?.started) event.preventDefault();
+  }).current;
+  const longPressGuard = useRef((event: Event) => {
+    if (pressRef.current?.started) event.preventDefault();
+  }).current;
+
+  /** Text selection is the page's, except while a press owns the finger or the mouse. */
+  const setPageSelection = (suppressed: boolean) => {
+    document.body.style.userSelect = suppressed ? 'none' : '';
+    // Safari still reads the prefixed property; an empty value removes the inline declaration.
+    document.body.style.setProperty('-webkit-user-select', suppressed ? 'none' : '');
+  };
+
+  /**
    * The drop point under a pointer, read from the targets the cards publish.
    *
    * The dragged card is not a target for itself: while the finger is still over the statement's old
@@ -98,8 +120,9 @@ export function PythonBlockEditor({
     const press = pressRef.current;
     if (press && press.timer !== null) window.clearTimeout(press.timer);
     pressRef.current = null;
-    document.removeEventListener('touchmove', stopTouchScroll);
-    document.body.style.userSelect = '';
+    document.removeEventListener('touchmove', touchScrollGuard);
+    document.removeEventListener('contextmenu', longPressGuard);
+    setPageSelection(false);
     setCardDrag(null);
     setDraggingId(null);
     setDropTarget(null);
@@ -121,15 +144,11 @@ export function PythonBlockEditor({
     } catch {
       // The pointer was released between the move and this line; the press is over anyway.
     }
-    // From here a touch is the drag, not the page's scroll. The listener is non-passive on purpose:
-    // once a long press has lifted a card, the browser must not take the next move as a scroll.
-    document.addEventListener('touchmove', stopTouchScroll, { passive: false });
-    document.body.style.userSelect = 'none';
+    // From here a touch is the drag, not the page's scroll. The non-passive `touchmove` guard was
+    // attached when the finger went down (see `onCardPointerDown`), because the browser decides at
+    // the start of a gesture whether its moves may scroll; it only starts declining now.
+    setPageSelection(true);
     navigator.vibrate?.(8);
-  };
-
-  const stopTouchScroll = (event: TouchEvent) => {
-    if (pressRef.current?.started) event.preventDefault();
   };
 
   /**
@@ -163,8 +182,15 @@ export function PythonBlockEditor({
     pressRef.current = press;
     if (event.pointerType === 'mouse') {
       // A drag from a card should move the card, not select the token under the pointer.
-      document.body.style.userSelect = 'none';
+      setPageSelection(true);
     } else {
+      // Both guards go on before the first `touchmove`. A listener attached only after the 320 ms
+      // hold would be too late for the gesture's first move: the browser has already decided
+      // whether this touch may scroll, so a drag could pan the page under the card instead. They
+      // decline their defaults only once the hold has lifted, so a finger that scrolls sooner
+      // still scrolls and a long-press menu after a tap still opens.
+      document.addEventListener('touchmove', touchScrollGuard, { passive: false });
+      document.addEventListener('contextmenu', longPressGuard);
       press.timer = window.setTimeout(() => {
         if (pressRef.current === press) liftCard();
       }, HOLD_MS);
@@ -419,8 +445,15 @@ export function PythonBlockEditor({
         <div
           aria-hidden="true"
           data-testid="block-drag-ghost"
-          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-accent bg-panel px-2 py-1 font-mono text-[11px] font-semibold text-accent shadow-lg"
-          style={{ left: cardDrag.x, top: cardDrag.y }}
+          // The chip rides just above the pointer, not under it: at the bottom edge of a card the
+          // pointer is exactly where the snap arrow is drawn, and a centred chip would paint over
+          // the one mark that says where the block will land.
+          className="pointer-events-none fixed z-50 rounded-lg border border-accent bg-panel px-2 py-1 font-mono text-[11px] font-semibold text-accent shadow-lg"
+          style={{
+            left: cardDrag.x,
+            top: cardDrag.y,
+            transform: 'translate(-50%, calc(-100% - 14px))',
+          }}
         >
           {cardDrag.label}
         </div>
