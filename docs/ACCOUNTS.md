@@ -151,7 +151,7 @@ production, and the two have separate keys.
 | symptom | likely cause |
 | :--- | :--- |
 | Panel says cloud sync is not configured | The build ran without `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. Variables are read at build time, not runtime. |
-| "Google sign-in is not enabled on this project yet" | Provider not enabled in Supabase, or the OAuth client is missing its callback URI. |
+| "Google sign-in is not enabled on this project yet" | Provider not enabled in Supabase, or the OAuth client is missing its callback URI. The panel answers this from the project's public `/auth/v1/settings`; enable Google under **Authentication → Providers** to make the button work. |
 | Returns to the site root after sign-in | The intended destination was rejected by `returnTo.ts`, or the app URL is not in Supabase's redirect list. |
 | "Draft sync unavailable: …" | `0002_…` has not run on this project; progress sync keeps working. |
 | Sign-in email never arrives | Free-tier rate limit or the address is on Supabase's suppression list; check Auth → Logs. |

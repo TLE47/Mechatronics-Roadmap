@@ -58,6 +58,9 @@ export function signInReturnUrl(returnTo = ''): string {
   return buildReturnUrl(window.location.origin, import.meta.env.BASE_URL, returnTo);
 }
 
+const GOOGLE_NOT_ENABLED =
+  'Google sign-in is not enabled on this project yet — use an email sign-in for now.';
+
 /** Supabase error codes and messages are not sentences; this is the one translation table. */
 function readable(message: string): string {
   if (/rate limit|too many/i.test(message)) return 'Too many attempts just now — try again in a minute.';
@@ -74,7 +77,7 @@ function readable(message: string): string {
   if (/invalid email|email address/i.test(message)) return 'That does not look like an email address.';
   if (/password.*(weak|short)|at least/i.test(message)) return 'That password is too short for this project.';
   if (/provider.*not enabled|unsupported provider/i.test(message)) {
-    return 'Google sign-in is not enabled on this project yet — use an email sign-in for now.';
+    return GOOGLE_NOT_ENABLED;
   }
   if (/invalid.*(totp|code)|totp.*invalid/i.test(message)) {
     return 'That code did not match — check the current six digits in your authenticator app.';
@@ -156,9 +159,33 @@ export function isRecoveryLink(): boolean {
 
 // ── Google ────────────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Whether this project has the Google provider switched on.
+ *
+ * `/auth/v1/settings` is public — the anon key is already in the bundle — and names every enabled
+ * provider. It is asked because `signInWithOAuth` navigates the whole page: with the provider off,
+ * Supabase answers the navigation with a raw `{"code":400,…"Unsupported provider"}` document, and
+ * the sentence below never gets the chance to show. An unreachable or unexpected answer is `null`,
+ * which leaves the redirect to speak for itself rather than blocking a working project.
+ */
+async function googleProviderEnabled(): Promise<boolean | null> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: SUPABASE_ANON_KEY ?? '' },
+    });
+    if (!response.ok) return null;
+    const settings: unknown = await response.json();
+    const external = (settings as { external?: Record<string, unknown> } | null)?.external;
+    return typeof external?.google === 'boolean' ? external.google : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function signInWithGoogle(returnTo = ''): Promise<string | null> {
   const supabase = await getClient();
   if (!supabase) return 'Cloud sync is not configured for this build.';
+  if ((await googleProviderEnabled()) === false) return GOOGLE_NOT_ENABLED;
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {

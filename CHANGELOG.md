@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.16.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.16.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,24 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-22] — Google sign-in says why it is off, instead of a JSON page
+
+On a Supabase project with the Google provider disabled, **Continue with Google** navigated the whole
+page to Supabase's `{"code":400,"error_code":"validation_failed","msg":"Unsupported provider:
+provider is not enabled"}` response, taking the panel and whatever the learner was doing with it. The
+button now asks the project's public `/auth/v1/settings` first and, when `external.google` is false,
+answers in the panel with the sentence that was already written for this case. An unreachable or
+unexpected settings answer changes nothing and the redirect is attempted as before.
+
+Enabling the provider is a project setting the bundle cannot grant: Supabase dashboard →
+**Authentication → Providers → Google**, paste the OAuth client id and secret, with
+`https://<project-ref>.supabase.co/auth/v1/callback` as the authorized redirect URI in Google Cloud.
+[`docs/ACCOUNTS.md`](docs/ACCOUNTS.md) step 5 lists both sides.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run test:accounts`, `npm run check:weight`.
 
 ---
 
