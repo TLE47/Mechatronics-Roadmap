@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.15.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.16.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -2724,9 +2724,8 @@ is 44 px and always on the bottom edge (`app/src/phoneSurface.ts`). The choice i
 a stored `code` for P.1 must not open P.2 in the editor, because a lesson a learner has never read
 should start on its text. The editor mounts only when Code is opened — the same moment Pyodide's
 warm-up starts — so a phone that only reads pays for neither the 149 kB editor nor the 10 MB
-interpreter. A phone keyboard has no colon on its first pane, so
-[`PythonKeys.tsx`](app/src/components/PythonKeys.tsx) supplies the twelve characters Python needs,
-inserted at the caret, each **40 × 40 px**.
+interpreter. A phone keyboard has no colon on its first pane, so `PythonKeys.tsx` supplied the twelve
+characters Python needed, inserted at the caret, each **40 × 40 px**.
 
 **One sheet, seven overlays.** Help, Pair, Shortcuts, the palette, Account, Reset progress and the
 cheat sheet are now [`Sheet.tsx`](app/src/components/Sheet.tsx): a bottom sheet on a phone and the
