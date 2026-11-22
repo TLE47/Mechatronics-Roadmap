@@ -68,9 +68,13 @@ flowchart LR
    begun to raise its own), restores the original attribute when it folds, and retargets without a
    slide when the next field is a text field too. Done blurs; tapping the prose folds. When this
    keyboard takes the bottom edge the editor's keys fold (`FIELD_KEYBOARD_OPEN_EVENT`), so one shell
-   owns it and the Study bar rides on it. Number, date, range, colour and file controls keep the
-   browser's own keyboard — their keypads are the honest ones. Above 768 px the host renders
-   nothing, and a phone that never types draws no second keyboard until a field first asks.
+   owns it and the Study bar rides on it. The native key is a handoff, not a one-way door: the field
+   keeps the OS keyboard while the caret stays in it, and leaving and returning to the field gives
+   the site keys back, with `inputmode=none` restored before the next focus. If the OS keyboard is
+   put away while the field still has the caret, the visual viewport growing back is the signal to
+   raise the site keys again. Number, date, range, colour and file controls keep the browser's own
+   keyboard — their keypads are the honest ones. Above 768 px the host renders nothing, and a phone
+   that never types draws no second keyboard until a field first asks.
 
    **Fn → 123 / ABC is the lighting layer**, not a second keyboard. The Fn row's `123` / `ABC` key
    prints `RGB` while Fn is on; one press swaps the three non-letter rows for the six modes (off,
@@ -233,9 +237,13 @@ and the strip follows; the install row appears only with a
 prompt event (or the iOS UA) and calls the prompt exactly once; and at 768/1024 the rail is back with
 Predict sharing Run's row. Its last block drives the keyboard with Chromium's own touch events rather
 than mouse clicks, because every key cancels `pointerdown` and a mouse-only gate cannot see the
-difference: it taps the editor's keys and a page field's keys, holds one for its preview, types six
-letters at a finger's pace, reads the haptics, carries the keys between two fields without folding,
-and records the shell's position every frame so a slide cannot pass for a jump — at 390 and 360 px,
+difference: it taps the editor's keys and a page field's keys, holds one for its preview, types ten
+letters at an uninterrupted finger's pace, reads the haptics, locks capitals on a double Shift,
+holds Backspace for a second in the editor, a controlled search and the note composer and proves it
+repeats then stops, puts a finger in the gap between two
+caps and in both 123 and ABC without losing the caret, hands the editor and a page field to the OS
+keyboard and gets the site keys back, carries the keys between two fields without folding, and
+records the shell's position every frame so a slide cannot pass for a jump — at 390 and 360 px,
 including the calculator display and the rich note composer. It launches no interpreter: `test:e2e` and
 `test:predict` own running code, and 10 MB on a throttled phone link would make this too slow to gate
 every pull request.

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.18.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -14,6 +14,35 @@ flowchart LR
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
 
+---
+
+## [2026-11-22] — The phone keyboard behaves like the phone's
+
+The custom keyboard now handles the things a native phone keyboard handles without thinking about
+them. **Backspace deletes on the way down and keeps deleting while the finger stays** — first the
+move that a single tap always made, then a steady run after 420 ms, stopping the moment the finger
+lifts — instead of waiting for the release and deleting one character. **A double tap on Shift locks
+capitals**, and the next tap lets them go, the way the OS keyboard's Shift behaves; one tap is still
+one capital. Keys that change the keyboard rather than the text (Shift, Fn, 123/ABC, a lighting
+mode) put the caret back afterwards.
+
+The reported disappearances had one cause: the keys cancel `pointerdown`, but the gaps and padding
+between them did not, so a fast finger that landed between two caps could blur the editor and fold
+the shell. The keyboard section now cancels the pointer default for its own background as well, and
+both focus controllers treat a blur during a press on the keys as a press, not the learner leaving.
+That covers the gaps, fast typing, the 123/ABC switch and the double Shift; the physical-touch gate
+pins each sequence at 390 px.
+
+The native key is now a handoff instead of a one-way door. A field handed to the OS keyboard keeps
+it while the caret stays there; when the caret leaves, the session ends, so the next focus on that
+field raises the site keys again with `inputmode=none` restored before the focus. If the OS keyboard
+is dismissed while the field still has the caret, the visual viewport growing back is the signal to
+raise the site keys again. This works for both the editor and every page field.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run check:weight`, `npm run test:e2e:mobile`
+(physical touches: caps lock, a held Backspace in the editor, a controlled search and the rich note
+composer, ten uninterrupted taps, both gap directions, both 123/ABC switches, and the native round
+trip for the editor and a page field).
 ---
 
 ## [2026-11-22] — The phone keyboard is tested with a real finger

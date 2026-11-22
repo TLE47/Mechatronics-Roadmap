@@ -30,9 +30,11 @@
  *      calls the browser's prompt once, and leaves after the learner accepts.
  *   8. At 768 and 1024 the rail returns, the picker goes, and Predict still shares Run's row.
  *   9. The keyboard answers a real finger, not a mouse: Chromium's touch events tap the editor's keys
- *      and a page field's keys, hold one to raise its preview, type fast, read the haptics, retarget
- *      between two fields without folding, and measure the slide up and the slide down at 390 and
- *      360 px. A key that cancels `pointerdown` is exactly the place where a mouse-only gate lies.
+ *      and a page field's keys, hold one to raise its preview, type at an uninterrupted finger's
+ *      pace, read the haptics, lock capitals on a double Shift, repeat Backspace while it is held,
+ *      keep the caret through the gap between two caps and through 123/ABC, return after a native
+ *      handoff, retarget between two fields without folding, and measure the slide up and the slide
+ *      down at 390 and 360 px. A key that cancels `pointerdown` is exactly where a mouse-only gate lies.
  *
  * It is deliberately not a Pyodide suite: `npm run test:e2e` and `npm run test:predict` already own
  * running code, and a 10 MB interpreter on a throttled phone link would make this gate too slow to
@@ -1087,6 +1089,43 @@ async function main() {
       await press(editorShell, 'python-key-backspace');
 
       const editorKeyboard = editorShell.getByTestId('python-keyboard');
+
+      // A second quick tap on Shift is the native keyboard's caps lock, and it must not fold the
+      // keys or lose the caret: the button changes the keyboard, not the text.
+      await press(editorShell, 'python-key-shift');
+      await press(editorShell, 'python-key-shift', 25);
+      check(
+        (await editorKeyboard.getAttribute('data-caps')) === '1',
+        'two quick touches on Shift must lock capitals'
+      );
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open',
+        'double-tapping Shift folded the keyboard'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'double-tapping Shift took the caret away from the editor'
+      );
+      await press(editorShell, 'python-key-a');
+      await press(editorShell, 'python-key-b');
+      code = await getEditorCode(page);
+      check(
+        code.slice(caret, caret + 2) === 'AB',
+        `caps lock typed ${JSON.stringify(code.slice(caret, caret + 2))}, not AB`
+      );
+      await press(editorShell, 'python-key-shift');
+      check(
+        (await editorKeyboard.getAttribute('data-caps')) === null,
+        'a tap on Shift must let caps lock go'
+      );
+      await press(editorShell, 'python-key-c');
+      code = await getEditorCode(page);
+      check(
+        code.slice(caret + 2, caret + 3) === 'c',
+        `letters stayed ${JSON.stringify(code.slice(caret, caret + 3))} after caps lock was released`
+      );
+      for (let index = 0; index < 3; index += 1) await press(editorShell, 'python-key-backspace');
+      check((await getEditorCode(page)) === baseline, 'the caps-lock letters did not clean up');
       await press(editorShell, 'python-key-fn');
       check((await editorKeyboard.getAttribute('data-fn')) === '1', 'Fn must arm on a touch');
       await press(editorShell, 'python-key-q');
@@ -1100,11 +1139,21 @@ async function main() {
         (await editorKeyboard.getAttribute('data-page')) === '123',
         '123 must open the numeric page on a touch'
       );
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open' &&
+          (await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor')))),
+        '123 folded the keyboard instead of switching its page'
+      );
       await press(editorShell, 'python-key-digit-7');
       code = await getEditorCode(page);
       check(code.slice(caret, caret + 1) === '7', 'the numeric page did not type a 7');
       await press(editorShell, 'python-key-layout');
       check((await editorKeyboard.getAttribute('data-page')) === 'abc', 'ABC must restore the letters');
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open' &&
+          (await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor')))),
+        'ABC folded the keyboard instead of switching its page'
+      );
       await press(editorShell, 'python-key-backspace');
 
       await press(editorShell, 'python-key-space');
@@ -1126,6 +1175,103 @@ async function main() {
       );
       for (let index = 0; index < 5; index += 1) await press(editorShell, 'python-key-backspace', 18);
       check((await getEditorCode(page)) === baseline, 'the quick touches did not clean up');
+
+      // Faster than any finger: down and up with no pause between. A keyboard that only works when
+      // taps are leisurely is not a keyboard a learner can type on.
+      for (const letter of 'typingfast') {
+        const key = editorShell.getByTestId(`python-key-${letter}`);
+        const keyBox = await key.boundingBox();
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchStart',
+          touchPoints: [
+            { x: keyBox.x + keyBox.width / 2, y: keyBox.y + keyBox.height / 2, id: 1, force: 1 },
+          ],
+        });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      }
+      await page.waitForTimeout(300);
+      code = await getEditorCode(page);
+      check(
+        code.slice(caret, caret + 10) === 'typingfast',
+        `ten uninterrupted touches typed ${JSON.stringify(code.slice(caret, caret + 10))}`
+      );
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open',
+        'typing fast folded the keyboard'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'typing fast took the caret away from the editor'
+      );
+      for (let index = 0; index < 10; index += 1) await press(editorShell, 'python-key-backspace');
+      check((await getEditorCode(page)) === baseline, 'the fast touches did not clean up');
+
+      // A held Backspace repeats like a phone's: one delete on the way down, then a steady run.
+      for (const letter of 'holddeletetouch') {
+        await press(editorShell, `python-key-${letter}`, 10);
+      }
+      const beforeHold = await getEditorCode(page);
+      await fingerDown(page, cdp, editorShell.getByTestId('python-key-backspace'), {
+        label: 'the Backspace key',
+      });
+      await page.waitForTimeout(1000);
+      await touchUp(page, cdp);
+      await page.waitForTimeout(220);
+      const afterHold = await getEditorCode(page);
+      check(
+        beforeHold.length - afterHold.length >= 6,
+        `holding Backspace removed ${beforeHold.length - afterHold.length} characters in a second`
+      );
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open' &&
+          (await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor')))),
+        'holding Backspace folded the keyboard or lost the caret'
+      );
+      await page.waitForTimeout(220);
+      check(
+        (await getEditorCode(page)) === afterHold,
+        'Backspace kept deleting after the finger lifted'
+      );
+      const remaining = afterHold.length - baseline.length;
+      check(remaining >= 0, 'holding Backspace deleted text that was there before it was held');
+      for (let index = 0; index < remaining; index += 1) {
+        await press(editorShell, 'python-key-backspace');
+      }
+      check((await getEditorCode(page)) === baseline, 'the held Backspace did not clean up');
+
+      // The gap between two caps belongs to the keyboard too: it must not move the caret.
+      const gapPoints = await page.evaluate(() => {
+        const q = document.querySelector('[data-testid="python-key-q"]').getBoundingClientRect();
+        const a = document.querySelector('[data-testid="python-key-a"]').getBoundingClientRect();
+        return {
+          horizontal: { x: q.right + 2, y: q.top + q.height / 2 },
+          vertical: { x: q.left + q.width / 2, y: (q.bottom + a.top) / 2 },
+        };
+      });
+      for (const [name, point] of Object.entries(gapPoints)) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchStart',
+          touchPoints: [{ x: point.x, y: point.y, id: 1, force: 1 }],
+        });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await page.waitForTimeout(220);
+        check(
+          (await editorShell.getAttribute('data-state')) === 'open',
+          `a finger in the ${name} gap folded the keyboard`
+        );
+        check(
+          await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+          `a finger in the ${name} gap took the caret away from the editor`
+        );
+        await page.evaluate(
+          ({ text, at }) => {
+            const editor = window.__mechalabEditors['editor-main'];
+            editor.set(text);
+            editor.setCursor(at);
+          },
+          { text: baseline, at: caret }
+        );
+      }
 
       await fingerDown(page, cdp, editorShell.getByTestId('python-key-a'), { label: 'the A key' });
       await page.waitForTimeout(180);
@@ -1165,6 +1311,43 @@ async function main() {
         `the layout key asked for ${JSON.stringify(await vibrations())}, not the confirmation`
       );
       await press(editorShell, 'python-key-layout');
+
+      // Native is a handoff, not a one-way door: after its field is left, touching the code again
+      // brings the site's keys back instead of leaving a focused editor with no keyboard.
+      await press(editorShell, 'python-key-native');
+      await page.waitForTimeout(260);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'closed',
+        'the native key did not fold the site keyboard'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'the native key took the caret away from the editor'
+      );
+      await page.evaluate(() => document.querySelector('.cm-content')?.blur());
+      await page.waitForTimeout(180);
+      const codeContent = await page.locator('.cm-content').boundingBox();
+      check(Boolean(codeContent), 'the code editor has no box to touch after the native handoff');
+      const codePoint = { x: codeContent.x + 24, y: codeContent.y + 24 };
+      check(
+        codePoint.y > 0 && codePoint.y < PHONE.height,
+        `the code's first line is off screen at ${Math.round(codePoint.y)}px`
+      );
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [{ x: codePoint.x, y: codePoint.y, id: 1, force: 1 }],
+      });
+      await page.waitForTimeout(60);
+      await touchUp(page, cdp);
+      await page.waitForTimeout(320);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open',
+        'the site keyboard did not come back after the native field was left'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'touching the code after the native handoff did not restore the caret'
+      );
 
       const pointerTypes = await page.evaluate(() => window.__touch.pointers);
       check(
@@ -1256,9 +1439,20 @@ async function main() {
         (await fieldShell.getByTestId('python-keyboard').getAttribute('data-page')) === '123',
         '123 must open the numeric page for a page field'
       );
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'open' &&
+          (await search.evaluate((element) => element === document.activeElement)),
+        '123 folded the page keyboard instead of switching its page'
+      );
       await press(fieldShell, 'python-key-digit-7');
       check((await search.inputValue()) === '7', 'the numeric page did not type 7 into the search');
       await press(fieldShell, 'python-key-layout');
+      check(
+        (await fieldShell.getByTestId('python-keyboard').getAttribute('data-page')) === 'abc' &&
+          (await fieldShell.getAttribute('data-state')) === 'open' &&
+          (await search.evaluate((element) => element === document.activeElement)),
+        'ABC folded the page keyboard instead of restoring the letters'
+      );
       await press(fieldShell, 'python-key-backspace');
       await press(fieldShell, 'python-key-shift');
       await press(fieldShell, 'python-key-s');
@@ -1278,6 +1472,59 @@ async function main() {
       );
       for (let index = 0; index < 6; index += 1) await press(fieldShell, 'python-key-backspace', 18);
       check((await search.inputValue()) === '', 'the quick touches did not clear the search');
+
+      // The same held Backspace in a controlled page field: each repeat is a real input event, so
+      // React's value and the caret have to keep up with the finger.
+      for (const letter of 'holddelete') {
+        await press(fieldShell, `python-key-${letter}`, 10);
+      }
+      await fingerDown(page, cdp, fieldShell.getByTestId('python-key-backspace'), {
+        label: 'the page field Backspace',
+      });
+      await page.waitForTimeout(1000);
+      await touchUp(page, cdp);
+      await page.waitForTimeout(220);
+      const fieldHeld = await search.inputValue();
+      check(
+        fieldHeld.length <= 5,
+        `holding Backspace left ${JSON.stringify(fieldHeld)} in the page field`
+      );
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'open' &&
+          (await search.evaluate((element) => element === document.activeElement)),
+        'holding Backspace folded the page keyboard or lost its field'
+      );
+      for (let index = 0; index < fieldHeld.length; index += 1) {
+        await press(fieldShell, 'python-key-backspace');
+      }
+      check((await search.inputValue()) === '', 'the held page Backspace did not clean up');
+
+      // The page field's native handoff has the same return: leave the field, touch it again, and
+      // the site keys are back with the OS keyboard suppressed before focus.
+      await press(fieldShell, 'python-key-native');
+      await page.waitForTimeout(200);
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'closed',
+        'the page field native key did not fold the site keyboard'
+      );
+      check((await search.getAttribute('inputmode')) === null, 'native must hand the inputmode back');
+      check(
+        await search.evaluate((element) => element === document.activeElement),
+        'the page field native key took the caret away from its field'
+      );
+      await search.evaluate((element) => element.blur());
+      await page.waitForTimeout(160);
+      await touchTap(page, cdp, search, { hold: 60, label: 'the search after the native handoff' });
+      await page.waitForTimeout(320);
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'open',
+        'the page keyboard did not come back after the native field was left'
+      );
+      check((await search.getAttribute('inputmode')) === 'none', 'the returning page keyboard did not suppress the OS keyboard');
+      check(
+        await search.evaluate((element) => element === document.activeElement),
+        'the returning page keyboard did not restore the field caret'
+      );
 
       await page.setViewportSize({ width: 360, height: 740 });
       await page.waitForTimeout(420);
@@ -1503,6 +1750,23 @@ async function main() {
       );
       await press(fieldShell, 'python-key-backspace');
       check((await note.textContent())?.trim() === 'not', 'Backspace did not edit the rich note');
+      for (const letter of ['a', 'b', 'c', 'd']) await press(fieldShell, `python-key-${letter}`, 20);
+      await fingerDown(page, cdp, fieldShell.getByTestId('python-key-backspace'), {
+        label: 'the note Backspace',
+      });
+      await page.waitForTimeout(900);
+      await touchUp(page, cdp);
+      await page.waitForTimeout(220);
+      const noteHeld = (await note.textContent())?.trim() ?? '';
+      check(
+        noteHeld.length <= 4,
+        `holding Backspace left ${JSON.stringify(noteHeld)} in the rich note`
+      );
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'open' &&
+          (await note.evaluate((element) => element === document.activeElement)),
+        'holding Backspace folded the note keyboard or lost the composer'
+      );
       await press(fieldShell, 'python-key-done');
       await page.waitForTimeout(320);
       check((await note.getAttribute('inputmode')) === null, 'Done must release the note composer');

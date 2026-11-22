@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ArrowBigUp,
   ArrowRightToLine,
@@ -38,7 +38,8 @@ import {
  * - **123** swaps the three QWERTY rows for digits, punctuation and arithmetic. `ABC` puts the
  *   letters back; it is one key that says which page it will open, not two keys.
  * - **Shift** is one-shot, the way a phone keyboard's shift is: the next letter is capital and the
- *   key lets go. It only exists on the letters page.
+ *   key lets go. Tapping it twice quickly locks capitals, as a phone's own Shift does, until the
+ *   next tap. It only exists on the letters page.
  *
  * **Lighting is a layer of this keyboard, not a second one.** With Fn on, the `123` / `ABC` key
  * becomes `RGB`: one press swaps the three top rows for the six lighting modes, a preset row, and
@@ -48,12 +49,15 @@ import {
  * each cap (`index.css`), so there is no per-frame JavaScript: a loop pauses when the shell slides
  * away and the reduced-motion preference turns the animations off.
  *
- * Every press cancels the pointer's default. A key is outside the editing surface, and on a phone
- * a press that moved focus to the button would blur the block field or the CodeMirror caret — the
- * editing position, the scroll and (in Visual) the keyboard itself would go with it. Cancelling on
- * pointerdown keeps the caret where it was, and the button still receives its click, its Enter and
- * its Space. The press also asks for a small vibration where the device has one, and raises the
- * pressed character above the cap in the iOS manner; neither is required for a key to work.
+ * Every press cancels the pointer's default, and the section does the same for its gaps and padding.
+ * A key is outside the editing surface, and on a phone a press that moved focus to the button would
+ * blur the block field or the CodeMirror caret — the editing position, the scroll and (in Visual)
+ * the keyboard itself would go with it. Cancelling on pointerdown keeps the caret where it was, and
+ * the button still receives its click, its Enter and its Space; a key that only changes the keyboard
+ * (Shift, Fn, 123/ABC) puts the caret back afterwards. Backspace deletes on the way down and repeats
+ * on a held finger, then stops on the lift. The press also asks for a small vibration where the
+ * device has one, and raises the pressed character above the cap in the iOS manner; neither is
+ * required for a key to work.
  */
 
 export type MobileKeyboardMode = 'code' | 'visual';
@@ -84,6 +88,8 @@ export interface MobilePythonKeyboardProps {
   onDelete: () => void;
   onNativeKeyboard: () => void;
   onDone: () => void;
+  /** Put the caret back in the editing surface after a key that changes the keyboard, not the text. */
+  onKeepFocus: () => void;
 }
 
 const SYMBOLS: { id: string; label: string; insert: string; name: string }[] = [
@@ -213,6 +219,8 @@ function Key({
   feedback = 'light',
   preview,
   onPreview,
+  onRepeat,
+  keepFocus = true,
 }: {
   testId: string;
   label: string;
@@ -229,7 +237,42 @@ function Key({
   /** The character this key should raise above the cap while it is held, if it has one. */
   preview?: string;
   onPreview?: (next: { text: string; button: HTMLElement } | null) => void;
+  /** A held key repeats this until the finger lifts, the way a native Backspace does. */
+  onRepeat?: () => void;
+  /** Native and Done deliberately move focus away; every other key keeps the caret. */
+  keepFocus?: boolean;
 }) {
+  const holdTimer = useRef<number | null>(null);
+  const repeatTimer = useRef<number | null>(null);
+  const repeated = useRef(false);
+  // When this key last took a pointer. A click that follows a pointer belongs to the repeat path,
+  // which already acted; a keyboard's Enter/Space click has no pointer behind it.
+  const pointerAt = useRef(0);
+
+  const stopRepeat = () => {
+    if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
+    if (repeatTimer.current !== null) window.clearInterval(repeatTimer.current);
+    holdTimer.current = null;
+    repeatTimer.current = null;
+  };
+
+  useEffect(() => stopRepeat, []);
+
+  /**
+   * Delete on the way down, then keep deleting while the finger stays, like a phone's Backspace.
+   * The synthetic click that follows the lift is swallowed, so one press never deletes twice.
+   */
+  const beginRepeat = () => {
+    if (!onRepeat) return;
+    stopRepeat();
+    repeated.current = true;
+    if (feedback !== 'none') haptic(feedback);
+    onRepeat();
+    holdTimer.current = window.setTimeout(() => {
+      repeatTimer.current = window.setInterval(onRepeat, 55);
+    }, 420);
+  };
+
   const merged: CSSProperties = {
     ...(index === undefined ? {} : ({ '--i': index } as CSSProperties)),
     ...style,
@@ -238,18 +281,48 @@ function Key({
     <button
       type="button"
       data-testid={testId}
+      data-no-keep-focus={keepFocus ? undefined : '1'}
       aria-label={label}
       aria-pressed={pressed}
       title={label}
       // The editing surface keeps focus — and with it the caret, the scroll and the open field.
       onPointerDown={(event) => {
         event.preventDefault();
+        pointerAt.current = Date.now();
+        if (onRepeat) {
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {
+            // A browser without capture still gets the closing pointerup on the key.
+          }
+          beginRepeat();
+        }
         if (preview) onPreview?.({ text: preview, button: event.currentTarget });
       }}
-      onPointerUp={() => onPreview?.(null)}
-      onPointerCancel={() => onPreview?.(null)}
-      onPointerLeave={() => onPreview?.(null)}
+      onPointerUp={() => {
+        stopRepeat();
+        // The click follows the lift in the same task; let it see that this press already acted.
+        if (onRepeat) window.setTimeout(() => (repeated.current = false), 0);
+        onPreview?.(null);
+      }}
+      onPointerCancel={() => {
+        stopRepeat();
+        repeated.current = false;
+        pointerAt.current = 0;
+        onPreview?.(null);
+      }}
+      onPointerLeave={() => {
+        stopRepeat();
+        if (onRepeat) window.setTimeout(() => (repeated.current = false), 0);
+        onPreview?.(null);
+      }}
+      onLostPointerCapture={() => stopRepeat()}
       onClick={() => {
+        const fromPointer = Date.now() - pointerAt.current < 700;
+        if (repeated.current || (onRepeat && fromPointer)) {
+          repeated.current = false;
+          return;
+        }
         if (feedback !== 'none') haptic(feedback);
         onPress();
       }}
@@ -280,10 +353,16 @@ export function MobilePythonKeyboard({
   onDelete,
   onNativeKeyboard,
   onDone,
+  onKeepFocus,
 }: MobilePythonKeyboardProps) {
   const [fn, setFn] = useState(false);
   const [page, setPage] = useState<'abc' | '123'>('abc');
   const [shift, setShift] = useState(false);
+  // A native phone's Shift, tapped twice, locks capitals until the next Shift. `shift` stays the
+  // one-shot arm; `caps` is the lock, and the labels and typed letters read both.
+  const [caps, setCaps] = useState(false);
+  const shiftTapAt = useRef(0);
+  const capital = shift || caps;
   // The lighting layer, and the choice it remembers. Fn + the layout key opens it; the same key
   // closes it. `page` and `fn` are not reset by the trip, so the learner returns to what they had.
   const [rgbOpen, setRgbOpen] = useState(false);
@@ -291,6 +370,17 @@ export function MobilePythonKeyboard({
   const [preview, setPreview] = useState<{ text: string; left: number } | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const noop = () => undefined;
+
+  // The stamp belongs to the latest press. A finger outside this keyboard clears it before its
+  // own focus change, so a blur caused by leaving is never mistaken for one caused by a key.
+  useEffect(() => {
+    const clear = (event: PointerEvent) => {
+      if (event.target instanceof Node && sectionRef.current?.contains(event.target)) return;
+      sectionRef.current?.removeAttribute('data-pressed-at');
+    };
+    document.addEventListener('pointerdown', clear, true);
+    return () => document.removeEventListener('pointerdown', clear, true);
+  }, []);
 
   // One write per choice: the value returned by the store is the value drawn, so a blocked
   // localStorage loses the memory and never the switch.
@@ -339,8 +429,30 @@ export function MobilePythonKeyboard({
   };
 
   const letter = (key: string) => {
-    onInsertText(shift ? key.toUpperCase() : key);
+    onInsertText(capital ? key.toUpperCase() : key);
     if (shift) setShift(false);
+  };
+
+  /**
+   * Shift, with the native keyboard's double tap: one press arms one capital, a second quick press
+   * locks capitals, and a press while locked lets go. The lock never folds or moves the keyboard.
+   */
+  const shiftPress = () => {
+    if (caps) {
+      setCaps(false);
+      setShift(false);
+      shiftTapAt.current = 0;
+      return;
+    }
+    const now = Date.now();
+    if (shift && now - shiftTapAt.current <= 360) {
+      setCaps(true);
+      setShift(false);
+      shiftTapAt.current = 0;
+      return;
+    }
+    setShift((on) => !on);
+    shiftTapAt.current = now;
   };
 
   /**
@@ -391,10 +503,29 @@ export function MobilePythonKeyboard({
       data-mode={mode}
       data-page={page}
       data-fn={fn ? '1' : undefined}
+      data-caps={caps ? '1' : undefined}
       data-layer={rgbOpen ? 'rgb' : 'keys'}
       data-rgb={rgb.mode === 'off' ? undefined : rgb.mode}
       role="group"
       aria-label="Python keyboard"
+      onPointerDownCapture={(event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()));
+        // A press anywhere on the keys — including the gap between two caps — belongs to the
+        // keyboard, not the page behind it. The caret must stay where the learner left it.
+        if (target.closest('input, textarea, select, label')) return;
+        event.preventDefault();
+      }}
+      onClickCapture={(event) => {
+        const target = event.target;
+        const button = target instanceof Element ? target.closest('button') : null;
+        if (!button || button.getAttribute('data-no-keep-focus') === '1') return;
+        // The key's action runs after this capture; put the caret back afterwards. A key that
+        // switches Fn, 123 or Shift has changed the keyboard and not the text, and on a phone a
+        // focused button can otherwise take the caret — and the keyboard — with it.
+        window.setTimeout(onKeepFocus, 0);
+      }}
       style={lightingStyle}
       className="relative min-w-0 select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
@@ -688,13 +819,13 @@ export function MobilePythonKeyboard({
                 testId={`python-key-${key}`}
                 label={fn ? `Digit ${digit}` : `Letter ${key}`}
                 index={index}
-                preview={fn ? digit : shift ? key.toUpperCase() : key}
+                preview={fn ? digit : capital ? key.toUpperCase() : key}
                 onPreview={showPreview}
                 onPress={() => (fn ? onInsertText(digit) : letter(key))}
                 className={CAP}
               >
                 <span className="text-[16px] font-medium leading-none">
-                  {fn ? digit : shift ? key.toUpperCase() : key}
+                  {fn ? digit : capital ? key.toUpperCase() : key}
                 </span>
                 <span
                   aria-hidden="true"
@@ -714,13 +845,13 @@ export function MobilePythonKeyboard({
                 testId={`python-key-${key}`}
                 label={`Letter ${key}`}
                 index={10 + index}
-                preview={shift ? key.toUpperCase() : key}
+                preview={capital ? key.toUpperCase() : key}
                 onPreview={showPreview}
                 onPress={() => letter(key)}
                 className={CAP}
               >
                 <span className="text-[16px] font-medium leading-none">
-                  {shift ? key.toUpperCase() : key}
+                  {capital ? key.toUpperCase() : key}
                 </span>
               </Key>
             ))}
@@ -730,11 +861,17 @@ export function MobilePythonKeyboard({
           <div className="mt-1 flex min-w-0 gap-1">
             <Key
               testId="python-key-shift"
-              label={shift ? 'Shift is on for one letter' : 'Shift, capital for one letter'}
-              pressed={shift}
-              onPress={() => setShift((on) => !on)}
+              label={
+                caps
+                  ? 'Caps lock is on: letters stay capital until Shift is tapped again'
+                  : shift
+                    ? 'Shift is on for one letter; tap twice for caps lock'
+                    : 'Shift, capital for one letter; tap twice for caps lock'
+              }
+              pressed={capital}
+              onPress={shiftPress}
               wide={1.5}
-              className={`${CAP} ${shift ? 'bg-accent-soft text-accent' : 'bg-raise text-muted'}`}
+              className={`${CAP} ${capital ? 'bg-accent-soft text-accent' : 'bg-raise text-muted'}`}
             >
               <ArrowBigUp className="h-4 w-4" aria-hidden="true" />
             </Key>
@@ -744,13 +881,13 @@ export function MobilePythonKeyboard({
                 testId={`python-key-${key}`}
                 label={`Letter ${key}`}
                 index={19 + index}
-                preview={shift ? key.toUpperCase() : key}
+                preview={capital ? key.toUpperCase() : key}
                 onPreview={showPreview}
                 onPress={() => letter(key)}
                 className={CAP}
               >
                 <span className="text-[16px] font-medium leading-none">
-                  {shift ? key.toUpperCase() : key}
+                  {capital ? key.toUpperCase() : key}
                 </span>
               </Key>
             ))}
@@ -758,6 +895,7 @@ export function MobilePythonKeyboard({
               testId="python-key-backspace"
               label="Backspace"
               onPress={onBackspace}
+              onRepeat={onBackspace}
               wide={1.5}
               className={`${CAP} bg-raise text-body`}
             >
@@ -817,6 +955,7 @@ export function MobilePythonKeyboard({
               testId="python-key-backspace"
               label="Backspace"
               onPress={onBackspace}
+              onRepeat={onBackspace}
               wide={1.5}
               className={`${CAP} bg-raise text-body`}
             >
@@ -882,6 +1021,7 @@ export function MobilePythonKeyboard({
           testId="python-key-native"
           label="Use the phone's own keyboard"
           feedback="confirmation"
+          keepFocus={false}
           onPress={onNativeKeyboard}
           wide={1}
           className={`${ACTION_CAP} text-muted`}
@@ -903,6 +1043,7 @@ export function MobilePythonKeyboard({
           testId="python-key-done"
           label="Done, close the keyboard"
           feedback="confirmation"
+          keepFocus={false}
           onPress={onDone}
           wide={2.1}
           className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center gap-1 rounded-lg font-mono text-[13px] font-bold"

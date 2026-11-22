@@ -35,9 +35,10 @@ import {
  * survive between fields, and a build that never opens a page field never draws a second keyboard
  * (which would duplicate the editor's test hooks).
  *
- * **Native** is the one-off escape hatch: it gives the field back to the OS keyboard for as long as
- * the learner stays there, without touching the caret. A later focus on another field returns to
- * the site keys.
+ * **Native** is a handoff, not a one-way door: it gives the field back to the OS keyboard for as
+ * long as the learner stays there, without touching the caret. Leaving that field ends the session,
+ * so the next focus on it returns to the site keys; if the OS keyboard is put away while the caret
+ * stays, the visual viewport growing back raises the site keys again.
  *
  * The component is mounted once at the app root (`main.tsx`), so it covers the whole-page branches
  * and sheets portalled to `<body>` alike. The editor's keyboard stands down on
@@ -53,6 +54,10 @@ export function PhoneFieldKeyboard() {
   const shellRef = useRef<HTMLDivElement | null>(null);
   const targetRef = useRef<TextField | null>(null);
   const nativeRef = useRef<TextField | null>(null);
+  // The blur/focus pair inside the native handoff is ours, not the learner leaving the field.
+  const handoffRef = useRef<TextField | null>(null);
+  // Whether the OS keyboard actually rose during this native session, read from the visual viewport.
+  const nativeShrunkRef = useRef(false);
   // The attribute each field had before this keyboard suppressed it, so it can be handed back.
   const originalsRef = useRef(new Map<TextField, string | null>());
   const open = target !== null;
@@ -122,6 +127,14 @@ export function PhoneFieldKeyboard() {
       window.dispatchEvent(new Event(FIELD_KEYBOARD_OPEN_EVENT));
     };
 
+    const keyboardPressedRecently = () => {
+      const section = document.querySelector(
+        '[data-testid="phone-field-keyboard"] [data-testid="python-keyboard"]'
+      );
+      const pressedAt = Number(section?.getAttribute('data-pressed-at') ?? 0);
+      return pressedAt > 0 && Date.now() - pressedAt < 400;
+    };
+
     // The attribute has to be in place before the browser focuses the field, or the OS keyboard has
     // already begun to rise and no later change can stop it on iOS.
     const onPointerDown = (event: Event) => {
@@ -138,12 +151,26 @@ export function PhoneFieldKeyboard() {
       if (native && native !== field) {
         delete native.dataset.fieldKeyboardNative;
         nativeRef.current = null;
+        handoffRef.current = null;
+        nativeShrunkRef.current = false;
       }
       show(field);
     };
 
     const onFocusOut = (event: FocusEvent) => {
+      // The OS keyboard's field was left: that ends the native session, so the next focus on this
+      // field is the custom keyboard's again. The handoff's own blur is exempt.
+      const native = nativeRef.current;
+      if (native && event.target === native && handoffRef.current !== native) {
+        delete native.dataset.fieldKeyboardNative;
+        nativeRef.current = null;
+        handoffRef.current = null;
+        nativeShrunkRef.current = false;
+      }
       if (!targetRef.current) return;
+      // A finger on a key (or in the gap between two) is still a press on the keyboard; it must not
+      // fold the keys it is using, even when iOS reports the blur with no related target.
+      if (keyboardPressedRecently()) return;
       const related = event.relatedTarget;
       if (related instanceof Element) {
         // A press on one of the keys never takes focus (the key cancels its pointerdown), but a
@@ -155,10 +182,29 @@ export function PhoneFieldKeyboard() {
       close();
     };
 
+    // When the OS keyboard goes away while the field keeps the caret (the phone's own hide key),
+    // the site's keys come back. Nothing is opened before the OS keyboard has actually risen.
+    const viewport = window.visualViewport;
+    const onViewportResize = () => {
+      const native = nativeRef.current;
+      if (!native || document.activeElement !== native) return;
+      const hidden = window.innerHeight - (viewport?.height ?? window.innerHeight);
+      if (hidden > 120) {
+        nativeShrunkRef.current = true;
+        return;
+      }
+      if (!nativeShrunkRef.current || hidden > 40) return;
+      nativeShrunkRef.current = false;
+      delete native.dataset.fieldKeyboardNative;
+      nativeRef.current = null;
+      show(native);
+    };
+    viewport?.addEventListener('resize', onViewportResize);
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('focusin', onFocusIn, true);
     document.addEventListener('focusout', onFocusOut, true);
     return () => {
+      viewport?.removeEventListener('resize', onViewportResize);
       document.removeEventListener('pointerdown', onPointerDown, true);
       document.removeEventListener('focusin', onFocusIn, true);
       document.removeEventListener('focusout', onFocusOut, true);
@@ -215,8 +261,14 @@ export function PhoneFieldKeyboard() {
     originalsRef.current.delete(current);
     current.dataset.fieldKeyboardNative = '1';
     nativeRef.current = current;
+    handoffRef.current = current;
+    nativeShrunkRef.current = false;
     current.blur();
     current.focus({ preventScroll: true });
+    // The blur/focus pair is synchronous; only that pair is exempt from ending the session.
+    window.setTimeout(() => {
+      if (handoffRef.current === current) handoffRef.current = null;
+    }, 50);
   };
 
   if (!phone) return null;
@@ -277,6 +329,14 @@ export function PhoneFieldKeyboard() {
           }}
           onNativeKeyboard={useNative}
           onDone={done}
+          onKeepFocus={() => {
+            const current = field();
+            // Only a press that actually lost the caret needs this; re-focusing a live contenteditable
+            // could move the selection it is trying to protect.
+            if (current && current.ownerDocument.activeElement !== current) {
+              current.focus({ preventScroll: true });
+            }
+          }}
         />
       )}
     </div>

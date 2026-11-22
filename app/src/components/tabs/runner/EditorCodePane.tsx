@@ -16,6 +16,21 @@ const PythonBlockEditor = lazy(() =>
   }))
 );
 
+/**
+ * Was the caret lost to a press on the keys themselves?
+ *
+ * Keys cancel `pointerdown`, but a finger can land on the gap between two caps, and iOS can take
+ * focus for a button anyway. The keyboard stamps every press; a blur within that press's own
+ * moment is not the learner leaving the editor, so the keys must stay up.
+ */
+function keyboardPressedRecently(): boolean {
+  const section = document.querySelector(
+    '[data-testid="mobile-keyboard-shell"] [data-testid="python-keyboard"]'
+  );
+  const pressedAt = Number(section?.getAttribute('data-pressed-at') ?? 0);
+  return pressedAt > 0 && Date.now() - pressedAt < 400;
+}
+
 /** The draft and editor handle the main pane draws. Structurally the card's `draft`. */
 interface CodePaneDraft {
   code: string;
@@ -134,7 +149,10 @@ export function EditorCodePane({
       if (!nativeRef.current) setKeyboardOpen(true);
       return;
     }
-    if (nativeRef.current) return;
+    // The native handoff lasts only while the caret does. When the OS keyboard's field is left,
+    // the next focus is the custom keyboard's again instead of a one-way trip.
+    if (nativeRef.current) setKeyboardNative(false);
+    if (keyboardPressedRecently()) return;
     if (
       related instanceof Element &&
       related.closest(
@@ -205,6 +223,32 @@ export function EditorCodePane({
     return () => window.removeEventListener(FIELD_KEYBOARD_OPEN_EVENT, fold);
   }, [isPhone]);
 
+  // A phone's OS keyboard is a viewport: when it rises the visual viewport shrinks, and when the
+  // learner puts it away the viewport grows back while the caret stays put. That is the moment the
+  // custom keys return instead of leaving a focused editor with no keyboard at all. Desktop
+  // Chromium never shrinks, so this listens and does nothing there rather than faking the event.
+  useEffect(() => {
+    if (!isPhone || !keyboardNative) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    let shrunk = false;
+    const update = () => {
+      const hidden = window.innerHeight - viewport.height;
+      if (hidden > 120) {
+        shrunk = true;
+        return;
+      }
+      if (!shrunk || hidden > 40) return;
+      shrunk = false;
+      const active = document.activeElement;
+      if (!(active instanceof Element) || !active.closest('.cm-editor, [data-block-id]')) return;
+      setKeyboardNative(false);
+      setKeyboardOpen(true);
+    };
+    viewport.addEventListener('resize', update);
+    return () => viewport.removeEventListener('resize', update);
+  }, [isPhone, keyboardNative]);
+
   const chooseMode = (next: BlockMode) => {
     if (next === mode) return;
     setMode(next);
@@ -262,6 +306,12 @@ export function EditorCodePane({
   // editor handle (CodeMirror commands own the document), the visual face's is the block handle.
   const on = (codeAction: () => void, visualAction: () => void) =>
     mode === 'visual' ? visualAction() : codeAction();
+  const keepEditingFocus = () => {
+    const active = document.activeElement;
+    if (active instanceof Element && active.closest('.cm-editor, [data-block-id]')) return;
+    if (mode === 'visual') visualRef.current?.focusField();
+    else mainEditorRef.current?.focus();
+  };
   const keyboardActions = {
     onInsertText: (text: string) =>
       on(() => mainEditorRef.current?.insertText(text), () => visualRef.current?.insertText(text)),
@@ -501,6 +551,7 @@ export function EditorCodePane({
             {...keyboardActions}
             onNativeKeyboard={openNativeKeyboard}
             onDone={closeKeyboard}
+            onKeepFocus={keepEditingFocus}
           />
         </div>
       )}
