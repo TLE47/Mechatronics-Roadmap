@@ -49,10 +49,14 @@ flowchart LR
    they are hit repeatedly and without looking. A key cancels its pointer default, so the caret, the
    field and the open keyboard stay put.
 
-   The keyboard is **fixed above the Study bar**, not in the page's flow: at 390 px the editor card
-   is taller than the screen, and an in-flow keyboard sits thousands of pixels below the editor. The
-   pane measures it and reserves the same height at its end, so the last lines can still be scrolled
-   out from under it. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
+   The keyboard is **fixed to the bottom edge**, not in the page's flow: at 390 px the editor card
+   is taller than the screen, and an in-flow keyboard sits thousands of pixels below the editor. It
+   takes the bottom edge the way a phone's own keyboard does, so the fixed Study bar rides on top of
+   the keys while they are up (`data-mobile-keyboard` and the measured height, the hook a sheet
+   also uses) and returns to the edge with **Done** — nothing is left between the last key row and
+   the screen edge, and Run/Lesson stay one press away. The keys' own inset is
+   the safe-area inset alone. The pane measures the keyboard and reserves the same height at its
+   end, so the last lines can still be scrolled out from under it. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
    block field, which is the only way to keep the OS keyboard shut while the custom one is the
    keyboard; the **native** key removes it and focuses the real editor, and the mode bar's key
    button is the way back without losing the caret. **Done** folds the keyboard and leaves that

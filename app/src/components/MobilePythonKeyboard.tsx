@@ -269,7 +269,7 @@ export function MobilePythonKeyboard({
       data-fn={fn ? '1' : undefined}
       role="group"
       aria-label="Python keyboard"
-      className="min-w-0 select-none border-t border-line-soft bg-canvas px-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
+      className="min-w-0 select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
       {/* Row 1 — editing actions. Fn swaps each label and, on the last two, the verb. */}
       <div className="flex min-w-0 gap-1">

@@ -1338,6 +1338,15 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   display: none !important;
 }
 
+/* The Python keyboard owns the bottom edge while it is up, the way a phone's own keyboard does, so
+   the fixed Study bar moves up to sit on top of the keys instead of leaving a strip between them
+   and the screen edge. `data-mobile-keyboard` and the height are written by
+   `components/tabs/runner/EditorCodePane.tsx` only once the keyboard has a measured height, so a
+   pane mounted for another tab (or for the Lesson surface) leaves the bar on the bottom edge. */
+body:has([data-testid='mobile-keyboard-shell'][data-mobile-keyboard='1']) [data-phone-bar] {
+  bottom: var(--mobile-keyboard-height, 0px);
+}
+
 /* The phone's Study surface fills the editor with the space it has. The theme reads the three
    variables, so the desktop editor keeps its 288/360 px frame and the phone's Code surface gets a
    taller body and a 16 px line. */

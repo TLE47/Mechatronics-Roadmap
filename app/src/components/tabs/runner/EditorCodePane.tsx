@@ -117,8 +117,10 @@ export function EditorCodePane({
   const keyboardShellRef = useRef<HTMLDivElement | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // The keyboard is fixed above the phone bar, so the pane reserves the same height at its end:
-  // without that space the last lines of the editor could never be scrolled out from under it.
+  // The keyboard is fixed, so the pane reserves its height at its end: without that space the last
+  // lines of the editor could never be scrolled out from under it. The same measurement is the
+  // "actually on screen" flag `index.css` reads to lift the Study bar onto the keys (a pane mounted
+  // for another tab, or for the Lesson surface, measures 0 and leaves the bar on the edge).
   useEffect(() => {
     const shell = keyboardShellRef.current;
     if (!isPhone || !keyboardOpen || !shell) {
@@ -130,7 +132,7 @@ export function EditorCodePane({
     const observer = new ResizeObserver(measure);
     observer.observe(shell);
     return () => observer.disconnect();
-  }, [isPhone, keyboardOpen, mode]);
+  }, [isPhone, keyboardOpen, mode, deferPhoneEditor]);
 
   // When Code opens with the keyboard showing, the mode bar is put under the sticky header. The
   // editor then fills the band between the two, instead of starting below the fold.
@@ -144,6 +146,16 @@ export function EditorCodePane({
     if (top >= headerHeight && top <= window.innerHeight - 76 - keyboardHeight - 60) return;
     window.scrollBy({ top: top - headerHeight - 4, behavior: 'auto' });
   }, [isPhone, keyboardOpen, mode, keyboardHeight]);
+
+  // The Study bar is outside this pane, so the one number it needs travels as a custom property:
+  // the bar's `bottom` is this height, which puts it on top of the keys rather than under them.
+  useEffect(() => {
+    if (!isPhone || keyboardHeight === 0) return;
+    document.body.style.setProperty('--mobile-keyboard-height', `${keyboardHeight}px`);
+    return () => {
+      document.body.style.removeProperty('--mobile-keyboard-height');
+    };
+  }, [isPhone, keyboardHeight]);
 
   const chooseMode = (next: BlockMode) => {
     if (next === mode) return;
@@ -402,15 +414,17 @@ export function EditorCodePane({
         </>
       )}
 
-      {/* One keyboard for both faces, on the bottom edge above the phone bar: an in-flow keyboard
-          at 390 px lands thousands of pixels below the editor, because the phone's Study page is
-          taller than the screen. The shell is measured so the pane can reserve the room the fixed
-          keys take; Visual's keyboard also rides over the toolbox dock it temporarily replaces. */}
+      {/* One keyboard for both faces, flush with the bottom edge: an in-flow keyboard at 390 px
+          lands thousands of pixels below the editor, because the phone's Study page is taller than
+          the screen. The shell is measured so the pane can reserve the room the fixed keys take;
+          the Study bar rides on top of it while it is up, and Visual's keyboard also rides over
+          the toolbox dock it temporarily replaces. */}
       {isPhone && !openHelperFile && !deferPhoneEditor && keyboardOpen && (
         <div
           ref={keyboardShellRef}
           data-testid="mobile-keyboard-shell"
-          className="fixed inset-x-0 bottom-[calc(3.5625rem+env(safe-area-inset-bottom))] z-40"
+          data-mobile-keyboard={keyboardHeight > 0 ? '1' : undefined}
+          className="fixed inset-x-0 bottom-0 z-40"
         >
           <MobilePythonKeyboard
             mode={mode}

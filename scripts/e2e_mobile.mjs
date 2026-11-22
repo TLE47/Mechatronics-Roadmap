@@ -20,8 +20,9 @@
  *      shared coding keyboard — a symbol key inserts at the caret, Fn makes digits, 123 opens the
  *      number page, undo/redo walk the history, native switching removes `inputmode` and the mode
  *      bar's key button brings the Python keys back, and Done folds them. Every key is at least
- *      40 px tall, the fixed bar sits on the bottom edge with a 44 px Run, and a sheet hides that
- *      bar instead of covering its last row.
+ *      40 px tall, the keyboard itself ends on the bottom edge while the fixed Study bar rides on
+ *      top of it (and returns to the edge with Done), that bar carries a 44 px Run, and a sheet
+ *      hides it instead of covering its last row.
  *   5. A reload inside Code comes back to Code; switching to Lesson hides the editor without
  *      losing it.
  *   6. The lesson sheet is the chooser: another entry opens, the sheet closes, the title follows.
@@ -455,6 +456,21 @@ async function main() {
       );
       const keyboard = page.getByTestId('python-keyboard');
       check(await keyboard.isVisible(), 'the Code surface must draw the Python keyboard');
+      const keyboardShell = await page.getByTestId('mobile-keyboard-shell').boundingBox();
+      check(
+        Boolean(keyboardShell) &&
+          Math.abs(keyboardShell.y + keyboardShell.height - PHONE.height) <= 1,
+        `the Python keyboard must end on the bottom edge, not ${Math.round(
+          (keyboardShell?.y ?? 0) + (keyboardShell?.height ?? 0)
+        )}px of ${PHONE.height}`
+      );
+      const barOnKeys = await box(page, 'phone-bar');
+      check(
+        Math.abs(barOnKeys.y + barOnKeys.height - keyboardShell.y) <= 1,
+        `the Study bar must sit on top of the keys, not ${Math.round(
+          barOnKeys.y + barOnKeys.height
+        )}px vs ${Math.round(keyboardShell.y)}px`
+      );
       const keys = page.locator('[data-testid^="python-key-"]');
       const keyCount = await keys.count();
       check(keyCount >= 60, `the Python keyboard has only ${keyCount} keys`);
@@ -549,6 +565,13 @@ async function main() {
           'Show the Python keyboard'
         ),
         'Done must leave the way back to the keyboard'
+      );
+      const barAfterDone = await box(page, 'phone-bar');
+      check(
+        Math.abs(barAfterDone.y + barAfterDone.height - PHONE.height) <= 1,
+        `Done must put the Study bar back on the bottom edge, not at ${Math.round(
+          barAfterDone.y + barAfterDone.height
+        )}px`
       );
       await page.getByTestId('keyboard-toggle').click();
       await keyboard.waitFor({ state: 'visible', timeout: 5000 });
