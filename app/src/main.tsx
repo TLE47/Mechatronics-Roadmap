@@ -12,6 +12,7 @@ import '@fontsource-variable/geist-mono';
 // from the `katex` package through `MathView.tsx`.
 import 'katex/dist/katex.min.css';
 import App from './App';
+import { PhoneFieldKeyboard } from './components/PhoneFieldKeyboard';
 import { UpdateNotice } from './UpdateNotice';
 import { bulkStorage, flushBulkStorage, hydrateBulkStorage } from './bulkStorage';
 import { migrateRenamedLessonIds } from './lessonRenames';
@@ -66,6 +67,9 @@ async function start(): Promise<void> {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <App />
+      {/* One keyboard host for every text field outside the Python editor. It renders nothing
+          above the phone breakpoint and nothing until a field first takes the keys. */}
+      <PhoneFieldKeyboard />
       <UpdateNotice />
     </React.StrictMode>
   );

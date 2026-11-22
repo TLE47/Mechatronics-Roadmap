@@ -1338,12 +1338,14 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   display: none !important;
 }
 
-/* The Python keyboard owns the bottom edge while it is up, the way a phone's own keyboard does, so
-   the fixed Study bar moves up to sit on top of the keys instead of leaving a strip between them
-   and the screen edge. `data-mobile-keyboard` and the height are written by
-   `components/tabs/runner/EditorCodePane.tsx` only once the keyboard has a measured height, so a
-   pane mounted for another tab (or for the Lesson surface) leaves the bar on the bottom edge. */
-body:has([data-testid='mobile-keyboard-shell'][data-mobile-keyboard='1']) [data-phone-bar] {
+/* A phone keyboard owns the bottom edge while it is up, the way a phone's own keyboard does, so the
+   fixed Study bar moves up to sit on top of the keys instead of leaving a strip between them and
+   the screen edge. Two shells can raise it: the editor's (`EditorCodePane`) and the site's host for
+   every other text field (`PhoneFieldKeyboard`). `data-mobile-keyboard` and the height are written
+   only once the keyboard has a measured height, so a pane mounted for another tab (or for the
+   Lesson surface) leaves the bar on the bottom edge. */
+body:has([data-testid='mobile-keyboard-shell'][data-mobile-keyboard='1']) [data-phone-bar],
+body:has([data-testid='phone-field-keyboard'][data-mobile-keyboard='1']) [data-phone-bar] {
   bottom: var(--mobile-keyboard-height, 0px);
 }
 
@@ -1685,12 +1687,12 @@ number-flow {
 /* ============================================================================
    The phone's Python keyboard: the slide, the press, and its lighting
    ----------------------------------------------------------------------------
-   `components/tabs/runner/EditorCodePane.tsx` keeps the shell mounted and flips
-   `data-state`; the hidden state is a transform off the bottom edge, so closing
-   is a transition rather than a disappearance, and `visibility` changes only
-   after the movement (the `0s` delay) so the keys are still painted while they
-   leave. Keeping the keyboard mounted is also what preserves its page, Fn state
-   and lighting layer between two fields.
+   `components/tabs/runner/EditorCodePane.tsx` and `components/PhoneFieldKeyboard.tsx`
+   keep the shell mounted and flip `data-state`; the hidden state is a transform off
+   the bottom edge, so closing is a transition rather than a disappearance, and
+   `visibility` changes only after the movement (the `0s` delay) so the keys are still
+   painted while they leave. Keeping the keyboard mounted is also what preserves its
+   page, Fn state and lighting layer between two fields.
 
    Every key is `.kb-key`: `isolation` keeps its light layer above the cap's own
    background and below the letter, which is what lets the wash tint the keycap

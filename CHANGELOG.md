@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.17.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.18.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,29 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-22] — The keyboard works anywhere you type
+
+The phone's coding keyboard is no longer the editor's alone. `components/PhoneFieldKeyboard.tsx` mounts
+once at the app root and follows focus into every text field outside CodeMirror and the block
+workspace: the lesson search, a note, a name or password in a sheet, the calculator's line, the visual
+toolbox's field, and the sticky-note composer's `contenteditable`. A field is handed to the site
+keyboard at `pointerdown` with `inputmode="none"` — the only moment iOS and Android can be stopped
+from raising their own — and gets its original attribute back when the keys fold. Moving between two
+fields retargets without closing; Done blurs and restores; tapping the prose slides the shell down.
+The keys are the same component, so Fn, 123, Shift, haptics, the press bubble and the Fn → RGB layer
+all work there. The editor's keyboard folds when the site keyboard takes the bottom edge, so two
+shells never share it, and the Study bar rides on whichever is up. Number, date, range, colour and
+file controls keep the browser's own keyboard: their keypads are the honest ones.
+
+The host renders nothing at 768 px and up and nothing until a field first asks for it, so a desktop
+visit and a phone that never types do not pay for a second keyboard.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run check:weight`, `npm run test:e2e:mobile` (a
+sheet's search is focused, typed into with the site keys scoped to their own keyboard, folded with
+Done, and the page keyboard is absent at 768/1024).
 
 ---
 

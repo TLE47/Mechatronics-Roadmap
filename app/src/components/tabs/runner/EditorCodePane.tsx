@@ -4,6 +4,7 @@ import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MobilePythonKeyboard } from '../../MobilePythonKeyboard';
 import type { PythonBlockEditorHandle } from '../../../pythonBlocks/PythonBlockEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
+import { FIELD_KEYBOARD_OPEN_EVENT } from '../../../keyboard/fieldTarget';
 import type { AnalysisSession } from '../../../analysisClient';
 import { readBlockSettings, writeBlockSettings, type BlockMode } from '../../../pythonBlocks/settings.ts';
 
@@ -189,6 +190,20 @@ export function EditorCodePane({
       document.body.style.removeProperty('--mobile-keyboard-height');
     };
   }, [isPhone, keyboardOpen, keyboardHeight]);
+
+  // The site's keyboard for page fields (`components/PhoneFieldKeyboard.tsx`) takes the bottom edge
+  // for a search box, a note or a sheet field. The editor's keys fold when it does — this pane stays
+  // mounted, so the document, caret and undo history are untouched, and the editor's own focus
+  // handler raises the keys again when the caret comes back.
+  useEffect(() => {
+    if (!isPhone) return;
+    const fold = () => {
+      setKeyboardNative(false);
+      setKeyboardOpen(false);
+    };
+    window.addEventListener(FIELD_KEYBOARD_OPEN_EVENT, fold);
+    return () => window.removeEventListener(FIELD_KEYBOARD_OPEN_EVENT, fold);
+  }, [isPhone]);
 
   const chooseMode = (next: BlockMode) => {
     if (next === mode) return;

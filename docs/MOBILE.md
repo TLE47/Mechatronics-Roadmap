@@ -60,6 +60,18 @@ flowchart LR
    named in `EditorCodePane` (the mode bar, the keys themselves, a sheet): a press on one of those is
    not the learner leaving the editor, while tapping the prose is.
 
+   **The keyboard is the site's, not only the editor's.** `components/PhoneFieldKeyboard.tsx` is
+   mounted once at the app root and follows the caret into every other text field — the lesson
+   search, a note, a name or password in a sheet, the calculator's line, the visual toolbox's field,
+   the sticky-note composer's `contenteditable`. It suppresses the OS keyboard at `pointerdown`
+   (`inputmode="none"` has to be on the field before the browser focuses it, or iOS has already
+   begun to raise its own), restores the original attribute when it folds, and retargets without a
+   slide when the next field is a text field too. Done blurs; tapping the prose folds. When this
+   keyboard takes the bottom edge the editor's keys fold (`FIELD_KEYBOARD_OPEN_EVENT`), so one shell
+   owns it and the Study bar rides on it. Number, date, range, colour and file controls keep the
+   browser's own keyboard — their keypads are the honest ones. Above 768 px the host renders
+   nothing, and a phone that never types draws no second keyboard until a field first asks.
+
    **Fn → 123 / ABC is the lighting layer**, not a second keyboard. The Fn row's `123` / `ABC` key
    prints `RGB` while Fn is on; one press swaps the three non-letter rows for the six modes (off,
    static, cycle, breathing, rainbow, reactive), six presets, a custom colour and brightness/speed

@@ -611,6 +611,44 @@ async function main() {
       );
       await page.getByTestId('btn-lessons').click();
       await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
+      // The keyboard is the site's, not the editor's: the sheet's own search box gets the same keys,
+      // after a tap that suppresses the OS keyboard before the field can focus.
+      const fieldKeyboard = page.getByTestId('phone-field-keyboard');
+      check(
+        !(await fieldKeyboard.isVisible()),
+        'a page field must not draw the site keyboard before it is focused'
+      );
+      // The desktop rail is still in the DOM behind the sheet and draws the same chooser search.
+      const search = page.getByTestId('lesson-sheet').getByTestId('input-lesson-search');
+      await search.click();
+      await fieldKeyboard.waitFor({ state: 'visible', timeout: 5000 });
+      check(
+        (await search.evaluate((element) => element.getAttribute('inputmode'))) === 'none',
+        'a focused page field must suppress the OS keyboard with inputmode=none'
+      );
+      const fieldKeys = fieldKeyboard.locator('[data-testid^="python-key-"]');
+      check((await fieldKeys.count()) >= 60, 'the page keyboard must draw the full key layout');
+      await fieldKeyboard.getByTestId('python-key-p').click();
+      check(
+        (await search.inputValue()) === 'p',
+        `the site keyboard did not type into the sheet search (value "${await search.inputValue()}")`
+      );
+      await fieldKeyboard.getByTestId('python-key-backspace').click();
+      check((await search.inputValue()) === '', 'Backspace did not clear the page field');
+      const fieldShell = await fieldKeyboard.boundingBox();
+      check(
+        Boolean(fieldShell) && Math.abs(fieldShell.y + fieldShell.height - PHONE.height) <= 1,
+        `the page keyboard must slide to the bottom edge, not ${Math.round(
+          (fieldShell?.y ?? 0) + (fieldShell?.height ?? 0)
+        )}px of ${PHONE.height}`
+      );
+      await fieldKeyboard.getByTestId('python-key-done').click();
+      await fieldKeyboard.waitFor({ state: 'hidden', timeout: 5000 });
+      check(
+        (await search.evaluate((element) => element.getAttribute('inputmode'))) === null,
+        'Done must hand the field its inputmode back'
+      );
+      ok('a sheet field gets the site keyboard, types, and folds from Done');
       // Scoped to the sheet: the desktop rail is still in the DOM behind it (hidden at 390), and a
       // second copy of the same row is a strict-mode tie, not a learner-visible duplicate.
       await page
@@ -711,6 +749,10 @@ async function main() {
       check(
         !(await page.getByTestId('phone-tab-nav').isVisible()),
         `the phone picker must be gone at ${size.width}px`
+      );
+      check(
+        (await page.getByTestId('phone-field-keyboard').count()) === 0,
+        `the site keyboard must not mount at ${size.width}px`
       );
       await assertNoSidewaysScroll(page, `the workbench at ${size.width}`);
       // 2 px is subpixel rounding between a primary and a secondary button, not a second row: a

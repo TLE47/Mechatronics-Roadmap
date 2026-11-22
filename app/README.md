@@ -1520,7 +1520,11 @@ Python's symbols and editing verbs in both Python Code and Visual, keeping the O
 until its native key asks for it. The keys follow the caret — opening on a focus and sliding away
 when it leaves the editor — compress under a finger and raise the character above the cap, and
 carry a lighting layer behind **Fn → 123 / ABC**: six modes, presets, a custom colour, brightness
-and speed, drawn with CSS so a folded keyboard costs no frames. The manifest is `standalone` with icons rendered from
+and speed, drawn with CSS so a folded keyboard costs no frames. A host at the app root
+([`src/components/PhoneFieldKeyboard.tsx`](src/components/PhoneFieldKeyboard.tsx)) gives every
+other text field on the site — searches, notes, sheet fields, the calculator's line, the sticky-note
+composer — the same keys, sliding up on focus and folding on Done; the editor's keys stand down
+while it is up, so one keyboard owns the bottom edge. The manifest is `standalone` with icons rendered from
 `favicon.svg` (`npm run icons`), so the
 installed app owns the whole display and `env(safe-area-inset-*)` keeps it clear of the notch. The
 map, the measured numbers and the deliberate limits are in
@@ -1604,6 +1608,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/MobilePythonKeyboard.tsx`](src/components/MobilePythonKeyboard.tsx) | The phone's one coding keyboard: symbols, QWERTY, Fn, 123, native switching, Done, the press preview and the Fn → 123/ABC lighting layer, shared by Python Code and Visual. |
 | [`src/keyboard/rgb.ts`](src/keyboard/rgb.ts) | The lighting's six modes, its presets and the remembered colour, brightness and speed. |
 | [`src/keyboard/haptics.ts`](src/keyboard/haptics.ts) | The three small taps the keys ask for, and the silent fallback where a device has none. |
+| [`src/components/PhoneFieldKeyboard.tsx`](src/components/PhoneFieldKeyboard.tsx) | The site's keyboard for every text field outside the editor: the focus-driven mounted shell, OS-keyboard suppression at pointerdown, retargeting between fields, the native handoff and the Study bar lift. |
+| [`src/keyboard/fieldTarget.ts`](src/keyboard/fieldTarget.ts) | Which fields the page keyboard owns, and the edit primitives it types with: native insert/delete (so undo works), the value-write fallback for React, and the contenteditable path. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
