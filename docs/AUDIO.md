@@ -113,7 +113,9 @@ needs a second styling system:
 
 Precedence: `data-sound="<role>"` wins; `data-sound="none"` silences a subtree; then `disabled`
 is silent (it did nothing); then the element's own semantics decide. Text fields are silent — typing
-is not a sound in this design.
+is not a sound in this design. The visual editor's card drag borrows two ticks rather than adding
+an eighth: `row` when a card lifts and `chip` when it lands, because a drag is a control press the
+interface already knows how to say.
 
 Three budgets keep the ticks from becoming a noisemaker:
 

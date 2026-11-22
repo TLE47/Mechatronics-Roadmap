@@ -22,9 +22,9 @@ flowchart LR
 | `operations.ts` | Immutable edits: insert a template at a point, change fields, move within a body, move to the exact point a drop names (across bodies, never into the statement's own subtree, no-op on its own place), duplicate with fresh ids, remove. Each returns a new program with `dirty` set. |
 | `registry.ts` | The Python Toolbox catalogue: nine categories, complete statement templates, keyword search, and the Recommended / Categories / A–Z / Recently used sorts. |
 | `settings.ts` | The remembered mode (`visual` / `code`), appearance, toolbox sort and recent element ids. Field-by-field normalization is the door stored values use. |
-| `appearance.ts` | Normal and Colorful. Colorful gives each statement family a theme token (`--accent`, `--emerald`, `--amber`, `--rose`, `--purple`) mixed into the panel, so it follows all four palettes. |
+| `appearance.ts` | Normal and Colorful. Every kind has its own ink, mixed from the theme's accent, emerald, amber, rose, purple and muted tokens; Colorful tints the surface, border and field from it, while Normal keeps the Python neutral and colours the left rule. Both follow all four palettes. |
 | `useBlockEditor.ts` | The program, undo/redo stacks, selection and insertion point. Text this hook did not emit re-parses; text it did emit is not parsed back. |
-| `BlockCard.tsx` | One statement as a card: real Python tokens, inline fields, a fold over move/duplicate/delete/insert-after that opens closed at every width, and an "Add statement inside" door on a suite. A press on the card lifts it (a hold on touch, a short travel with a mouse); each card publishes the drop target a dragged element lands on, the ring a release would snap to, and a small arrow in the gap the statement will land in. |
+| `BlockCard.tsx` | One statement as a card: real Python tokens, inline fields, a fold over move/duplicate/delete/insert-after that opens closed at every width, an info button that names the kind and what it does, and an "Add statement inside" door on a suite. A press on the card lifts it (a hold on touch, a short travel with a mouse); each card publishes the drop target a dragged element lands on, the ring a release would snap to, and a small arrow in the gap that points down for a lower drop and up for a drag above. |
 | `InlineField.tsx` | One editable token: tap to open where it is, Enter or leaving commits, Escape restores. |
 | `PythonToolbox.tsx` | The toolbox: category dropdown, Previous/Next, search, sort, tap-to-insert, pointer drag onto a card, and the phone's dock (a grabber whose swipe moves the sheet with the finger, a third of the screen). Colorful paints each element with its card's ink. |
 | `PythonBlockEditor.tsx` | The workspace and its toolbar: undo/redo, Normal/Colorful, statement count, the card list and the toolbox (docked on a phone, inline from tablet up). |
@@ -72,14 +72,20 @@ one drop from inserting twice.
 **A card is draggable too**, and by the same targets. A touch rests on a card for about a third of a
 second, or a mouse travels past eight pixels, and the card follows the pointer behind a small label
 chip that rides just above the pointer (a chip centred on the finger would cover the landing gap);
-the card under it draws the line a release will snap to, with a small down arrow in the exact slot —
-the gap below that card, or just above the top of an empty suite's dashed target — and the drop is
-one exact point — root or any suite, above or below any card. A touch that moves before the hold ends is a scroll, not
-a drag. Controls opt out with `data-no-drag`, so a verb is still a button and a tap still opens a
+the card under it draws the line a release will snap to, with a small arrow in the exact slot —
+the gap below that card, or just above the top of an empty suite's dashed target — pointing down
+for a drop below the card's old place and up for a drag above it. The drop is one exact point — root
+or any suite, above or below any card. A touch that moves before the hold ends is a scroll, not a
+drag. Controls opt out with `data-no-drag`, so a verb is still a button and a tap still opens a
 field; a press that has not lifted is cancelled when the pointer leaves the card, and the card takes
 pointer capture only once it is in the air, so a tap's click reaches the field it started on. The
 move keeps the statement's id, refuses to drop a suite inside itself, and a drop on the statement's
 own place is not an edit (and so not an undo step).
+
+When sound is on, the lift plays the interface's `row` brush and a landed move plays its `chip`
+tick; both go through the same sound bus as every other control, so a muted learner still sees the
+card and the arrow and loses no information. A small info button beside the controls toggle opens
+one sentence about the kind, whether the five verbs are folded or open.
 
 The browser's own long-press gestures are declined while a card is in hand. The non-passive
 `touchmove` guard goes on when the finger goes down, not when the hold lifts, because a browser
@@ -96,16 +102,18 @@ screen can still select the code it can see.
   immutability, raw preservation, an empty suite completed with `pass`, two-space and tab
   indentation, a drop landing at the index its target named (root and inside a suite), a card moved
   to an exact point across bodies, a suite refusing a drop into its own subtree, a drop on its own
-  place leaving the program identical, the nine categories, the four sorts, and CPython's `ast.parse`
-  on the generated programs.
+  place leaving the program identical, the nine categories, the four sorts, one distinct Colorful
+  ink and Normal rule for every statement kind, and CPython's `ast.parse` on the generated programs.
 - `npm run test:e2e:blocks` — the real surface: Python Code and Normal are the defaults; opening
   Visual and returning leaves `main.py` untouched and keeps the code caret; a statement typed in
   Python Code draws as a block, and returning to code leaves that text byte-identical; the toolbox
   collapses, steps categories, searches across them, sorts and remembers Recently used; a mouse drag
   from the toolbox lands after the card it is released on and is one undo step; a card opens folded,
   and its toggle unfolds the five controls; a card is picked up, follows the pointer with its label
-  chip riding above it and a small arrow in the gap a release would land in, and snaps to the drop
-  point it was released on, as one undo step; a real touch long-press
+  chip riding above it and a small arrow in the gap a release would land in pointing down for a
+  downward drag, and snaps to the drop point it was released on, as one undo step; the lift and the
+  snap dispatch the row and chip ticks; the info button names the kind and closes again; a real
+  touch long-press
   carries a card onto another card without scrolling the page, selecting text or opening the
   long-press menu, and a real touch swipe on the dock grabber moves the sheet before it settles; a
   toolbox tap and an inline edit reach the code view; add-inside,
@@ -120,9 +128,12 @@ screen can still select the code it can see.
   another palette and checks again.
 - `npm run test:e2e:snap-arrow` — the arrow **on screen**, not only in the DOM: at 1280 and 390 it
   holds a real drag (a mouse and a CDP touch long-press) over the gap below a card and over an empty
-  suite, screenshots each paused frame into `artifacts/snap-arrow/`, hides the arrow to diff its own
-  pixels, and checks the painted pixels are the accent colour at 10×6. A clipped, covered or
-  wrong-coloured marker fails here; the after-release frame and the DOM count prove it clears.
+  suite, adds a desktop drag **above** the card's old place so the arrow must point up, screenshots
+  each of the five paused frames into `artifacts/snap-arrow/`, hides the arrow to diff its own
+  pixels, and checks the painted pixels are the accent colour at 10×6 with the expected direction. A
+  clipped, covered or wrong-direction marker fails here; the after-release frame and the DOM count
+  prove it clears.
 - The app-wide sweeps open this workspace too: `npm run check:axe` and `npm run test:theme:e2e` audit
   Normal and Colorful in all four palettes on a seeded program containing one card of every
-  statement family, so Colorful's five inks are measured rather than assumed.
+  statement family, so Colorful's fourteen inks and Normal's fourteen rules are measured rather than
+  assumed.

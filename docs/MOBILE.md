@@ -65,8 +65,11 @@ bottom padding so the last card can still be scrolled above the dock. A card ope
 controls folded at every width — the toggle is on the card — and a touch that rests on a card for a
 third of a second lifts it to drag. The label chip that follows the finger rides just above it, so
 the finger (and the chip) never covers the landing point; the card under it draws the point a
-release will snap to, with a small down accent arrow in the gap the statement will land in — or
-just above an empty suite's dashed target. A touch that moves sooner scrolls instead, and
+release will snap to, with a small accent arrow in the gap the statement will land in — pointing
+down for a drop below its old place, up for a drag above it, or into an empty suite's dashed
+target. When sound is on, the lift and the landing reuse the interface's quiet `row` and `chip`
+ticks; a muted phone loses only the sound, not the card, the chip or the arrow. A small info button
+on every card names the kind and explains it without opening the five verbs. A touch that moves sooner scrolls instead, and
 `npm run test:e2e:snap-arrow` screenshots the paused drag at 390 px and proves the arrow's pixels
 are painted. No browser long-press gesture claims that finger:
 the card declines text selection and the iOS callout in CSS, and the editor attaches its non-passive

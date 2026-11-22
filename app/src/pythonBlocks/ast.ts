@@ -123,6 +123,24 @@ export const KIND_LABELS: Record<BlockKind, string> = {
   raw: 'Python',
 };
 
+/** One sentence the card's info button can show, in the same order as the labels above. */
+export const KIND_INFO: Record<BlockKind, string> = {
+  assign: 'Stores a value under a name. The variable keeps that value until something changes it.',
+  call: 'Calls a function such as print() and runs its effect right here.',
+  if: 'Runs the statements inside only when the condition is true.',
+  elif: 'Checks another condition when the earlier if or elif was false.',
+  else: 'Runs when none of the conditions above were true.',
+  for: 'Repeats the suite once for each item in the iterable.',
+  while: 'Repeats the suite while the condition stays true.',
+  def: 'Defines a function with a name and parameters; its suite is the body.',
+  return: 'Ends the function and hands a value back to the caller.',
+  try: 'Runs the suite and watches for an exception.',
+  except: 'Runs when the matching exception was raised inside the try.',
+  finally: 'Always runs after the try suite, whether it succeeded or raised.',
+  import: 'Brings a module into this program so its names can be used.',
+  raw: 'Lines the visual editor keeps exactly as written; it never rewrites them.',
+};
+
 /**
  * The single line a statement's header is, or null where the node carries its own lines.
  *

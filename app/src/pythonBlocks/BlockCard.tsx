@@ -4,8 +4,15 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { ArrowDown, ArrowUp, ChevronUp, Copy, CornerDownRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
-import { KIND_LABELS, type BlockFields, type BlockKind, type BlockNode, isContainer } from './ast.ts';
+import { ArrowDown, ArrowUp, ChevronUp, Copy, CornerDownRight, Info, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import {
+  KIND_INFO,
+  KIND_LABELS,
+  type BlockFields,
+  type BlockKind,
+  type BlockNode,
+  isContainer,
+} from './ast.ts';
 import { blockColors, type BlockAppearance } from './appearance.ts';
 import { InlineField } from './InlineField';
 
@@ -40,7 +47,7 @@ export interface BlockCardHandlers {
   /** Which card is in the air, and the point a release would land on right now. */
   drag: {
     id: string | null;
-    target: { bodyId: string | null; index: number } | null;
+    target: { bodyId: string | null; index: number; direction: 'up' | 'down' } | null;
   };
   onCardPointerDown: (
     event: ReactPointerEvent<HTMLDivElement>,
@@ -174,15 +181,17 @@ function Tokens({
  * A small arrow at the gap a lifted block will snap into (`app/src/pythonBlocks/BlockCard.tsx`).
  *
  * The highlighted card says which statement the pointer is over; the arrow says exactly where the
- * statement lands — the gap just below that card, or the top of an empty suite. It is drawn only
+ * statement lands — the gap just below that card, or the top of an empty suite — and which way the
+ * card is travelling: down for a drop below its old place, up for a drag above it. It is drawn only
  * while something is in the air, and it never takes a pointer event: the release still hit-tests
  * the cards underneath it.
  */
-function SnapArrow({ style }: { style: CSSProperties }) {
+function SnapArrow({ direction, style }: { direction: 'up' | 'down'; style: CSSProperties }) {
   return (
     <span
       aria-hidden="true"
       data-testid="block-snap-arrow"
+      data-direction={direction}
       className="pointer-events-none absolute z-10 block h-0 w-0"
       style={{
         borderLeft: '5px solid transparent',
@@ -190,6 +199,9 @@ function SnapArrow({ style }: { style: CSSProperties }) {
         borderTop: '6px solid var(--accent)',
         filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))',
         ...style,
+        // The box is the same triangle in the same gap; the rotation is what tells the learner the
+        // direction of the move. A transform keeps the border colour the pixel gate reads.
+        transform: direction === 'up' ? 'rotate(180deg)' : undefined,
       }}
     />
   );
@@ -212,8 +224,10 @@ export function BlockCard({
 }) {
   const colors = blockColors(node.kind, handlers.appearance);
   const [actionsOpen, setActionsOpen] = useState(handlers.actionsOpenByDefault);
+  const [infoOpen, setInfoOpen] = useState(false);
   const selected = handlers.selectedId === node.id;
   const dragging = handlers.drag.id === node.id;
+  const dragDirection = handlers.drag.target?.direction ?? 'down';
   // A release here puts the statement directly below this card (or inside its suite, at the end).
   const dropAfter =
     !dragging &&
@@ -255,7 +269,7 @@ export function BlockCard({
       className={`relative list-none ${dragging ? 'opacity-40' : ''}`}
     >
       {/* The exact slot a release would land in: below this card, above the next one. */}
-      {dropAfter && <SnapArrow style={{ bottom: -6, left: 10 }} />}
+      {dropAfter && <SnapArrow direction={dragDirection} style={{ bottom: -6, left: 10 }} />}
       {handlers.insertionHere(bodyId, index + 1) && (
         <div
           aria-hidden="true"
@@ -322,6 +336,23 @@ export function BlockCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
+            {/* The kind stays one tap away even when the verbs are folded: a learner can read what
+                the block does without opening the five controls or leaving the workspace. */}
+            <button
+              type="button"
+              data-testid="block-info-toggle"
+              data-no-drag="1"
+              aria-expanded={infoOpen}
+              aria-label={`${infoOpen ? 'Hide' : 'Show'} what the ${label} statement ${position} does`}
+              title="What this block does"
+              onClick={(event) => {
+                event.stopPropagation();
+                setInfoOpen((value) => !value);
+              }}
+              className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded border border-transparent text-faint transition-colors hover:border-line-soft hover:bg-raise hover:text-ink"
+            >
+              <Info className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
             {actionsOpen && (
               <>
                 {action(
@@ -389,6 +420,19 @@ export function BlockCard({
           </div>
         </div>
 
+        {infoOpen && (
+          <p
+            data-testid="block-info"
+            className="mb-1.5 mt-1 rounded border border-line-soft px-2 py-1 text-[11px] leading-snug"
+            style={{ color: 'var(--muted)' }}
+          >
+            <span className="font-semibold" style={{ color: 'var(--body)' }}>
+              {label}:
+            </span>{' '}
+            {KIND_INFO[node.kind]}
+          </p>
+        )}
+
         {container && (
           <div
             data-drop-body={node.id}
@@ -404,8 +448,10 @@ export function BlockCard({
           >
             {/* An empty suite has no card to draw the arrow under, so it points into the body —
                 just above the dashed target outline, so the two accent marks do not merge into
-                one another. */}
-            {dropInside && node.body.length === 0 && <SnapArrow style={{ top: -9, left: 10 }} />}
+                one another. It always points into the only slot, whichever way the finger came. */}
+            {dropInside && node.body.length === 0 && (
+              <SnapArrow direction="down" style={{ top: -9, left: 10 }} />
+            )}
             {node.body.length > 0 ? (
               <ol className="m-0 flex list-none flex-col gap-1 p-0">
                 {node.body.map((child, childIndex) => (

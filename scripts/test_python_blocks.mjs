@@ -19,7 +19,8 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { nodeHeader, renderProgram } from '../app/src/pythonBlocks/ast.ts';
+import { KIND_LABELS, nodeHeader, renderProgram } from '../app/src/pythonBlocks/ast.ts';
+import { blockColors } from '../app/src/pythonBlocks/appearance.ts';
 import {
   duplicateNode,
   insertNode,
@@ -435,6 +436,14 @@ check('the four sorts are deterministic and mean what they say', () => {
 
   const recent = sortItems(TOOLBOX_ITEMS, 'recent', ['print', 'def']);
   assert.deepEqual(recent.slice(0, 2).map((entry) => entry.id), ['print', 'def']);
+});
+
+check('every kind has its own Colorful ink and its own Normal rule', () => {
+  const kinds = Object.keys(KIND_LABELS);
+  const inks = new Set(kinds.map((kind) => blockColors(kind, 'colorful').ink));
+  const rules = new Set(kinds.map((kind) => blockColors(kind, 'normal').rule));
+  assert.equal(inks.size, kinds.length, 'Colorful should give every statement kind a distinct ink');
+  assert.equal(rules.size, kinds.length, 'Normal should give every statement kind a distinct rule');
 });
 
 check('a stored preference is normalized field by field', () => {

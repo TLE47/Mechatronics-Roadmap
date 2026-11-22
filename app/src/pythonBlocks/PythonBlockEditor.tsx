@@ -6,6 +6,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { Blocks, Redo2, Undo2 } from 'lucide-react';
+import { playUi } from '../audio/facade.ts';
+import { panFromX } from '../audio/clickMap.ts';
 import { KIND_LABELS, type BlockKind, type BlockNode } from './ast.ts';
 import { BlockCard, type BlockCardHandlers } from './BlockCard';
 import { APPEARANCE_LABELS, type BlockAppearance } from './appearance.ts';
@@ -19,6 +21,9 @@ import { useBlockEditor } from './useBlockEditor';
 const HOLD_MS = 320;
 /** How far a pointer travels before a press is a drag rather than a tap (or a scroll, on touch). */
 const MOVE_SLOP = 8;
+
+/** The point a card drag would land on, and the way the card is travelling to reach it. */
+type CardDropTarget = InsertionPoint & { direction: 'up' | 'down' };
 
 interface CardPress {
   id: string;
@@ -72,7 +77,7 @@ export function PythonBlockEditor({
   const [cardDrag, setCardDrag] = useState<{ label: string; x: number; y: number } | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   /** The point a release would land on right now, which the cards use to draw their snap line. */
-  const [dropTarget, setDropTarget] = useState<InsertionPoint | null>(null);
+  const [dropTarget, setDropTarget] = useState<CardDropTarget | null>(null);
   const pressRef = useRef<CardPress | null>(null);
 
   /**
@@ -105,15 +110,31 @@ export function PythonBlockEditor({
    * should not promise. A suite's body is a deeper target than its card, so dropping over a loop's
    * inside lands inside it.
    */
-  const dropPointAt = (x: number, y: number): InsertionPoint | null => {
+  const dropPointAt = (x: number, y: number): CardDropTarget | null => {
     const under = document.elementFromPoint(x, y);
     const target = under?.closest('[data-drop-body]') as HTMLElement | null;
     if (!target) return null;
-    const dragged = pressRef.current?.id;
-    if (dragged && target.closest(`[data-block-id="${dragged}"]`)) return null;
+    const press = pressRef.current;
+    if (press && target.closest(`[data-block-id="${press.id}"]`)) return null;
     const rawBody = target.getAttribute('data-drop-body');
     const rawIndex = Number(target.getAttribute('data-drop-index'));
-    return { bodyId: rawBody ? rawBody : null, index: Number.isFinite(rawIndex) ? rawIndex : 0 };
+    // The arrow points the way the statement is travelling. A card (or a suite) is anchored by its
+    // own top edge; the end-of-program surface is not a card, so there the pointer's side of the
+    // source card decides. The source card keeps its old place while it is in the air, which is
+    // exactly the position the learner is comparing against.
+    let direction: 'up' | 'down' = 'down';
+    if (press) {
+      const source = press.element.getBoundingClientRect();
+      const card = target.closest('[data-block-id]');
+      const anchorTop = card ? card.getBoundingClientRect().top : null;
+      if (anchorTop !== null) direction = anchorTop < source.top - 1 ? 'up' : 'down';
+      else direction = y < source.top + source.height / 2 ? 'up' : 'down';
+    }
+    return {
+      bodyId: rawBody ? rawBody : null,
+      index: Number.isFinite(rawIndex) ? rawIndex : 0,
+      direction,
+    };
   };
 
   const endPress = () => {
@@ -148,6 +169,10 @@ export function PythonBlockEditor({
     // attached when the finger went down (see `onCardPointerDown`), because the browser decides at
     // the start of a gesture whether its moves may scroll; it only starts declining now.
     setPageSelection(true);
+    // The lift reuses the interface's own vocabulary: a soft row brush, panned to the hand. The
+    // sound bus is silent until the learner turns sound on, so this costs no autoplay and no audio
+    // code before that choice.
+    playUi('row', panFromX(press.x, window.innerWidth));
     navigator.vibrate?.(8);
   };
 
@@ -221,8 +246,12 @@ export function PythonBlockEditor({
     const target = press.started ? dropPointAt(event.clientX, event.clientY) : null;
     const moved = press.started;
     const id = press.id;
+    const pan = panFromX(event.clientX, window.innerWidth);
     endPress();
-    if (moved && target) editor.moveTo(id, target.bodyId, target.index);
+    // The snap is only a fact if the model actually moved; a release over the statement's own place
+    // is silence, not a click that promises an edit that did not happen.
+    const landed = moved && target ? editor.moveTo(id, target.bodyId, target.index) : false;
+    if (landed) playUi('chip', pan);
   };
 
   const onCardPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -462,7 +491,11 @@ export function PythonBlockEditor({
       <PythonToolbox
         onInsert={(item) => editor.insert(item.template, item.id)}
         onDropItem={onDropItem}
-        onDragTargetChange={setDropTarget}
+        // A toolbox element has no old place to travel from, so its arrow keeps pointing down into
+        // the gap it will fill.
+        onDragTargetChange={(target) =>
+          setDropTarget(target ? { ...target, direction: 'down' } : null)
+        }
         appearance={appearance}
         dock={isPhone}
         recent={editor.recent}

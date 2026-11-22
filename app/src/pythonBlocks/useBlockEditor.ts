@@ -53,8 +53,8 @@ interface BlockEditor {
   editField: (id: string, fields: Partial<BlockFields>) => void;
   remove: (id: string) => void;
   move: (id: string, direction: -1 | 1) => void;
-  /** Move a statement to the point a dragged card named, across bodies if need be. */
-  moveTo: (id: string, bodyId: string | null, index: number) => void;
+  /** Move a statement to the point a dragged card named; false when that is its own place. */
+  moveTo: (id: string, bodyId: string | null, index: number) => boolean;
   duplicate: (id: string) => void;
   undo: () => void;
   redo: () => void;
@@ -198,9 +198,11 @@ export function useBlockEditor(
 
   const moveTo = (id: string, bodyId: string | null, index: number) => {
     const next = moveNodeTo(programRef.current, id, { bodyId, index });
-    // A drop on the statement's own place is not an edit, so it must not cost an undo step.
-    if (next === programRef.current) return;
+    // A drop on the statement's own place is not an edit, so it must not cost an undo step, and it
+    // must not sound like a placement either.
+    if (next === programRef.current) return false;
     commit(next, id);
+    return true;
   };
 
   const duplicate = (id: string) => {

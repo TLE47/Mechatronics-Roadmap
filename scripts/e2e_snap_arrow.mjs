@@ -12,15 +12,16 @@
  * viewport mid-drag, the crop around the gap, and a nearest-neighbour zoom so the arrow can be
  * looked at rather than inferred. `artifacts/` is gitignored; the PNGs are run output, not source.
  *
- * Four pauses are captured, each before the release:
+ * Five pauses are captured, each before the release:
  *
- * 1. desktop, a card held over the gap below another card;
- * 2. desktop, a card held over a suite that has nothing inside it yet;
- * 3. phone, the same gap with a real CDP touch long-press;
- * 4. phone, the same empty suite with that finger.
+ * 1. desktop, a card held over the gap below another card, the arrow pointing down;
+ * 2. desktop, a card dragged up over an earlier card, the arrow pointing up;
+ * 3. desktop, a card held over a suite that has nothing inside it yet;
+ * 4. phone, the same gap with a real CDP touch long-press;
+ * 5. phone, the same empty suite with that finger.
  *
  * After each release exactly zero arrows must remain. The arrow is accent-coloured, 10×6 CSS px, and
- * inside the viewport in every case.
+ * inside the viewport in every case, and its `data-direction` must match the way the card travelled.
  *
  * Run: npm run test:e2e:snap-arrow
  */
@@ -105,7 +106,7 @@ async function pressPoint(card) {
  * and not a second geometry assertion: a marker hidden behind the drag chip or the next card
  * produces no changed pixels at all.
  */
-async function captureArrow(page, name) {
+async function captureArrow(page, name, direction) {
   const arrow = page.getByTestId('block-snap-arrow');
   assert.equal(await arrow.count(), 1, `${name}: exactly one snap arrow should be drawn`);
 
@@ -140,11 +141,13 @@ async function captureArrow(page, name) {
       accent,
       rgb: { r, g, b, a },
       parentId: element.closest('[data-block-id]')?.getAttribute('data-block-id') ?? null,
+      direction: element.getAttribute('data-direction'),
       viewport: { width: window.innerWidth, height: window.innerHeight },
     };
   });
 
   assert.equal(meta.painted, meta.accent, `${name}: the arrow should paint --accent`);
+  assert.equal(meta.direction, direction, `${name}: the arrow should point ${direction}`);
   assert.equal(meta.rgb.a, 255, `${name}: the accent should be opaque`);
   assert.ok(
     meta.rect.width >= 9 && meta.rect.width <= 11,
@@ -337,14 +340,34 @@ async function main() {
     // Near the target card's left edge, where the dragged card's chip used to cover the arrow.
     await page.mouse.move(secondBox.x + 22, secondBox.y + secondBox.height - 2, { steps: 10 });
     await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
-    const desktopGap = await captureArrow(page, 'desktop-gap');
+    const desktopGap = await captureArrow(page, 'desktop-gap', 'down');
     assertGap(desktopGap, secondBox, secondId, 'desktop gap');
     await page.mouse.up();
     await assertGone(page, 'desktop-gap');
     await page.getByTestId('block-undo').click();
     await page.waitForTimeout(100);
 
-    // ---- 2. Desktop: a card held over a suite that is empty ----
+    // ---- 2. Desktop: a card held above its old place, so the arrow points up ----
+    const upSource = await pressPoint(cards.nth(2));
+    const upTargetBox = await cards.nth(0).boundingBox();
+    assert.ok(upTargetBox, 'the desktop up-target card should be laid out');
+    const upTargetId = await cards.nth(0).getAttribute('data-block-id');
+    await page.mouse.move(upSource.x, upSource.y);
+    await page.mouse.down();
+    await page.mouse.move(upSource.x + 12, upSource.y - 16, { steps: 3 });
+    await page.getByTestId('block-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    await page.mouse.move(upTargetBox.x + 22, upTargetBox.y + upTargetBox.height - 2, {
+      steps: 10,
+    });
+    await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    const desktopGapUp = await captureArrow(page, 'desktop-gap-up', 'up');
+    assertGap(desktopGapUp, upTargetBox, upTargetId, 'desktop gap up');
+    await page.mouse.up();
+    await assertGone(page, 'desktop-gap-up');
+    await page.getByTestId('block-undo').click();
+    await page.waitForTimeout(100);
+
+    // ---- 3. Desktop: a card held over a suite that is empty ----
     const suiteId = await page.getByTestId('python-block-if').last().getAttribute('data-block-id');
     const bodyBox = await suiteBody.boundingBox();
     assert.ok(bodyBox, 'the empty suite body should be laid out');
@@ -355,14 +378,14 @@ async function main() {
     await page.getByTestId('block-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
     await page.mouse.move(bodyBox.x + bodyBox.width / 2, bodyBox.y + 14, { steps: 10 });
     await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
-    const desktopSuite = await captureArrow(page, 'desktop-empty-suite');
+    const desktopSuite = await captureArrow(page, 'desktop-empty-suite', 'down');
     assertInsideSuite(desktopSuite, bodyBox, suiteId, 'desktop empty suite');
     await page.mouse.up();
     await assertGone(page, 'desktop-empty-suite');
     await page.getByTestId('block-undo').click();
     await page.waitForTimeout(100);
 
-    // ---- 3. Phone: the same gap, held by a real finger ----
+    // ---- 4. Phone: the same gap, held by a real finger ----
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(300);
     const codeSurface = page.getByTestId('phone-surface-code');
@@ -458,7 +481,7 @@ async function main() {
       steps: 10,
     });
     await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
-    const phoneGap = await captureArrow(page, 'phone-gap');
+    const phoneGap = await captureArrow(page, 'phone-gap', 'down');
     assertGap(phoneGap, phoneSecondBox, phoneSecondId, 'phone gap');
     await touch.end();
     await assertGone(page, 'phone-gap');
@@ -478,7 +501,7 @@ async function main() {
       await page.waitForTimeout(100);
     }
 
-    // ---- 4. Phone: the same empty suite ----
+    // ---- 5. Phone: the same empty suite ----
     const phoneSuiteBody = await suiteBody.boundingBox();
     assert.ok(phoneSuiteBody, 'the phone empty suite body should be laid out');
     const phoneFirstAgain = await pressPoint(page.locator(CARD).nth(0));
@@ -488,13 +511,13 @@ async function main() {
       steps: 10,
     });
     await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
-    const phoneSuite = await captureArrow(page, 'phone-empty-suite');
+    const phoneSuite = await captureArrow(page, 'phone-empty-suite', 'down');
     assertInsideSuite(phoneSuite, phoneSuiteBody, suiteId, 'phone empty suite');
     await touch.end();
     await assertGone(page, 'phone-empty-suite');
 
     assert.deepEqual(pageErrors, [], `the page threw: ${pageErrors.join('; ')}`);
-    console.log(`snap arrow on screen: 4 paused drags captured in ${SHOT_DIR}`);
+    console.log(`snap arrow on screen: 5 paused drags captured in ${SHOT_DIR}`);
   } finally {
     await browser.close();
     if (ownServer) await ownServer.viteServer.close();

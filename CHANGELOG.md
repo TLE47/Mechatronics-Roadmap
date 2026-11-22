@@ -16,6 +16,35 @@ flowchart LR
 
 ---
 
+## [2026-11-22] — The arrow points the way the card is going, and every block gets its own face
+
+The snap arrow is no longer always a downward triangle. A card in the air draws it at the gap a
+release will land in, pointing **down** when the card is travelling down to a lower place and **up**
+when it is dragged above where it started; an empty suite still points into its only slot. Both
+directions are photographed at 1280 in `npm run test:e2e:snap-arrow`, which now captures five paused
+drags instead of four.
+
+**Colour does the sorting.** All fourteen statement kinds now have their own ink, mixed from the
+palette's accent, emerald, amber, rose, purple and muted tokens, so an `elif` no longer shares its
+`if`'s amber and a `while` no longer shares its `for`'s rose. Colorful tints the surface, border and
+field from that ink; Normal keeps the Python neutral but gives every kind a softened colour on its
+left rule, so the families are distinguishable before Colorful is chosen. The four-palette theme
+audit checks both block surfaces and all four inks per palette; `npm run test:theme:e2e` is clean.
+
+**A block can say what it is.** A small info button on every card, next to the controls toggle,
+opens one sentence about the kind — what an `if` runs, what a `return` hands back — and closes
+without touching the program. The same button is available while the five verbs are folded.
+
+**Dragging has a voice when sound is on.** Lifting a card reuses the interface's `row` brush and a
+landed card reuses its `chip` tick, through the existing sound bus rather than a second audio
+context; the browser gate records both dispatched events. The engine is still silent until the
+learner turns sound on in the header.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run check:weight`, `npm run test:blocks` (33),
+`npm run test:e2e:blocks`, `npm run test:e2e:snap-arrow`, `npm run test:theme:e2e`.
+
+---
+
 ## [2026-11-22] — The gap a dragged block will land in gets a small arrow
 
 While a statement is in the air — lifted from the workspace or dragged out of the toolbox — the card

@@ -261,6 +261,30 @@ async function main() {
       0,
       'a folded card should draw no controls'
     );
+    // The info button is the card's own explanation, and it is available before the verbs are.
+    const infoToggle = firstCard.getByTestId('block-info-toggle');
+    assert.equal(
+      await infoToggle.getAttribute('aria-expanded'),
+      'false',
+      'the info panel should start closed'
+    );
+    await infoToggle.click();
+    const infoPanel = firstCard.getByTestId('block-info');
+    await infoPanel.waitFor({ state: 'visible', timeout: 3000 });
+    const infoCardName = await firstCard.getByRole('group').getAttribute('aria-label');
+    const infoKind = (infoCardName ?? '').split(' statement ')[0];
+    const infoText = await infoPanel.innerText();
+    assert.ok(
+      infoText.includes(infoKind),
+      `the info panel should name the ${infoKind} block, got "${infoText}"`
+    );
+    await infoToggle.click();
+    assert.equal(
+      await firstCard.getByTestId('block-info').count(),
+      0,
+      'closing the info panel should remove it'
+    );
+    console.log('  ok the info button explains the block kind and closes again');
     await firstCard.getByTestId('block-actions-toggle').click();
     await firstCard.getByTestId('block-duplicate').waitFor({ state: 'visible' });
     await firstCard.getByTestId('block-actions-toggle').click();
@@ -443,6 +467,14 @@ async function main() {
       moveBox.y >= 40 && nextBox.y + nextBox.height <= 890,
       'both cards should be on screen for the drag'
     );
+    // The drag speaks through the interface's sound bus: a row brush when the card lifts and a chip
+    // when it lands. Sound may be off; the events still describe what happened.
+    await page.evaluate(() => {
+      window.__cardDragSounds = [];
+      window.addEventListener('mechalab:sound', (event) =>
+        window.__cardDragSounds.push(event.detail)
+      );
+    });
     // The bottom padding, not a field or a verb: a press here is a press on the card itself.
     await page.mouse.move(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height - 2);
     await page.mouse.down();
@@ -450,6 +482,14 @@ async function main() {
       steps: 3,
     });
     await page.getByTestId('block-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    assert.ok(
+      await page.evaluate(() =>
+        window.__cardDragSounds.some(
+          (message) => message.kind === 'ui' && message.role === 'row'
+        )
+      ),
+      'lifting a card should play the interface row tick'
+    );
     await page.mouse.move(nextBox.x + nextBox.width / 2, nextBox.y + nextBox.height - 2, {
       steps: 10,
     });
@@ -464,6 +504,11 @@ async function main() {
       rootIds[1],
       'the arrow should point at the gap under the card the pointer is on'
     );
+    assert.equal(
+      await snapArrow.getAttribute('data-direction'),
+      'down',
+      'a card dragged down should point its arrow down'
+    );
     const arrowBox = await snapArrow.boundingBox();
     assert.ok(
       arrowBox &&
@@ -476,6 +521,14 @@ async function main() {
       await page.getByTestId('block-snap-arrow').count(),
       0,
       'the arrow should clear once the card has landed'
+    );
+    assert.ok(
+      await page.evaluate(() =>
+        window.__cardDragSounds.some(
+          (message) => message.kind === 'ui' && message.role === 'chip'
+        )
+      ),
+      'a landed card should play the interface chip tick'
     );
     const orderAfterDrag = await rootCards.evaluateAll((cards) =>
       cards.map((card) => card.getAttribute('data-block-id'))
@@ -918,8 +971,8 @@ async function main() {
     // The bottom padding, not a field or a verb: this is a press on the card itself.
     const pressX = pressCardBox.x + 16;
     const pressY = pressCardBox.y + pressCardBox.height - 3;
-    const touchDropX = dropCardBox.x + 16;
-    const touchDropY = dropCardBox.y + dropCardBox.height - 3;
+    let touchDropX = dropCardBox.x + 16;
+    let touchDropY = dropCardBox.y + dropCardBox.height - 3;
     /** Every position a gesture could move: the page, the document, and each card ancestor. */
     const scrollSnapshot = () =>
       page.evaluate(() => {
@@ -997,9 +1050,47 @@ async function main() {
       { x: firstMoveX, y: firstMoveY },
       { timeout: 3000 }
     );
+    // The phone's sticky rows can compact once the finger is moving, which slides the cards up
+    // after the band was measured. Wait for the layout to settle and put the finger on the target
+    // card where it is now; the same card, not the coordinates from before the hold.
+    await stableFirstCard();
+    await page.waitForTimeout(120);
+    const dropNow = await touchCards.nth(1).boundingBox();
+    assert.ok(dropNow, 'the touch target card should still be laid out after the hold');
+    touchDropX = dropNow.x + 16;
+    touchDropY = dropNow.y + dropNow.height - 3;
 
     await touch.move(touchDropX, touchDropY, { steps: 12 });
     await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    // A touch that approaches the dock can make the phone's sticky rows compact once more, sliding
+    // the cards up under the finger after the last measurement. Follow the card that is actually
+    // under the finger: move to its current top band again until the drop point is the intended
+    // card, then assert the strict target. The finger stays down the whole time.
+    let underFinger = null;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      underFinger = await page.evaluate(
+        ({ x, y }) =>
+          document
+            .elementFromPoint(x, y)
+            ?.closest('[data-block-id]')
+            ?.getAttribute('data-block-id') ?? null,
+        { x: touchDropX, y: touchDropY }
+      );
+      if (underFinger === touchIds[1]) break;
+      await stableFirstCard();
+      await page.waitForTimeout(120);
+      const box = await touchCards.nth(1).boundingBox();
+      assert.ok(box, 'the touch target card should still be laid out');
+      touchDropX = box.x + 16;
+      touchDropY = box.y + 8;
+      await touch.move(touchDropX, touchDropY, { steps: 3 });
+      await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    }
+    assert.equal(
+      underFinger,
+      touchIds[1],
+      'the card under the finger should be the one the hold is carrying the statement onto'
+    );
     assert.equal(
       await page.locator('[data-drop-active="1"]').first().evaluate((target) =>
         target.closest('[data-block-id]')?.getAttribute('data-block-id')
@@ -1008,6 +1099,11 @@ async function main() {
       'the card under the finger should be the one drawn as the drop point'
     );
     await page.getByTestId('block-snap-arrow').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      await page.getByTestId('block-snap-arrow').getAttribute('data-direction'),
+      'down',
+      'a card dragged down with a finger should point its arrow down'
+    );
     assert.equal(
       await page.getByTestId('block-snap-arrow').evaluate((arrow) =>
         arrow.closest('[data-block-id]')?.getAttribute('data-block-id')
