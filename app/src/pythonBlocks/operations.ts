@@ -182,6 +182,63 @@ export function moveNode(program: BlockProgram, id: string, direction: -1 | 1): 
   return moved ? { ...program, nodes, dirty: true } : program;
 }
 
+/** Where a statement sits: the body that owns it and its index among that body's statements. */
+export interface NodeLocation {
+  node: BlockNode;
+  bodyId: string | null;
+  index: number;
+}
+
+function findLocation(nodes: BlockNode[], id: string, bodyId: string | null): NodeLocation | null {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index];
+    if (node.id === id) return { node, bodyId, index };
+    const found = findLocation(node.body, id, node.id);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** Whether `id` is `node` itself or sits anywhere inside its suites. */
+function containsId(node: BlockNode, id: string): boolean {
+  return node.id === id || node.body.some((child) => containsId(child, id));
+}
+
+/**
+ * Move a statement to one exact point: the one a dragged card names.
+ *
+ * This is the drag's edit, distinct from `moveNode`'s swap with a neighbour. The statement keeps its
+ * id, so the card under the learner's finger is still the card they catch after the drop, and the
+ * target is a body plus an index, so a drop can cross into a suite or out of one.
+ *
+ * Two refusals are the model's, not the view's: a statement cannot be dropped into its own subtree
+ * (that would delete the program below it), and a drop that lands exactly where the statement already
+ * is returns the program unchanged rather than a dirty edit the learner would have to undo. Indices
+ * are measured with the dragged statement still in its old place, which is why a same-body drop after
+ * its old index shifts down by one once the statement is removed.
+ */
+export function moveNodeTo(program: BlockProgram, id: string, at: InsertionPoint): BlockProgram {
+  const from = findLocation(program.nodes, id, null);
+  if (!from) return program;
+  if (at.bodyId !== null && containsId(from.node, at.bodyId)) return program;
+  const removed = removeNode(program, id);
+  const body = bodyOf(removed, at.bodyId);
+  if (!body) return program;
+  let index = Math.max(0, Math.round(at.index));
+  if (from.bodyId === at.bodyId) {
+    if (index === from.index) return program;
+    if (from.index < index) index -= 1;
+    if (index === from.index) return program;
+  }
+  index = Math.max(0, Math.min(index, body.length));
+  const nodes = mapBody(removed.nodes, at.bodyId, (current) => [
+    ...current.slice(0, index),
+    from.node,
+    ...current.slice(index),
+  ]);
+  return { ...removed, nodes, dirty: true };
+}
+
 /** Copy a statement directly under itself, with fresh ids for the whole subtree. */
 export function duplicateNode(
   program: BlockProgram,

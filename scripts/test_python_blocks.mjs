@@ -24,6 +24,7 @@ import {
   duplicateNode,
   insertNode,
   moveNode,
+  moveNodeTo,
   newNode,
   removeNode,
   updateNode,
@@ -204,6 +205,44 @@ check('move up and down swap siblings inside the same body', () => {
   const back = moveNode(moved, moved.nodes[1].id, -1);
   assert.equal(back.nodes[0].fields.name, 'name');
   assert.equal(renderProgram(back), MVP);
+});
+
+check('a drag lands a statement exactly where it was released', () => {
+  const program = parseProgram(MVP);
+  const [name, age, ifNode] = program.nodes;
+  // Root to root: the release names one point, and the statement keeps its id there.
+  const last = moveNodeTo(program, name.id, { bodyId: null, index: 3 });
+  assert.deepEqual(
+    last.nodes.map((node) => node.id),
+    [age.id, ifNode.id, name.id]
+  );
+  assert.equal(renderProgram(last), 'age = 20\nif age >= 18:\n    print(name)\nname = "Alex"\n');
+  // Root into a suite: the drop names the suite's own body, not a sibling position.
+  const inside = moveNodeTo(program, name.id, { bodyId: ifNode.id, index: 0 });
+  assert.deepEqual(
+    inside.nodes[1].body.map((node) => node.id),
+    [name.id, ifNode.body[0].id]
+  );
+  assert.equal(
+    renderProgram(inside),
+    'age = 20\nif age >= 18:\n    name = "Alex"\n    print(name)\n'
+  );
+  // A suite's statement dragged out becomes a root statement.
+  const out = moveNodeTo(program, ifNode.body[0].id, { bodyId: null, index: 0 });
+  assert.equal(out.nodes[0].id, ifNode.body[0].id);
+  assert.equal(out.nodes[2].body.length, 0);
+});
+
+check('a drag refuses the drops that would break the program', () => {
+  const program = parseProgram(MVP);
+  const ifNode = program.nodes[2];
+  // Into itself: the statement's own subtree would be deleted with it.
+  assert.equal(moveNodeTo(program, ifNode.id, { bodyId: ifNode.id, index: 0 }), program);
+  // Where it already is, and directly after itself: no edit, and therefore no undo step.
+  assert.equal(moveNodeTo(program, ifNode.id, { bodyId: null, index: 2 }), program);
+  assert.equal(moveNodeTo(program, ifNode.id, { bodyId: null, index: 3 }), program);
+  // A body the program does not contain is not a target.
+  assert.equal(moveNodeTo(program, ifNode.id, { bodyId: 'missing', index: 0 }), program);
 });
 
 check('a duplicate gets fresh ids, copies the suite, and sits under its original', () => {

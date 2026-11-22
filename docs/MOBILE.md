@@ -57,12 +57,16 @@ flowchart LR
 
 **Visual blocks dock on a phone.** `EditorCodePane`'s Visual face draws the same `main.py` as cards.
 Its Python Toolbox is a **dock**, not the panel at the end of the workspace: fixed above the fixed
-Study bar (measured, so it sits on the bar rather than under it), a grabber that swipes down to one
-row or up to about a third of the screen, and the catalog scrolling inside it. The workspace keeps
-42vh of bottom padding so the last card can still be scrolled above the dock. A card opens with its
-five controls folded on a phone and unfolded on desktop; the toolbar above the code is one compact
-row below `sm` and the full bar with its sentence above that. From `sm` up the toolbox is the inline
-panel, so Visual is not a phone-only face.
+Study bar (measured, so it sits on the bar rather than under it), a grabber that drags the sheet
+between one row and about a third of the screen, and the catalog scrolling inside it. The swipe is
+live: the height follows the finger rather than deciding on release, and letting go settles it with
+one short ease (or snaps back if the drag ended on the side it started). The workspace keeps 42vh of
+bottom padding so the last card can still be scrolled above the dock. A card opens with its five
+controls folded at every width — the toggle is on the card — and a touch that rests on a card for a
+third of a second lifts it to drag, with the card under the pointer drawn as the point it will snap
+to; a touch that moves sooner scrolls instead. The toolbar above the code is one compact row below
+`sm` and the full bar with its sentence above that. From `sm` up the toolbox is the inline panel, so
+Visual is not a phone-only face.
 
 **The workflow rides in Code.** The editor's output views — Predict, Run output, Expected, Workflow — are
 tabs of one card, and the Workflow canvas is born in one column: the same flow is legible in a 380 px

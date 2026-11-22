@@ -16,6 +16,33 @@ flowchart LR
 
 ---
 
+## [2026-11-22] — Cards you can pick up, a dock that follows the finger, and quieter cards
+
+A statement card is now something a learner can take hold of and put somewhere else, the way the iOS
+Shortcuts editor's actions move. A touch rests on a card for about a third of a second, or a mouse
+travels past eight pixels, and the card follows the pointer behind a small label chip while the card
+under it draws the line the release will snap to. The drop is one exact point — root or any suite,
+above or below any card — carried by the same `data-drop-body` / `data-drop-index` targets a dragged
+toolbox element already used, and it reaches every card, nested ones included. The move keeps the
+statement's id, refuses to drop a suite inside itself, and a drop on the statement's own place costs
+no undo step. Controls opt out with `data-no-drag`, so a verb is still a button and a tap still opens
+a field; a touch that moves before the hold ends is a scroll, and a card takes pointer capture only
+once it is in the air, so a tap's click is not stolen from the field it started on.
+
+**Each card opens folded at every width.** Five verbs per statement were room a desktop had but the
+code did not need: the toggle is on every card, and the code is what a card is for. The phone's
+compact toolbar is unchanged.
+
+**The phone's toolbox follows the thumb.** Dragging the grabber used to decide the fold on release;
+now the sheet's height tracks the finger pixel for pixel, and only letting go settles it — one short
+ease to open or folded, or a snap back when a drag ends on the side it started. The body stays
+mounted while folded (clipped, `inert`, `aria-hidden`) so the fold has something to animate, and a
+tap on the grabber still toggles.
+
+Verification: `npx tsc -b`, `npm run build`, `npm run test:blocks` (32), `npm run test:e2e:blocks`.
+
+---
+
 ## [2026-11-21] — The visual blocks get a phone dock, drag and drop, and a quieter toolbar
 
 The Visual face is no longer phone-first furniture that a desktop learner has to hunt for. The

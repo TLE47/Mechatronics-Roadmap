@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowDown, ArrowUp, ChevronUp, Copy, CornerDownRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
-import { KIND_LABELS, type BlockFields, type BlockNode, isContainer } from './ast.ts';
+import { KIND_LABELS, type BlockFields, type BlockKind, type BlockNode, isContainer } from './ast.ts';
 import { blockColors, type BlockAppearance } from './appearance.ts';
 import { InlineField } from './InlineField';
 
@@ -28,11 +28,24 @@ export interface BlockCardHandlers {
   /**
    * Whether a card opens with its five controls drawn.
    *
-   * Desktop has the width for them and a learner can see what a card can do; a phone's card is the
-   * code and nothing else until the learner asks for the controls, which is room a 390 px screen
-   * cannot spend on five 24 px buttons. The toggle is on every card either way.
+   * Always false: a card is the code first at every width, and five 24 px buttons per statement are
+   * room the workspace would rather spend on the program. The toggle is on every card, so the verbs
+   * are one tap away.
    */
   actionsOpenByDefault: boolean;
+  /** Which card is in the air, and the point a release would land on right now. */
+  drag: {
+    id: string | null;
+    target: { bodyId: string | null; index: number } | null;
+  };
+  onCardPointerDown: (
+    event: ReactPointerEvent<HTMLDivElement>,
+    info: { id: string; kind: BlockKind; bodyId: string | null; index: number }
+  ) => void;
+  onCardPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onCardPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onCardPointerCancel: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onCardPointerLeave: (event: ReactPointerEvent<HTMLDivElement>) => void;
   insertionHere: (bodyId: string | null, index: number) => boolean;
   onSelect: (nodeId: string | null, bodyId: string | null, index: number) => void;
   onField: (id: string, fields: Partial<BlockFields>) => void;
@@ -171,6 +184,14 @@ export function BlockCard({
   const colors = blockColors(node.kind, handlers.appearance);
   const [actionsOpen, setActionsOpen] = useState(handlers.actionsOpenByDefault);
   const selected = handlers.selectedId === node.id;
+  const dragging = handlers.drag.id === node.id;
+  // A release here puts the statement directly below this card (or inside its suite, at the end).
+  const dropAfter =
+    !dragging &&
+    handlers.drag.target !== null &&
+    handlers.drag.target.bodyId === bodyId &&
+    handlers.drag.target.index === index + 1;
+  const dropInside = handlers.drag.target?.bodyId === node.id;
   const container = isContainer(node.kind);
   const raw = node.kind === 'raw' || node.kind === 'import';
   const label = KIND_LABELS[node.kind];
@@ -186,6 +207,7 @@ export function BlockCard({
       aria-label={`${name} ${label} statement ${position}`}
       title={title}
       data-testid={testId}
+      data-no-drag="1"
       onClick={(event) => {
         event.stopPropagation();
         onClick();
@@ -200,7 +222,8 @@ export function BlockCard({
     <li
       data-testid={`python-block-${node.kind}`}
       data-block-id={node.id}
-      className="relative list-none"
+      data-dragging={dragging ? '1' : undefined}
+      className={`relative list-none ${dragging ? 'opacity-40' : ''}`}
     >
       {handlers.insertionHere(bodyId, index + 1) && (
         <div
@@ -216,13 +239,28 @@ export function BlockCard({
         // own body publishes a deeper target, so a drop inside a container reaches the container.
         data-drop-body={bodyId ?? ''}
         data-drop-index={index + 1}
+        data-drop-active={dropAfter ? '1' : undefined}
         onClick={() => handlers.onSelect(node.id, bodyId, index)}
+        onPointerDown={(event) =>
+          handlers.onCardPointerDown(event, { id: node.id, kind: node.kind, bodyId, index })
+        }
+        onPointerMove={handlers.onCardPointerMove}
+        onPointerUp={handlers.onCardPointerUp}
+        onPointerCancel={handlers.onCardPointerCancel}
+        // A release the page never saw (outside the window) must not leave a card in the air.
+        onLostPointerCapture={handlers.onCardPointerCancel}
+        // A press that leaves before it lifts was never a drag; the card must not stay armed.
+        onPointerLeave={handlers.onCardPointerLeave}
         style={{
           background: colors.background,
-          border: `1px solid ${selected ? 'var(--accent)' : colors.border}`,
+          border: `1px solid ${dropAfter ? 'var(--accent)' : selected ? 'var(--accent)' : colors.border}`,
           borderLeft: `3px solid ${colors.rule}`,
           borderRadius: 8,
-          boxShadow: selected ? '0 0 0 2px var(--accent-soft)' : undefined,
+          boxShadow: dropAfter
+            ? '0 0 0 2px var(--accent), 0 6px 14px rgba(0,0,0,0.18)'
+            : selected
+              ? '0 0 0 2px var(--accent-soft)'
+              : undefined,
         }}
         className="min-w-0 px-2 py-1.5"
       >
@@ -297,6 +335,7 @@ export function BlockCard({
             <button
               type="button"
               data-testid="block-actions-toggle"
+              data-no-drag="1"
               aria-expanded={actionsOpen}
               aria-label={`${actionsOpen ? 'Hide' : 'Show'} controls for ${label} statement ${position}`}
               title={
@@ -323,8 +362,14 @@ export function BlockCard({
           <div
             data-drop-body={node.id}
             data-drop-index={node.body.length}
+            data-drop-active={dropInside ? '1' : undefined}
             className="mt-1.5 min-w-0 pl-2"
-            style={{ borderLeft: `2px solid ${colors.border}` }}
+            style={{
+              borderLeft: `2px solid ${colors.border}`,
+              ...(dropInside
+                ? { outline: '2px dashed var(--accent)', outlineOffset: 2, borderRadius: 6 }
+                : {}),
+            }}
           >
             {node.body.length > 0 ? (
               <ol className="m-0 flex list-none flex-col gap-1 p-0">
@@ -351,6 +396,7 @@ export function BlockCard({
             <button
               type="button"
               data-testid={`block-add-inside-${node.id}`}
+              data-no-drag="1"
               // Keep the visible words first: `label-content-name-mismatch` (WCAG 2.5.3) fails
               // when the accessible name paraphrases "Add statement inside" instead of containing it.
               aria-label={`Add statement inside ${label} statement ${position}`}

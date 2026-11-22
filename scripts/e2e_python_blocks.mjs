@@ -87,6 +87,15 @@ function blockCount(page) {
  * is that gate's separate measurement; everything else a keyboard or screen-reader user meets here
  * is in scope.
  */
+/**
+ * Cards open folded: the code is what a card shows, and its five verbs are one tap away. Every test
+ * that clicks one of those verbs asks the card to unfold first.
+ */
+async function openCardControls(card) {
+  const toggle = card.getByTestId('block-actions-toggle').first();
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
+
 async function assertNoSeriousA11y(page) {
   await page.addScriptTag({
     path: path.join(process.cwd(), 'node_modules', 'axe-core', 'axe.min.js'),
@@ -233,22 +242,29 @@ async function main() {
     const starterBlocks = await blockCount(page);
     assert.ok(starterBlocks > 0, 'the starter should draw at least one statement card');
 
-    // A desktop card opens with its verbs. The toggle is on every card, and folding it hides the
-    // five controls without touching the statement they act on.
+    // A card opens folded at every width: the code first, its verbs on request. The toggle hides
+    // the five controls without touching the statement they act on.
     const firstCard = page.locator('[data-testid="python-workspace-list"] > li').first();
+    assert.equal(
+      await firstCard.getByTestId('block-actions-toggle').getAttribute('aria-expanded'),
+      'false',
+      'a card should open with its controls folded'
+    );
+    assert.equal(
+      await firstCard.getByTestId('block-duplicate').count(),
+      0,
+      'a folded card should draw no controls'
+    );
+    await firstCard.getByTestId('block-actions-toggle').click();
+    await firstCard.getByTestId('block-duplicate').waitFor({ state: 'visible' });
     await firstCard.getByTestId('block-actions-toggle').click();
     assert.equal(
       await firstCard.getByTestId('block-duplicate').count(),
       0,
       'folding a card should remove its controls'
     );
-    assert.equal(
-      await firstCard.getByTestId('block-actions-toggle').getAttribute('aria-expanded'),
-      'false'
-    );
     await firstCard.getByTestId('block-actions-toggle').click();
-    await firstCard.getByTestId('block-duplicate').waitFor({ state: 'visible' });
-    console.log('  ok a card folds and unfolds its five controls');
+    console.log('  ok a card opens folded and its toggle unfolds the five controls');
     await switchToCode(page);
     assert.equal(
       await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor()),
@@ -403,6 +419,57 @@ async function main() {
     assert.equal(await blockCount(page), beforeDrag, 'the drop is one undo step');
     console.log('  ok a dragged toolbox block lands after the card it was released on');
 
+    // ---- A card itself can be picked up and dropped ----
+    // The press rests on the card's own surface, a mouse drag past the slop lifts it, and the
+    // release snaps it to the point under the pointer — anywhere in the program, not the next slot.
+    const rootCards = page.locator('[data-testid="python-workspace-list"] > li');
+    const rootIds = await rootCards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute('data-block-id'))
+    );
+    assert.ok(rootIds.length >= 3, 'the card drag needs a few root statements to reorder');
+    // The two cards at the top of the list, so the press and the release are both on screen.
+    await rootCards.first().scrollIntoViewIfNeeded();
+    const movingCard = rootCards.first();
+    const moveBox = await movingCard.boundingBox();
+    const nextBox = await rootCards.nth(1).boundingBox();
+    assert.ok(moveBox && nextBox, 'the first two root cards should be laid out');
+    assert.ok(
+      moveBox.y >= 40 && nextBox.y + nextBox.height <= 890,
+      'both cards should be on screen for the drag'
+    );
+    // The bottom padding, not a field or a verb: a press here is a press on the card itself.
+    await page.mouse.move(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height - 2);
+    await page.mouse.down();
+    await page.mouse.move(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height - 24, {
+      steps: 3,
+    });
+    await page.getByTestId('block-drag-ghost').waitFor({ state: 'visible', timeout: 3000 });
+    await page.mouse.move(nextBox.x + nextBox.width / 2, nextBox.y + nextBox.height - 2, {
+      steps: 10,
+    });
+    await page.locator('[data-drop-active="1"]').first().waitFor({ state: 'visible', timeout: 3000 });
+    await page.mouse.up();
+    const orderAfterDrag = await rootCards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute('data-block-id'))
+    );
+    assert.equal(
+      orderAfterDrag.length,
+      rootIds.length,
+      'a card drag moves a statement, it does not copy one'
+    );
+    assert.deepEqual(
+      orderAfterDrag,
+      [rootIds[1], rootIds[0], ...rootIds.slice(2)],
+      'the released card should sit directly under the card it was dropped on'
+    );
+    await page.getByTestId('block-undo').click();
+    assert.deepEqual(
+      await rootCards.evaluateAll((cards) => cards.map((card) => card.getAttribute('data-block-id'))),
+      rootIds,
+      'a card drag should be one undo step'
+    );
+    console.log('  ok a card follows the pointer and snaps to the drop point');
+
     await page.getByTestId('block-add-statement').click();
     await page.getByTestId('toolbox-item-print').click();
     await page.getByTestId('python-block-call').last().waitFor({ state: 'visible' });
@@ -525,6 +592,7 @@ async function main() {
 
     // Duplicate the whole suite, then remove the copy.
     const countBeforeCopy = await blockCount(page);
+    await openCardControls(ifCard);
     await ifCard.getByTestId('block-duplicate').first().click();
     assert.equal(await blockCount(page), countBeforeCopy + 2, 'duplicate should copy the suite');
     edited = await getEditorCode(page);
@@ -534,12 +602,14 @@ async function main() {
       'the duplicate should be a second If in main.py'
     );
     const duplicateIf = page.getByTestId('python-block-if').last();
+    await openCardControls(duplicateIf);
     await duplicateIf.getByTestId('block-remove').first().click();
     assert.equal(await blockCount(page), countBeforeCopy, 'delete should remove the whole suite');
     edited = await getEditorCode(page);
     assert.equal((edited.match(/^if age >= 18:$/gm) ?? []).length, 1);
 
     // Insert after the If through its own + control, move the new print above it, then put it back.
+    await openCardControls(page.locator(`[data-block-id="${ifId}"]`));
     await page
       .locator(`[data-block-id="${ifId}"]`)
       .getByTestId('block-insert-after')
@@ -559,6 +629,7 @@ async function main() {
       lines.indexOf('print("Hello")') > lines.indexOf('if age >= 18:'),
       'the new root print should start below the If'
     );
+    await openCardControls(printCard);
     await printCard.getByTestId('block-move-up').first().click();
     lines = (await getEditorCode(page)).split('\n');
     assert.ok(
@@ -679,15 +750,42 @@ async function main() {
     assert.ok(grabBox, 'the dock should draw its grabber');
     await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2);
     await page.mouse.down();
-    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2 + 90, {
+    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2 + 45, {
+      steps: 8,
+    });
+    // The sheet follows the finger: part way down it is part way folded, not already folded.
+    await page.waitForFunction(
+      (openHeight) => {
+        const sheet = document.querySelector('[data-testid="python-toolbox"]');
+        return !!sheet && sheet.getBoundingClientRect().height < openHeight - 20;
+      },
+      dockBox.height,
+      { timeout: 3000 }
+    );
+    const midBox = await dock.boundingBox();
+    assert.ok(
+      midBox && midBox.height < dockBox.height - 20 && midBox.height > dockBox.height - 70,
+      `the dock should follow the finger, got ${Math.round(midBox?.height ?? 0)}px of ${Math.round(dockBox.height)}px`
+    );
+    await page.mouse.move(grabBox.x + grabBox.width / 2, grabBox.y + grabBox.height / 2 + 160, {
       steps: 8,
     });
     await page.mouse.up();
+    // The fold eases to nothing; the body is still mounted, so the assertion is its height, not its
+    // presence. (A clipped input still reports a box, so `isVisible` would lie about a folded dock.)
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="python-toolbox-body"]')?.getBoundingClientRect()
+          .height ?? 1) < 1,
+      undefined,
+      { timeout: 3000 }
+    );
     assert.equal(
-      await page.getByTestId('toolbox-search').count(),
-      0,
+      await page.getByTestId('python-toolbox-body').getAttribute('data-state'),
+      'closed',
       'a downward swipe on the grabber should fold the dock to one row'
     );
+    await page.waitForTimeout(300);
     const foldedBox = await dock.boundingBox();
     assert.ok(
       foldedBox && foldedBox.height < dockBox.height,
@@ -695,7 +793,13 @@ async function main() {
     );
     // A tap on the grabber is the other way in, for a learner who does not think to swipe.
     await grabber.click();
-    await page.getByTestId('toolbox-search').waitFor({ state: 'visible', timeout: 5000 });
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="python-toolbox-body"]')?.getBoundingClientRect()
+          .height ?? 0) > 0,
+      undefined,
+      { timeout: 5000 }
+    );
 
     // A touch tap, not a synthesized mouse click: the phone's primary interaction is tapping a
     // toolbox element and having the statement appear.

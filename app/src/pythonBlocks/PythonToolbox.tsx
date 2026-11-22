@@ -64,6 +64,11 @@ export interface ToolboxDropTarget {
 
 /** How far a pointer has to travel before a press becomes a drag rather than a tap. */
 const DRAG_THRESHOLD = 10;
+/** The open dock's height: a third of the screen, the share the Shortcuts sheet gives its actions. */
+const DOCK_SHARE = 0.36;
+const dockHeight = () => Math.round(window.innerHeight * DOCK_SHARE);
+/** How far a grabber gesture has to travel to mean a swipe rather than a tap. */
+const SWIPE_SLOP = 8;
 
 export function PythonToolbox({
   onInsert,
@@ -71,6 +76,7 @@ export function PythonToolbox({
   appearance = 'normal',
   dock = false,
   onDropItem,
+  onDragTargetChange,
 }: {
   onInsert: (item: ToolboxItem) => void;
   /** Toolbox item ids, most recently inserted first. */
@@ -81,6 +87,8 @@ export function PythonToolbox({
   dock?: boolean;
   /** A dragged element released over a card. Missing, drags resolve to nothing and taps still work. */
   onDropItem?: (item: ToolboxItem, target: ToolboxDropTarget) => void;
+  /** The point an element in the air would land on, so the cards can draw where it will snap. */
+  onDragTargetChange?: (target: ToolboxDropTarget | null) => void;
 }) {
   const [open, setOpen] = useState(true);
   const [category, setCategory] = useState<ToolboxCategoryId | 'all'>('all');
@@ -89,12 +97,29 @@ export function PythonToolbox({
   const [ghost, setGhost] = useState<{ label: string; x: number; y: number } | null>(null);
   /** The phone's own Study bar, which the dock sits above rather than under. */
   const [barHeight, setBarHeight] = useState(0);
+  /** The open dock's height in pixels: its settled height, and the target a swipe is pulling toward. */
+  const [openPx, setOpenPx] = useState(() => dockHeight());
+  /**
+   * The dock's height while a finger owns it.
+   *
+   * Null when the sheet is settled, where CSS owns the height and the fold is one short ease. A
+   * number means a grabber gesture is in progress and the sheet is exactly that tall — the finger
+   * moves a pixel, the edge moves a pixel, which is the difference between a sheet that follows the
+   * touch and one that snaps after it.
+   */
+  const [liveHeight, setLiveHeight] = useState<number | null>(null);
+  const liveRef = useRef<number | null>(null);
+  const setLive = (value: number | null) => {
+    liveRef.current = value;
+    setLiveHeight(value);
+  };
 
   useEffect(() => {
     if (!dock) return;
     const measure = () => {
       const bar = document.querySelector<HTMLElement>('[data-phone-bar]');
       setBarHeight(bar ? Math.round(bar.getBoundingClientRect().height) : 0);
+      setOpenPx(dockHeight());
     };
     // The bar is a sibling that mounts with the editor and is hidden while a sheet is open; a first
     // paint and a resize are the two moments its height can change.
@@ -117,7 +142,7 @@ export function PythonToolbox({
   /** True between a drag's release and the click the browser synthesises after it. */
   const draggedRef = useRef(false);
   /** The grabber's own gesture, so a swipe does not also read as a tap. */
-  const swipeRef = useRef<{ y: number; handled: boolean } | null>(null);
+  const swipeRef = useRef<{ y: number } | null>(null);
 
   const items = toolboxItems({ category, query, sort, recent });
 
@@ -136,19 +161,37 @@ export function PythonToolbox({
 
   const onGrabberDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    swipeRef.current = { y: event.clientY, handled: false };
+    swipeRef.current = { y: event.clientY };
+    // The finger starts from wherever the sheet is now: open drags it down, folded drags it up.
+    setLive(open ? openPx : 0);
     event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const onGrabberMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const gesture = swipeRef.current;
+    if (!gesture) return;
+    const start = open ? openPx : 0;
+    // Down folds, up unfolds: the edge follows the finger in the direction it is dragged.
+    setLive(Math.max(0, Math.min(openPx, start - (event.clientY - gesture.y))));
   };
 
   const onGrabberUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const gesture = swipeRef.current;
     swipeRef.current = null;
     if (!gesture) return;
+    const start = open ? openPx : 0;
+    const height = liveRef.current ?? start;
     const dy = event.clientY - gesture.y;
-    if (Math.abs(dy) < 18) return;
-    gesture.handled = true;
+    setLive(null);
+    // A tap is not a swipe: the click that follows belongs to the sheet's toggle.
+    if (Math.abs(dy) < SWIPE_SLOP) return;
     draggedRef.current = true;
-    setOpen(dy < 0);
+    setOpen(height > openPx / 2);
+  };
+
+  const onGrabberCancel = () => {
+    swipeRef.current = null;
+    setLive(null);
   };
 
   const onGrabberClick = () => {
@@ -185,28 +228,21 @@ export function PythonToolbox({
       draggedRef.current = true;
     }
     setGhost({ label: drag.item.label, x: event.clientX, y: event.clientY });
+    onDragTargetChange?.(targetAt(event.clientX, event.clientY));
   };
 
   const endDrag = (event: ReactPointerEvent<HTMLButtonElement>, dropped: boolean) => {
     const drag = dragRef.current;
     dragRef.current = null;
     setGhost(null);
+    onDragTargetChange?.(null);
     if (!drag?.active) {
       draggedRef.current = false;
       return;
     }
     if (dropped && onDropItem) {
-      const target = document
-        .elementFromPoint(event.clientX, event.clientY)
-        ?.closest('[data-drop-body]');
-      if (target) {
-        const rawBody = target.getAttribute('data-drop-body');
-        const rawIndex = Number(target.getAttribute('data-drop-index'));
-        onDropItem(drag.item, {
-          bodyId: rawBody ? rawBody : null,
-          index: Number.isFinite(rawIndex) ? rawIndex : 0,
-        });
-      }
+      const target = targetAt(event.clientX, event.clientY);
+      if (target) onDropItem(drag.item, target);
     }
     // The click that follows the release belongs to the drag, not to the item. The flag is cleared
     // by the next press (or by that click), never on a timer: a timer can run before the click the
@@ -222,8 +258,20 @@ export function PythonToolbox({
     onInsert(item);
   };
 
+  /** The drop point under a pointer, from the targets the cards publish. */
+  const targetAt = (x: number, y: number): ToolboxDropTarget | null => {
+    const target = document.elementFromPoint(x, y)?.closest('[data-drop-body]');
+    if (!target) return null;
+    const rawBody = target.getAttribute('data-drop-body');
+    const rawIndex = Number(target.getAttribute('data-drop-index'));
+    return { bodyId: rawBody ? rawBody : null, index: Number.isFinite(rawIndex) ? rawIndex : 0 };
+  };
+
   const searching = query.trim() !== '';
   const grouped = sort === 'categories' && !searching;
+  // The dock keeps its body mounted while folded so the fold can animate; elsewhere a folded
+  // toolbox draws nothing, and an `aria-controls` pointing at nothing is invalid ARIA.
+  const bodyId = dock || open ? 'python-toolbox-body' : undefined;
   let lastCategory: ToolboxCategoryId | null = null;
 
   return (
@@ -244,13 +292,12 @@ export function PythonToolbox({
           type="button"
           data-testid="toolbox-grabber"
           aria-expanded={open}
-          aria-controls={open ? 'python-toolbox-body' : undefined}
+          aria-controls={bodyId}
           aria-label={open ? 'Hide the Python toolbox' : 'Show the Python toolbox'}
           onPointerDown={onGrabberDown}
+          onPointerMove={onGrabberMove}
           onPointerUp={onGrabberUp}
-          onPointerCancel={() => {
-            swipeRef.current = null;
-          }}
+          onPointerCancel={onGrabberCancel}
           onClick={onGrabberClick}
           className="flex w-full cursor-grab touch-none flex-col items-center gap-0.5 pb-0.5 pt-1.5 active:cursor-grabbing"
         >
@@ -266,8 +313,7 @@ export function PythonToolbox({
           type="button"
           data-testid="toolbox-toggle"
           aria-expanded={open}
-          // The id only exists while the body is drawn; a reference to a missing id is invalid ARIA.
-          aria-controls={open ? 'python-toolbox-body' : undefined}
+          aria-controls={bodyId}
           onClick={toggleOpen}
           className="flex min-h-8 cursor-pointer items-center gap-1 rounded-lg border border-line-soft bg-panel px-2 font-mono text-[12px] font-semibold text-body transition-colors hover:border-accent/40 hover:text-accent"
         >
@@ -284,16 +330,33 @@ export function PythonToolbox({
         </p>
       </div>
 
-      {open && (
+      {(open || dock) && (
         <div
           id="python-toolbox-body"
           data-testid="python-toolbox-body"
-          className={
+          data-state={open ? 'open' : 'closed'}
+          // Folded and settled means gone as far as a keyboard or a screen reader is concerned.
+          inert={dock ? !open && liveHeight === null : undefined}
+          aria-hidden={dock ? !open : undefined}
+          style={
             dock
-              ? 'max-h-[36vh] overflow-y-auto overscroll-contain px-2 pb-2'
-              : 'px-2 pb-2'
+              ? {
+                  height: liveHeight ?? (open ? openPx : 0),
+                  // Following the finger is instant; letting go settles with one short ease.
+                  transition:
+                    liveHeight === null ? 'height 220ms cubic-bezier(0.32, 0.72, 0, 1)' : 'none',
+                }
+              : undefined
           }
+          className={dock ? 'overflow-hidden' : ''}
         >
+          <div
+            className={
+              dock
+                ? 'h-full overflow-y-auto overscroll-contain px-2 pb-2'
+                : 'px-2 pb-2'
+            }
+          >
           <div className="flex min-w-0 flex-wrap items-center gap-1">
             <button
               type="button"
@@ -418,6 +481,7 @@ export function PythonToolbox({
               })}
             </div>
           )}
+          </div>
         </div>
       )}
 

@@ -26,6 +26,7 @@ import {
   duplicateNode,
   insertNode,
   moveNode,
+  moveNodeTo,
   removeNode,
   updateNode,
 } from './operations.ts';
@@ -52,6 +53,8 @@ interface BlockEditor {
   editField: (id: string, fields: Partial<BlockFields>) => void;
   remove: (id: string) => void;
   move: (id: string, direction: -1 | 1) => void;
+  /** Move a statement to the point a dragged card named, across bodies if need be. */
+  moveTo: (id: string, bodyId: string | null, index: number) => void;
   duplicate: (id: string) => void;
   undo: () => void;
   redo: () => void;
@@ -193,6 +196,13 @@ export function useBlockEditor(
   const move = (id: string, direction: -1 | 1) =>
     commit(moveNode(programRef.current, id, direction), id);
 
+  const moveTo = (id: string, bodyId: string | null, index: number) => {
+    const next = moveNodeTo(programRef.current, id, { bodyId, index });
+    // A drop on the statement's own place is not an edit, so it must not cost an undo step.
+    if (next === programRef.current) return;
+    commit(next, id);
+  };
+
   const duplicate = (id: string) => {
     const result = duplicateNode(programRef.current, id);
     if (!result) return;
@@ -214,6 +224,7 @@ export function useBlockEditor(
     editField,
     remove,
     move,
+    moveTo,
     duplicate,
     undo,
     redo,

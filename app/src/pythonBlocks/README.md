@@ -19,14 +19,14 @@ flowchart LR
 |---|---|
 | `ast.ts` | The shared program: statement kinds, fields, suites, and `renderProgram`. The fast path returns the parsed `source` byte-for-byte until the first edit; an edited program is generated from its blocks. Raw and import nodes carry their own lines. |
 | `parser.ts` | Python text to nodes. Logical lines are grouped before classification (brackets, triple-quoted strings, backslash continuations), suites are found by indentation, and an unrecognized indented block becomes one raw node that keeps its relative indentation. |
-| `operations.ts` | Immutable edits: insert a template at a point, change fields, move within a body, duplicate with fresh ids, remove. Each returns a new program with `dirty` set. |
+| `operations.ts` | Immutable edits: insert a template at a point, change fields, move within a body, move to the exact point a drop names (across bodies, never into the statement's own subtree, no-op on its own place), duplicate with fresh ids, remove. Each returns a new program with `dirty` set. |
 | `registry.ts` | The Python Toolbox catalogue: nine categories, complete statement templates, keyword search, and the Recommended / Categories / A–Z / Recently used sorts. |
 | `settings.ts` | The remembered mode (`visual` / `code`), appearance, toolbox sort and recent element ids. Field-by-field normalization is the door stored values use. |
 | `appearance.ts` | Normal and Colorful. Colorful gives each statement family a theme token (`--accent`, `--emerald`, `--amber`, `--rose`, `--purple`) mixed into the panel, so it follows all four palettes. |
 | `useBlockEditor.ts` | The program, undo/redo stacks, selection and insertion point. Text this hook did not emit re-parses; text it did emit is not parsed back. |
-| `BlockCard.tsx` | One statement as a card: real Python tokens, inline fields, a fold over move/duplicate/delete/insert-after, and an "Add statement inside" door on a suite. Each card publishes the drop target a dragged element lands on. |
+| `BlockCard.tsx` | One statement as a card: real Python tokens, inline fields, a fold over move/duplicate/delete/insert-after that opens closed at every width, and an "Add statement inside" door on a suite. A press on the card lifts it (a hold on touch, a short travel with a mouse); each card publishes the drop target a dragged element lands on and the ring a release would snap to. |
 | `InlineField.tsx` | One editable token: tap to open where it is, Enter or leaving commits, Escape restores. |
-| `PythonToolbox.tsx` | The toolbox: category dropdown, Previous/Next, search, sort, tap-to-insert, pointer drag onto a card, and the phone's dock (grabber, swipe, a third of the screen). Colorful paints each element with its card's ink. |
+| `PythonToolbox.tsx` | The toolbox: category dropdown, Previous/Next, search, sort, tap-to-insert, pointer drag onto a card, and the phone's dock (a grabber whose swipe moves the sheet with the finger, a third of the screen). Colorful paints each element with its card's ink. |
 | `PythonBlockEditor.tsx` | The workspace and its toolbar: undo/redo, Normal/Colorful, statement count, the card list and the toolbox (docked on a phone, inline from tablet up). |
 
 ## What the model promises
@@ -51,12 +51,15 @@ editor's first paint does not fetch it. The mode and look are device preferences
 
 The workspace is not a phone-only surface, and the toolbox is not a second catalog for phones. Below
 768 px the toolbox is a **dock**: fixed above the Study bar, folded to its grabber or opened to about
-a third of the screen, moved by a swipe on the grabber, with the catalog scrolling inside it. From
-`sm` up it is the inline panel under the workspace. The compact toolbar above the workspace is a
-phone budget (one row, no sentence); `sm` restores the words, the larger buttons and the statement
-noun. A card's five controls open folded on a phone and unfolded on desktop, and the fold is on every
-card either way. The remembered `visual` mode also opens Study's editor body on a desktop instead of
-leaving the chosen face behind a collapsed card.
+a third of the screen, with the catalog scrolling inside it. The grabber's swipe is not a decision on
+release: the sheet's height follows the finger pixel for pixel while it moves, and only letting go
+settles it — one short ease to open or folded, or a snap back when a drag ends on the side it
+started. A folded dock keeps its body mounted (clipped, `inert`, `aria-hidden`) so that fold has
+something to animate. From `sm` up it is the inline panel under the workspace. The compact toolbar
+above the workspace is a phone budget (one row, no sentence); `sm` restores the words, the larger
+buttons and the statement noun. A card's five controls open folded at every width: the toggle is on
+every card, and the code is what a card is for. The remembered `visual` mode also opens Study's
+editor body on a desktop instead of leaving the chosen face behind a collapsed card.
 
 Dragging is one pointer implementation, not HTML5 drag-and-drop: a mouse drag or a sideways touch
 drag on an element follows the pointer, and the release hit-tests the `data-drop-body` /
@@ -65,23 +68,38 @@ list's scroll (`touch-action: pan-y`), so dragging a block never breaks scrollin
 click that pointer capture retargets at the element after a drop is swallowed, which is what keeps
 one drop from inserting twice.
 
+**A card is draggable too**, and by the same targets. A touch rests on a card for about a third of a
+second, or a mouse travels past eight pixels, and the card follows the pointer behind a small label
+chip; the card under it draws the line a release will snap to, and the drop is one exact point —
+root or any suite, above or below any card. A touch that moves before the hold ends is a scroll, not
+a drag. Controls opt out with `data-no-drag`, so a verb is still a button and a tap still opens a
+field; a press that has not lifted is cancelled when the pointer leaves the card, and the card takes
+pointer capture only once it is in the air, so a tap's click reaches the field it started on. The
+move keeps the statement's id, refuses to drop a suite inside itself, and a drop on the statement's
+own place is not an edit (and so not an undo step).
+
 ## Gates
 
 - `npm run test:blocks` — the model, with no browser: round trips, nesting, edits, undo-relevant
   immutability, raw preservation, an empty suite completed with `pass`, two-space and tab
-  indentation, a drop landing at the index its target named (root and inside a suite), the nine
-  categories, the four sorts, and CPython's `ast.parse` on the generated programs.
+  indentation, a drop landing at the index its target named (root and inside a suite), a card moved
+  to an exact point across bodies, a suite refusing a drop into its own subtree, a drop on its own
+  place leaving the program identical, the nine categories, the four sorts, and CPython's `ast.parse`
+  on the generated programs.
 - `npm run test:e2e:blocks` — the real surface: Python Code and Normal are the defaults; opening
   Visual and returning leaves `main.py` untouched and keeps the code caret; a statement typed in
   Python Code draws as a block, and returning to code leaves that text byte-identical; the toolbox
   collapses, steps categories, searches across them, sorts and remembers Recently used; a mouse drag
-  from the toolbox lands after the card it is released on and is one undo step; a card folds and
-  unfolds its five controls; a toolbox tap and an inline edit reach the code view; add-inside,
+  from the toolbox lands after the card it is released on and is one undo step; a card opens folded,
+  and its toggle unfolds the five controls; a card is picked up, follows the pointer with its label
+  chip and snaps to the drop point it was released on, as one undo step; a toolbox tap and an inline
+  edit reach the code view; add-inside,
   insert-after, duplicate, delete and move up/down change the generated program; the interpreter runs
   it; the same history answers its buttons and ⌘Z/⇧⌘Z; Colorful repaints the toolbox and changes only
   the drawing, and with the mode and recent list survives a reload; axe finds nothing serious or
-  critical; a 390 px phone has no horizontal scrolling, its toolbox is a dock on the Study bar that
-  folds and reopens by swipe and by tap, and a touch tap inserts a statement; and the open Python
+  critical; a 390 px phone has no horizontal scrolling, its toolbox is a dock on the Study bar whose
+  height follows the grabber before it settles, folds and reopens by swipe and by tap, and a touch
+  tap inserts a statement; and the open Python
   Code pane walks all four app palettes, checking CodeMirror's rendered keyword, string, number and
   comment inks and its surface against the palette variables, then closes and reopens the pane across
   another palette and checks again.
