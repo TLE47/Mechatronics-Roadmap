@@ -1324,6 +1324,34 @@ async function main() {
         await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
         'the native key took the caret away from the editor'
       );
+      // Android shrinks `innerHeight` together with the visual viewport, so the height remembered at
+      // Native is the only baseline that can tell the OS keyboard rose and later went away.
+      await page.setViewportSize({ width: PHONE.width, height: 560 });
+      await page.waitForTimeout(320);
+      const editorShrink = await page.evaluate(() => ({
+        inner: window.innerHeight,
+        visual: window.visualViewport?.height ?? window.innerHeight,
+      }));
+      check(
+        Math.abs(editorShrink.inner - editorShrink.visual) <= 2 && editorShrink.visual <= 570,
+        `the Android shrink did not take both heights together: ${JSON.stringify(editorShrink)}`
+      );
+      check(
+        (await editorShell.getAttribute('data-state')) === 'closed',
+        'a viewport shrink reopened the editor keys before the OS keyboard was dismissed'
+      );
+      await page.setViewportSize(PHONE);
+      await page.waitForTimeout(420);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open',
+        'the editor keys did not return when the visual viewport grew back to the Native baseline'
+      );
+      check(
+        await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
+        'the returned editor keys did not keep the caret'
+      );
+      await press(editorShell, 'python-key-native');
+      await page.waitForTimeout(260);
       await page.evaluate(() => document.querySelector('.cm-content')?.blur());
       await page.waitForTimeout(180);
       const codeContent = await page.locator('.cm-content').boundingBox();
@@ -1512,6 +1540,34 @@ async function main() {
         await search.evaluate((element) => element === document.activeElement),
         'the page field native key took the caret away from its field'
       );
+      // The same Android shrink pattern for a page field: both heights fall together.
+      await page.setViewportSize({ width: PHONE.width, height: 560 });
+      await page.waitForTimeout(320);
+      const fieldShrink = await page.evaluate(() => ({
+        inner: window.innerHeight,
+        visual: window.visualViewport?.height ?? window.innerHeight,
+      }));
+      check(
+        Math.abs(fieldShrink.inner - fieldShrink.visual) <= 2 && fieldShrink.visual <= 570,
+        `the Android shrink did not take both heights together: ${JSON.stringify(fieldShrink)}`
+      );
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'closed',
+        'a viewport shrink reopened the page keys before the OS keyboard was dismissed'
+      );
+      await page.setViewportSize(PHONE);
+      await page.waitForTimeout(420);
+      check(
+        (await fieldShell.getAttribute('data-state')) === 'open',
+        'the page keys did not return when the visual viewport grew back to the Native baseline'
+      );
+      check((await search.getAttribute('inputmode')) === 'none', 'the returning page keys did not suppress the OS keyboard');
+      check(
+        await search.evaluate((element) => element === document.activeElement),
+        'the returned page keys did not keep the field caret'
+      );
+      await press(fieldShell, 'python-key-native');
+      await page.waitForTimeout(200);
       await search.evaluate((element) => element.blur());
       await page.waitForTimeout(160);
       await touchTap(page, cdp, search, { hold: 60, label: 'the search after the native handoff' });

@@ -58,6 +58,9 @@ export function PhoneFieldKeyboard() {
   const handoffRef = useRef<TextField | null>(null);
   // Whether the OS keyboard actually rose during this native session, read from the visual viewport.
   const nativeShrunkRef = useRef(false);
+  // The viewport height when Native was chosen, before the OS keyboard can change it. Android
+  // shrinks `innerHeight` with the visual viewport, so their difference is not a keyboard signal.
+  const nativeViewportBaseRef = useRef(0);
   // The attribute each field had before this keyboard suppressed it, so it can be handed back.
   const originalsRef = useRef(new Map<TextField, string | null>());
   const open = target !== null;
@@ -183,12 +186,13 @@ export function PhoneFieldKeyboard() {
     };
 
     // When the OS keyboard goes away while the field keeps the caret (the phone's own hide key),
-    // the site's keys come back. Nothing is opened before the OS keyboard has actually risen.
+    // the site's keys come back. Nothing is opened before the OS keyboard has actually risen. The
+    // baseline is the height remembered at Native, because on Android `innerHeight` shrinks too.
     const viewport = window.visualViewport;
     const onViewportResize = () => {
       const native = nativeRef.current;
-      if (!native || document.activeElement !== native) return;
-      const hidden = window.innerHeight - (viewport?.height ?? window.innerHeight);
+      if (!native || document.activeElement !== native || !viewport) return;
+      const hidden = (nativeViewportBaseRef.current || viewport.height) - viewport.height;
       if (hidden > 120) {
         nativeShrunkRef.current = true;
         return;
@@ -251,6 +255,8 @@ export function PhoneFieldKeyboard() {
   const useNative = () => {
     const current = field();
     if (!current) return;
+    // Remember the resting viewport before the OS keyboard has a chance to shrink it.
+    nativeViewportBaseRef.current = window.visualViewport?.height ?? window.innerHeight;
     setTarget(null);
     targetRef.current = null;
     // Hand the attribute back, then let the OS keyboard rise in this same press's gesture. The

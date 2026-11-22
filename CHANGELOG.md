@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,15 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-22] — The native keyboard return works on Android too
+
+The native handoff's way back compared `visualViewport.height` with `window.innerHeight`. On Android
+the OS keyboard shrinks both, so that difference stays near zero: the custom keys could be left
+folded after the OS keyboard went away. The height is now remembered when Native is chosen and used
+as the baseline for the editor and every page field, so the shrink and the return are measured from
+the same resting viewport. The physical-touch gate shrinks both heights together and checks that the
+keys stay folded, then restores the viewport and checks that they return with the caret in place.
 
 ## [2026-11-22] — The phone keyboard behaves like the phone's
 

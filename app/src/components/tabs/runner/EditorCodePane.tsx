@@ -127,6 +127,9 @@ export function EditorCodePane({
   const keyboardMode = !isPhone ? 'off' : keyboardNative ? 'native' : 'custom';
   const nativeRef = useRef(keyboardNative);
   nativeRef.current = keyboardNative;
+  // The viewport height when Native was chosen, before the OS keyboard can change it. Android
+  // shrinks `innerHeight` with the visual viewport, so their difference is not a keyboard signal.
+  const nativeViewportBaseRef = useRef(0);
   const visualRef = useRef<PythonBlockEditorHandle | null>(null);
   const modeBarRef = useRef<HTMLDivElement | null>(null);
   const keyboardShellRef = useRef<HTMLDivElement | null>(null);
@@ -225,15 +228,17 @@ export function EditorCodePane({
 
   // A phone's OS keyboard is a viewport: when it rises the visual viewport shrinks, and when the
   // learner puts it away the viewport grows back while the caret stays put. That is the moment the
-  // custom keys return instead of leaving a focused editor with no keyboard at all. Desktop
-  // Chromium never shrinks, so this listens and does nothing there rather than faking the event.
+  // custom keys return instead of leaving a focused editor with no keyboard at all. The baseline is
+  // the height remembered when Native was chosen, not `innerHeight`: on Android both shrink together,
+  // so comparing them would never see the OS keyboard either rise or go away.
   useEffect(() => {
     if (!isPhone || !keyboardNative) return;
     const viewport = window.visualViewport;
     if (!viewport) return;
+    const baseline = nativeViewportBaseRef.current || viewport.height;
     let shrunk = false;
     const update = () => {
-      const hidden = window.innerHeight - viewport.height;
+      const hidden = baseline - viewport.height;
       if (hidden > 120) {
         shrunk = true;
         return;
@@ -262,6 +267,8 @@ export function EditorCodePane({
   };
 
   const openNativeKeyboard = () => {
+    // Remember the resting viewport before the OS keyboard has a chance to shrink it.
+    nativeViewportBaseRef.current = window.visualViewport?.height ?? window.innerHeight;
     // While the tap is still a gesture, hand the focus to the real editor: the property change that
     // hides the custom keys renders afterwards, and a focus taken then may not raise the OS keyboard.
     if (mode === 'visual') visualRef.current?.openNativeKeyboard();
