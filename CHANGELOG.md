@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.7`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.8`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -16,6 +16,14 @@ flowchart LR
 
 ---
 
+## [2026-11-23] — The band moves the page only when the bar costs it room
+
+The first cut of the short-phone fix pinned the mode bar under the header on every keyboard open.
+That is right when the band is short, but a full-height phone already has **293 px** and does not
+need its page moved under the learner. The pin now runs only when the remaining band would be under
+**140 px**: a 360×640 phone still turns its reflowed 42 px band back into 89 px, while a 390×844
+phone keeps the scroll the learner chose.
+
 ## [2026-11-23] — The phone's code band never grows into the Study bar
 
 On a short phone the code band had a floor of 140 px, but the space between the mode bar and the
@@ -23,10 +31,10 @@ Study bar can be less. At 360×640 the bar began at 242 px and the code face end
 last 51 px of code — including the line being typed — sat behind the bar for the whole session.
 The editor's own scroller could not reveal it either, because it believed the caret was already
 visible. The face is now capped at the measured space, so a small band is honest instead of
-overlapping the text. The mode bar is also pinned under the header whenever the keys are up: a
-width change that rewrapped the lesson above the editor could leave the bar 97 px down the screen,
-and the old placement only moved a bar near the folds. At 360×640 that is now an 89 px band instead
-of a 42 px one.
+overlapping the text. When the room left would be under 140 px, the mode bar is pinned under the
+header: a width change that rewrapped the lesson above the editor could leave the bar 97 px down
+the screen and take most of the band with it. At 360×640 that is now an 89 px band instead of a
+42 px one. A full-height phone, whose band is already 293 px, is left where the learner scrolled it.
 
 The speed gate now ends on that phone: it resizes to 360×640 after the long-file run, sets a
 30-line file with the caret at the end, and types `shortband` at seeded random speeds while

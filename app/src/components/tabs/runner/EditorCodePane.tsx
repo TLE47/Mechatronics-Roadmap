@@ -2,6 +2,9 @@ import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState, type RefO
 import { Blocks, Code2, Keyboard } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MobilePythonKeyboard } from '../../MobilePythonKeyboard';
+
+/** Below this the mode bar is pinned under the header; a phone with this much room is left alone. */
+const MIN_PHONE_BAND = 140;
 import type { PythonBlockEditorHandle } from '../../../pythonBlocks/PythonBlockEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import { FIELD_KEYBOARD_OPEN_EVENT } from '../../../keyboard/fieldTarget';
@@ -226,20 +229,6 @@ export function EditorCodePane({
       // position while the keys are up, so it is not undone by a second scroll from the surface.
       const header = document.querySelector('header[data-chrome="header"]');
       const headerHeight = header?.getBoundingClientRect().height ?? 0;
-      const barTop = bar.getBoundingClientRect().top;
-      // The keys are up, so put the mode bar directly under the header every time: the band is the
-      // largest the phone can give, not the room left where the page happened to be. The old test
-      // only moved a bar that was near the folds, so a reflow above the editor — a narrower width,
-      // a lesson that rewraps — could leave it 100 px down the screen and silently take that room
-      // from the code. On a 360×640 phone that was the difference between 139 px of band and 42 px.
-      // `instant`, not `auto`: the page sets `scroll-behavior: smooth` for its own in-page links,
-      // and `auto` inherits it. An animated placement meant the band was measured while the page
-      // was still moving — the editor got a floor while the page travelled — and it is the same
-      // travelling scrollbar the learner sees when Code opens.
-      if (Math.abs(barTop - headerHeight - 4) > 1) {
-        window.scrollTo({ top: window.scrollY + barTop - headerHeight - 4, behavior: 'instant' });
-      }
-      const top = bar.getBoundingClientRect().bottom;
       // The band ends where the Study bar begins. Deriving it from the bar's height rather than its
       // current `top` keeps this independent of the CSS variable that rides the bar on the keys:
       // that variable is applied by an effect, and a first paint can precede it. A sheet hides the
@@ -247,6 +236,21 @@ export function EditorCodePane({
       const study = studyBar?.getBoundingClientRect();
       const studyHeight = study && study.height > 0 ? study.height : 0;
       const bottom = window.innerHeight - keyboardHeight - studyHeight;
+      const barTop = bar.getBoundingClientRect().top;
+      const beforePin = bar.getBoundingClientRect().bottom;
+      // The page has left the mode bar lower than a usable band needs: a reflow above the editor —
+      // a narrower width, a lesson that rewraps — could put it 97 px down the screen and take that
+      // room from the code. On a 360×640 phone that was the difference between 89 px and 42 px.
+      // Pin it under the header only when the band is under the comfort floor; a full-height phone
+      // already has its 293 px, so the learner's own scroll is left alone.
+      // `instant`, not `auto`: the page sets `scroll-behavior: smooth` for its own in-page links,
+      // and `auto` inherits it. An animated placement meant the band was measured while the page
+      // was still moving — the editor got a floor while the page travelled — and it is the same
+      // travelling scrollbar the learner sees when Code opens.
+      if (bottom - beforePin < MIN_PHONE_BAND && Math.abs(barTop - headerHeight - 4) > 1) {
+        window.scrollTo({ top: window.scrollY + barTop - headerHeight - 4, behavior: 'instant' });
+      }
+      const top = bar.getBoundingClientRect().bottom;
       // Never taller than the room that exists. A 140 px floor overran the Study bar on a short
       // phone: at 360×640 the bar began at 242 px while the face ended at 293 px, so the last 51 px
       // of code — the line being typed — sat behind the bar while the editor's own scroller still

@@ -120,8 +120,9 @@ flowchart LR
    140 px floor used to overrun a short phone: at 360×640 the Study bar began at 242 px while the
    face ended at 293 px, so the last two lines — the line being typed — were behind the bar. The
    band is now capped at the measured space; a smaller band is honest, an overlapping one hides
-   the caret. While the keys are up the mode bar is pinned under the header, so a reflow above the
-   editor (a narrower width, a lesson that rewraps) cannot take room from the band; before, the
+   the caret. When the room left would be under 140 px the mode bar is pinned under the header, so
+   a reflow above the editor (a narrower width, a lesson that rewraps) cannot take room from the
+   band; a phone whose band is already full is left where the learner scrolled it. Before, the
    placement only moved a bar near the folds, and a 360×640 phone could drop from 89 px of code to
    42 px without overlapping anything. Before this the card was as tall as its
    file — a 40-line starter made a 1048 px editor in a 3151 px page — so the editor's own scroller
