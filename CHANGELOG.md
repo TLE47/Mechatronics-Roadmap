@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.5`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.6`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,28 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-23] — The phone's code editor is a band above the keys, and its caret stays in it
+
+Typing fast on a phone moved the page's scrollbar up and down, and the line being typed could sit
+under the keys. The cause was the editor's height: on the phone's Code surface the card was as tall
+as its document. A forty-line file made a **1048 px editor inside a 3151 px page**, so the editor's
+own scroller never moved (`scrollHeight === clientHeight`), the page's scrollbar did all the work,
+and the caret measured **660 px below the keyboard**. Every wrapped line then grew the page again,
+another reason the scrollbar kept sliding.
+
+The code face is now a **measured band** between the mode bar and the Study bar that rides on the
+keys (`EditorCodePane`). The page no longer changes height while a finger types; the editor's own
+scroller follows the caret, with a line of `scrollMargins` keeping the line clear of the keys.
+Every keyboard edit — insert, Backspace, Return, Tab, indent, undo — now reveals the caret
+(`pythonEditorImpl`); a command's dispatch is programmatic, and CodeMirror does not scroll for it.
+The band is placed instantly rather than through the page's smooth scroll, and the surface switch
+no longer scrolls to the card's top while the keys are up, which was undoing the placement. Tapping
+the Code tab that is already selected no longer moves the page at all.
+
+The speed gate now ends with a long file: it asserts the code face is a band above the keys, types
+a 10-key acceleration at the end of 32 lines, and samples every frame to prove **zero frames with
+the caret below the keys**, one `window.scrollY`, one document height, and a moving editor scroller.
 
 ## [2026-11-23] — A phone key types when the finger lands, not when it lifts
 

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState, type RefObject } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Blocks, Code2, Keyboard } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MobilePythonKeyboard } from '../../MobilePythonKeyboard';
@@ -15,6 +15,9 @@ const PythonBlockEditor = lazy(() =>
     default: module.PythonBlockEditor,
   }))
 );
+
+/** `useLayoutEffect` on the browser, `useEffect` during SSR: React warns about the former on a server. */
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * Was the caret lost to a press on the keys themselves?
@@ -134,6 +137,10 @@ export function EditorCodePane({
   const modeBarRef = useRef<HTMLDivElement | null>(null);
   const keyboardShellRef = useRef<HTMLDivElement | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  // The height of the band the code editor fills on a phone: from the mode bar's bottom edge to the
+  // top of the Study bar that rides on the keys. Null off a phone, in Visual, or while the OS
+  // keyboard owns the screen, where the page keeps its natural height.
+  const [editorBand, setEditorBand] = useState<number | null>(null);
 
   /**
    * The code editor's caret is the keyboard's switch.
@@ -186,18 +193,81 @@ export function EditorCodePane({
     return () => observer.disconnect();
   }, [isPhone, keyboardOpen, mode, deferPhoneEditor, openHelper]);
 
-  // When Code opens with the keyboard showing, the mode bar is put under the sticky header. The
-  // editor then fills the band between the two, instead of starting below the fold.
-  useEffect(() => {
-    if (!isPhone || !keyboardOpen || mode !== 'code' || keyboardHeight === 0) return;
+  /**
+   * The phone's code editor is a **band above the keys**, not a page.
+   *
+   * Left to itself the card is as tall as its document: a forty-line file made a 1048 px editor
+   * inside a 3151 px page, so its own scroller never moved, the page's scrollbar did all the
+   * work, and the caret sat 660 px *below* the keyboard. Typing then grew the page again for every
+   * wrapped line, which is the scrollbar that kept sliding up and down, and the line being typed
+   * was hidden under the keys.
+   *
+   * The band is measured from the mode bar's bottom edge to the top of the Study bar that rides on
+   * the keys, so the editor fills exactly what the learner can see. The page no longer changes
+   * height while a finger types; the editor's own scroller follows the caret, and `scrollMargins`
+   * in `pythonEditorImpl.tsx` keeps a line of air above the keys. It is re-measured for a keyboard
+   * that grows, a bar that wraps, a rotation, and over the next few frames for the page clamp the
+   * new height can cause.
+   */
+  useIsomorphicLayoutEffect(() => {
+    if (!isPhone || mode !== 'code' || !keyboardOpen || keyboardNative) {
+      setEditorBand(null);
+      return;
+    }
     const bar = modeBarRef.current;
     if (!bar) return;
-    const header = document.querySelector('header[data-chrome="header"]');
-    const headerHeight = header?.getBoundingClientRect().height ?? 0;
-    const top = bar.getBoundingClientRect().top;
-    if (top >= headerHeight && top <= window.innerHeight - 76 - keyboardHeight - 60) return;
-    window.scrollBy({ top: top - headerHeight - 4, behavior: 'auto' });
-  }, [isPhone, keyboardOpen, mode, keyboardHeight]);
+    const studyBar = document.querySelector<HTMLElement>('[data-phone-bar]');
+    const compute = () => {
+      // The card is hidden on the Lesson surface; a hidden bar measures zero and has no place to
+      // put. Its ResizeObserver fires when Code shows it again.
+      if (bar.getBoundingClientRect().height === 0) return;
+      // Put the mode bar under the sticky header first: the editor then fills the band between the
+      // two instead of starting below the fold. This is the only place that decides the page's
+      // position while the keys are up, so it is not undone by a second scroll from the surface.
+      const header = document.querySelector('header[data-chrome="header"]');
+      const headerHeight = header?.getBoundingClientRect().height ?? 0;
+      const barTop = bar.getBoundingClientRect().top;
+      if (barTop < headerHeight || barTop > window.innerHeight - 76 - keyboardHeight - 60) {
+        // `instant`, not `auto`: the page sets `scroll-behavior: smooth` for its own in-page links,
+        // and `auto` inherits it. An animated placement meant the band was measured while the page
+        // was still moving — the editor got the 140 px floor — and it is the same travelling
+        // scrollbar the learner sees when Code opens.
+        window.scrollTo({ top: window.scrollY + barTop - headerHeight - 4, behavior: 'instant' });
+      }
+      const top = bar.getBoundingClientRect().bottom;
+      // The band ends where the Study bar begins. Deriving it from the bar's height rather than its
+      // current `top` keeps this independent of the CSS variable that rides the bar on the keys:
+      // that variable is applied by an effect, and a first paint can precede it. A sheet hides the
+      // bar (zero height), and then the keys are the edge.
+      const study = studyBar?.getBoundingClientRect();
+      const studyHeight = study && study.height > 0 ? study.height : 0;
+      const bottom = window.innerHeight - keyboardHeight - studyHeight;
+      const next = Math.max(140, Math.round(bottom - top));
+      setEditorBand((current) => (Math.abs((current ?? 0) - next) <= 1 ? current : next));
+    };
+    compute();
+    // Sizing the editor changes the page's height by hundreds of pixels, and the first frame can
+    // land before that layout exists. Settle over a handful of frames so the placement and the band
+    // are read from the page the learner actually has; each pass is idempotent, and a pass whose
+    // bar is already in place does not scroll.
+    let frame = 0;
+    let frames = 0;
+    const settle = () => {
+      compute();
+      frames += 1;
+      if (frames < 8) frame = requestAnimationFrame(settle);
+    };
+    frame = requestAnimationFrame(settle);
+    const observer = new ResizeObserver(compute);
+    observer.observe(bar);
+    if (studyBar) observer.observe(studyBar);
+    window.addEventListener('resize', compute);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, [isPhone, mode, keyboardOpen, keyboardNative, keyboardHeight, deferPhoneEditor, openHelper]);
 
   // The Study bar is outside this pane, so the one number it needs travels as a custom property:
   // the bar's `bottom` is this height, which puts it on top of the keys rather than under them.
@@ -505,7 +575,23 @@ export function EditorCodePane({
           </div>
           <div
             data-editor-face="code"
-            style={{ display: mode === 'code' ? undefined : 'none' }}
+            data-phone-band={editorBand === null ? undefined : '1'}
+            style={{
+              display: mode === 'code' ? undefined : 'none',
+              // A measured band is a fixed box: `flex-1`'s zero basis would otherwise let the
+              // editor's content set the height again, and the block margin only contains a child
+              // that overflows rather than resizing the band.
+              ...(editorBand === null
+                ? null
+                : {
+                    height: editorBand,
+                    flex: '0 0 auto',
+                    minHeight: 0,
+                    // The band is sized on purpose; the browser must not answer the page's own
+                    // height change by moving the scroll under the learner's thumb.
+                    overflowAnchor: 'none',
+                  }),
+            }}
             className="flex min-h-0 flex-1 flex-col"
           >
             <PythonEditor

@@ -1365,6 +1365,23 @@ body:has([data-testid='phone-field-keyboard'][data-mobile-keyboard='1']) [data-p
   height: 100%;
 }
 
+/* The phone's code face is a measured band above the keys (`EditorCodePane`), not a page-height
+   document. `--editor-min-h` is 45dvh, taller than the band on a short phone; left in place it
+   would push the last lines back under the keyboard. The face owns the height and the editor
+   scrolls inside it, so the page never changes height while a finger is typing. */
+[data-editor-face='code'][data-phone-band='1'],
+[data-editor-face='code'][data-phone-band='1'] [data-editor],
+[data-editor-face='code'][data-phone-band='1'] .cm-host,
+[data-editor-face='code'][data-phone-band='1'] .cm-editor,
+[data-editor-face='code'][data-phone-band='1'] .cm-scroller {
+  min-height: 0;
+}
+[data-editor-face='code'][data-phone-band='1'] .cm-editor,
+[data-editor-face='code'][data-phone-band='1'] .cm-scroller {
+  height: 100%;
+  max-height: 100%;
+}
+
 /* A bounded split has a height, not only a floor. Every pane shares it and scrolls inside its own
    box. A height is what stops a tall pane (the graph's 29rem sheet) from sizing the body: in a
    column split a nested row group sizes to its content just as a top-level rows split does. A

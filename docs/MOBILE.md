@@ -114,7 +114,22 @@ flowchart LR
    also uses) and returns to the edge with **Done** — nothing is left between the last key row and
    the screen edge, and Run/Lesson stay one press away. The keys' own inset is
    the safe-area inset alone. The pane measures the keyboard and reserves the same height at its
-   end, so the last lines can still be scrolled out from under it. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
+   end, and while the code face is showing it is a **measured band**, not a page-height document:
+   `EditorCodePane` measures from the mode bar's bottom edge to the top of the Study bar that rides
+   on the keys, and the editor fills exactly that box. Before this the card was as tall as its
+   file — a 40-line starter made a 1048 px editor in a 3151 px page — so the editor's own scroller
+   never moved, the page's scrollbar did the scrolling, and the caret sat far below the keys. The
+   band is placed with an instant scroll (the page's own `scroll-behavior` is smooth, so `auto`
+   would animate a measurement), and the surface switch does not scroll to the card's top while
+   the keys are up, because that undid the placement. The page's height no longer changes as lines
+   wrap, so the scrollbar stays where the learner left it.
+
+   **Every key reveals the caret.** CodeMirror scrolls for the browser's own typing, but a
+   key press goes through the editor's handle — `insertText`, `backspace`, `insertNewLine`,
+   `insertTab`, indent, undo — and a command's dispatch is programmatic. Each of those now asks the
+   view to scroll the caret into the band, with the 26 px `scrollMargins` bottom keeping the line
+   being typed clear of the Study bar and the keys. The scroller moves by the line; the page does
+   not. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
    block field, which is the only way to keep the OS keyboard shut while the custom one is the
    keyboard; the **native** key removes it and focuses the real editor in the same gesture, so the
    OS keyboard rises as the custom shell slides away. The mode bar's key button is the way back: it

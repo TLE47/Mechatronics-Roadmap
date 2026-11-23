@@ -244,6 +244,145 @@ async function main() {
       `${COUNT} randomized speed plans passed: ${touches} touches, ${singlePlans} single-thumb / ${overlapPlans} overlapping, ${seconds}s`
     );
 
+    console.log('\nthe caret stays above the keys on a long file');
+
+    // The phone's code editor used to be as tall as its document: a long file made the page
+    // thousands of pixels tall, the editor's own scroller never moved, and the caret sat hundreds
+    // of pixels under the keys. Typing then grew the page for every wrapped line — the scrollbar
+    // that kept sliding up and down — while the line being typed was hidden. The editor is now a
+    // measured band above the keys (`EditorCodePane`), and every keyboard edit reveals the caret
+    // (`pythonEditorImpl.revealCaret`). These checks pin both the geometry and the page's stillness.
+    const band = await page.evaluate(() => {
+      const face = document.querySelector(
+        '[data-testid="editor-panel"][data-phone-code="1"] [data-editor-face="code"]'
+      );
+      const box = face?.getBoundingClientRect();
+      return {
+        marked: face?.getAttribute('data-phone-band') ?? null,
+        height: box ? Math.round(box.height) : 0,
+        keysTop: Math.round(
+          document.querySelector('[data-testid="python-keyboard"]')?.getBoundingClientRect().top ?? 0
+        ),
+      };
+    });
+    check(band.marked === '1', 'the phone code face is not a measured band');
+    check(
+      band.height > 120 && band.height < band.keysTop,
+      `the code face is not a band above the keys (${band.height}px of ${band.keysTop}px)`
+    );
+
+    // A file the band cannot hold, with the caret at its end. The first real key is the press that
+    // must bring the caret into the band; sampling starts after it, so what follows measures typing.
+    const longFile = Array.from(
+      { length: 32 },
+      (_, index) => `step_${String(index).padStart(2, '0')} = ${index}  # a line the band cannot hold`
+    ).join('\n');
+    await page.evaluate((text) => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.set(text);
+      editor.setCursor(text.length);
+      editor.focus();
+    }, longFile);
+    await delay(140);
+    await dispatch('touchStart', [{ key: 'a', id: 1 }]);
+    await delay(6);
+    await dispatch('touchEnd', []);
+    await delay(160);
+
+    const bandEdge = await page.evaluate(() => {
+      const study = document.querySelector('[data-phone-bar]');
+      const keyboard = document.querySelector('[data-testid="python-keyboard"]');
+      const face = document.querySelector(
+        '[data-testid="editor-panel"][data-phone-code="1"] [data-editor-face="code"]'
+      );
+      return {
+        top: Math.round(
+          Math.min(
+            study?.getBoundingClientRect().top ?? Infinity,
+            keyboard?.getBoundingClientRect().top ?? Infinity
+          )
+        ),
+        faceBottom: Math.round(face?.getBoundingClientRect().bottom ?? 0),
+      };
+    });
+    const bandTop = bandEdge.top;
+    // A band of the right height that has not been placed ends below the fold, where the caret
+    // check above would only fail once a key was typed. Pin its bottom to the bar it sits on.
+    check(
+      Math.abs(bandEdge.faceBottom - bandTop) <= 2,
+      `the code band ends at ${bandEdge.faceBottom}px, not at the Study bar's ${bandTop}px`
+    );
+
+    await page.evaluate(() => {
+      const samples = [];
+      window.__bandSamples = samples;
+      const scroller = document.querySelector(
+        '[data-testid="editor-panel"] [data-editor="editor-main"] .cm-scroller'
+      );
+      const sample = () => {
+        const editor = window.__mechalabEditors['editor-main'];
+        const coords = editor.coordsOf(editor.getCursor());
+        samples.push({
+          windowY: window.scrollY,
+          docH: document.documentElement.scrollHeight,
+          scrollTop: scroller ? scroller.scrollTop : 0,
+          caretBottom: coords ? coords.bottom : null,
+        });
+        if (samples.length < 1500) window.__bandFrame = requestAnimationFrame(sample);
+      };
+      sample();
+    });
+
+    const scrollPlan = {
+      seed: 'scroll',
+      mode: 'single',
+      keys: [...'typingfast'],
+      gaps: [90, 70, 40, 20, 12, 9, 8, 8, 8, 8],
+      holds: [8, 7, 6, 5, 4, 4, 3, 3, 3, 3],
+      expected: 'typingfast',
+    };
+    await runPlan(scrollPlan);
+    await delay(140);
+    const bandRun = await page.evaluate(() => {
+      cancelAnimationFrame(window.__bandFrame);
+      return {
+        samples: window.__bandSamples ?? [],
+        text: window.__mechalabEditors['editor-main'].get(),
+        cursor: window.__mechalabEditors['editor-main'].getCursor(),
+      };
+    });
+
+    check(
+      bandRun.text === `${longFile}a${scrollPlan.expected}`,
+      `typing at the end of a long file produced ${JSON.stringify(bandRun.text.slice(-24))}`
+    );
+    check(
+      bandRun.cursor === longFile.length + 1 + scrollPlan.expected.length,
+      'the caret did not follow the typed text on a long file'
+    );
+    const hiddenFrames = bandRun.samples.filter(
+      (sample) => sample.caretBottom !== null && sample.caretBottom > bandTop + 0.5
+    );
+    check(
+      hiddenFrames.length === 0,
+      `${hiddenFrames.length} of ${bandRun.samples.length} frames typed with the caret below the keys (${bandTop}px)`
+    );
+    const pageYs = new Set(bandRun.samples.map((sample) => Math.round(sample.windowY)));
+    check(
+      pageYs.size === 1,
+      `the page scrolled while typing (window.scrollY ${[...pageYs].join(', ')})`
+    );
+    const docHeights = new Set(bandRun.samples.map((sample) => Math.round(sample.docH)));
+    check(
+      docHeights.size === 1,
+      `the page changed height while typing (${[...docHeights].join(', ')}px)`
+    );
+    check(
+      bandRun.samples.some((sample) => sample.scrollTop > 0),
+      'the editor scroller never moved; the caret cannot have been followed'
+    );
+    ok('a long file is a band above the keys, and typing scrolls only that band');
+
     check(pageErrors.length === 0, `the speed session threw: ${pageErrors.join('; ')}`);
     check(
       consoleErrors.length === 0,

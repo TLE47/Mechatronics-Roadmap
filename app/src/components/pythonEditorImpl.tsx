@@ -47,7 +47,14 @@ import {
   startCompletion,
   type CompletionSource,
 } from '@codemirror/autocomplete';
-import { Compartment, EditorState, StateEffect, StateField, Transaction } from '@codemirror/state';
+import {
+  Compartment,
+  EditorState,
+  StateEffect,
+  StateField,
+  Transaction,
+  type Extension,
+} from '@codemirror/state';
 import {
   Decoration,
   drawSelection,
@@ -87,6 +94,21 @@ function revealLine(view: EditorView, line: number): void {
   const target = view.state.doc.line(number);
   view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
   view.focus();
+}
+
+/**
+ * Scroll the caret back into the scroller, honouring the keyboard's `scrollMargins`.
+ *
+ * CodeMirror scrolls for the browser's own typing, but a command or a dispatch from the phone's
+ * keyboard is programmatic: the selection moves and the view stays where it was. On a phone that
+ * left the caret under the keys for the rest of the run, because nothing else on the page scrolls
+ * the editor any more (`EditorCodePane` sizes it to the band). One effect-only transaction is
+ * enough, and it is what a native editor does on every key.
+ */
+function revealCaret(view: EditorView): void {
+  view.dispatch({
+    effects: EditorView.scrollIntoView(view.state.selection.main.head, { y: 'nearest' }),
+  });
 }
 
 /** The robot's box is a line decoration, so it moves with the document and never steals the caret. */
@@ -162,8 +184,14 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
  * than a direct `setAttribute`: the view reconciles that facet's attributes on its own updates and
  * would otherwise remove an attribute no facet knows about.
  */
-const keyboardAttributes = (mode: 'off' | 'custom' | 'native') =>
-  EditorView.contentAttributes.of(mode === 'custom' ? { inputmode: 'none' } : {});
+const keyboardAttributes = (mode: 'off' | 'custom' | 'native'): Extension[] => [
+  EditorView.contentAttributes.of(mode === 'custom' ? { inputmode: 'none' } : {}),
+  // The custom keys own the bottom of a phone's screen (`EditorCodePane` sizes the editor to the
+  // band above them). CodeMirror scrolls the caret to the nearest edge of its scroller; a line of
+  // margin keeps the line being typed clear of the keys, so a fast run never types into a line the
+  // thumb cannot see. Off a phone there is no such band and the margin is absent.
+  EditorView.scrollMargins.of(() => (mode === 'custom' ? { bottom: 26 } : null)),
+];
 
 const PYTHON_WORDS = [
   'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif',
@@ -413,7 +441,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           if (!view) return;
           // `replaceSelection` keeps a selection replaceable — a learner who selected a word and
           // tapped `(` gets a bracket around it rather than after it, which is what an editor does.
-          view.dispatch(view.state.replaceSelection(text));
+          view.dispatch({ ...view.state.replaceSelection(text), scrollIntoView: true });
           view.focus();
         },
         backspace: () => {
@@ -423,18 +451,21 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // indentation-aware command deleted a whole 4-space unit in one press at the end of an
           // indent, which is not what the key says it does (and made a fast run unpredictable).
           deleteCharBackwardStrict(view);
+          revealCaret(view);
           view.focus();
         },
         indent: () => {
           const view = viewRef.current;
           if (!view) return;
           indentMore(view);
+          revealCaret(view);
           view.focus();
         },
         dedent: () => {
           const view = viewRef.current;
           if (!view) return;
           indentLess(view);
+          revealCaret(view);
           view.focus();
         },
         insertNewLine: () => {
@@ -443,24 +474,27 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // The command, not a bare `\n`: the new line keeps the suite's indentation, which is the
           // one thing a phone keyboard cannot see to type.
           insertNewlineAndIndent(view);
+          revealCaret(view);
           view.focus();
         },
         insertTab: () => {
           const view = viewRef.current;
           if (!view) return;
-          view.dispatch(view.state.replaceSelection('    '));
+          view.dispatch({ ...view.state.replaceSelection('    '), scrollIntoView: true });
           view.focus();
         },
         undo: () => {
           const view = viewRef.current;
           if (!view) return;
           undoCommand(view);
+          revealCaret(view);
           view.focus();
         },
         redo: () => {
           const view = viewRef.current;
           if (!view) return;
           redoCommand(view);
+          revealCaret(view);
           view.focus();
         },
         duplicate: () => {
@@ -473,6 +507,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
             view.dispatch({
               changes: { from: selection.to, insert: text },
               selection: { anchor: selection.to + text.length },
+              scrollIntoView: true,
             });
           } else {
             // Nothing selected means the whole line, the operation a phone has no chord for. The
@@ -481,6 +516,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
             view.dispatch({
               changes: { from: line.to, insert: `\n${line.text}` },
               selection: { anchor: line.to + line.text.length + 1 },
+              scrollIntoView: true,
             });
           }
           view.focus();
@@ -494,6 +530,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           } else {
             deleteLineCommand(view);
           }
+          revealCaret(view);
           view.focus();
         },
         blur: () => viewRef.current?.contentDOM.blur(),
