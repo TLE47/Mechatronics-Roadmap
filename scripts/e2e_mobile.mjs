@@ -20,7 +20,7 @@
  *      shared coding keyboard — a symbol key inserts at the caret, Fn makes digits, 123 opens the
  *      number page, undo/redo walk the history, native switching removes `inputmode` and the mode
  *      bar's key button brings the Python keys back, and Done folds them. Every key is at least
- *      40 px tall, the keyboard itself ends on the bottom edge while the fixed Study bar rides on
+ *      43.5 px tall (a 44 px target), the keyboard itself ends on the bottom edge while the fixed Study bar rides on
  *      top of it (and returns to the edge with Done), that bar carries a 44 px Run, and a sheet
  *      hides it instead of covering its last row.
  *   5. A reload inside Code comes back to Code; switching to Lesson hides the editor without
@@ -48,9 +48,17 @@ import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode } from './editor-code.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import {
+  countTaps,
+  mulberry32,
+  planKeyboardScenario,
+  planVisualScenario,
+} from './keyboard_stress.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
 const PHONE = { width: 390, height: 844 };
+/** A shorter local run for debugging one seed; CI and the full gate use all 100. */
+const STRESS_COUNT = Number(process.env.KEYBOARD_STRESS_COUNT ?? 100);
 const TERMINAL = { width: 768, height: 1024 };
 const WIDE = { width: 1024, height: 900 };
 const IOS_UA =
@@ -260,6 +268,88 @@ async function touchTap(page, cdp, locator, options = {}) {
 }
 
 /**
+ * One touch with no settling wait: the finger lands, leaves, and the next one can follow at the
+ * pace the caller names. This is the typing path; `touchTap` is the gesture path.
+ */
+async function fastPoint(page, cdp, point, { hold = 4, after = 0 } = {}) {
+  // The two protocol messages are ordered on one CDP session, so the lift can be sent while the
+  // press's response is still in flight. The tap still has its hold; the round trip does not sit
+  // between the two halves of every keystroke.
+  const start = cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ ...point, id: 1, radiusX: 5, radiusY: 5, force: 1 }],
+  });
+  if (hold > 0) await new Promise((resolve) => setTimeout(resolve, hold));
+  const end = cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await Promise.all([start, end]);
+  if (after > 0) await new Promise((resolve) => setTimeout(resolve, after));
+}
+
+async function fastTouch(page, cdp, locator, { hold = 8, after = 0, label = 'the key' } = {}) {
+  const target = locator.first();
+  const found = await target.boundingBox();
+  check(Boolean(found), `${label} has no box to touch`);
+  await fastPoint(
+    page,
+    cdp,
+    { x: found.x + found.width / 2, y: found.y + found.height / 2 },
+    { hold, after }
+  );
+}
+
+/** Put the editor's document and caret back without claiming any keystroke typed it. */
+async function setEditorText(page, text, cursor = text.length) {
+  await page.evaluate((next) => window.__mechalabEditors['editor-main'].set(next), text);
+  // React owns `value`. The hidden pre is the component's last render of it, so waiting for that
+  // text is waiting for the reset to have committed. Without this, a reset's older render can land
+  // after the first key and replace the new text — the test would be racing the state it just set.
+  await page.waitForFunction(
+    (expected) =>
+      document.querySelector('[data-testid="editor-main-text"]')?.textContent === expected,
+    text,
+    { timeout: 2000 }
+  );
+  await page.evaluate((at) => window.__mechalabEditors['editor-main'].setCursor(at), cursor);
+  await page.waitForTimeout(8);
+}
+
+/** The centre of every visible key, in one read, so a typing run is not a box lookup per touch. */
+async function captureKeyPoints(page) {
+  return page.evaluate(() => {
+    const points = {};
+    for (const element of document.querySelectorAll(
+      '[data-testid="mobile-keyboard-shell"] [data-testid^="python-key-"]'
+    )) {
+      const id = element.getAttribute('data-testid');
+      const rect = element.getBoundingClientRect();
+      points[id] = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+    return points;
+  });
+}
+
+function keyPoint(keyPoints, pageName, id) {
+  const point = keyPoints[pageName]?.[id];
+  check(Boolean(point), `the ${id} key has no captured centre on the ${pageName} page`);
+  return point;
+}
+
+async function waitForKeyboardPage(page, expected) {
+  await page.waitForFunction(
+    (next) =>
+      document
+        .querySelector('[data-testid="mobile-keyboard-shell"] [data-testid="python-keyboard"]')
+        ?.getAttribute('data-page') === next,
+    expected,
+    { timeout: 2000 }
+  );
+}
+
+async function editorHasFocus(page) {
+  return page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor')));
+}
+
+/**
  * Record the shell's own rect every frame while `action` opens or folds it. The promise is created
  * before the touch, so the first frame is the position the finger found, not the one it left.
  */
@@ -418,6 +508,177 @@ function checkManifestIcons() {
     fs.existsSync(path.join('app', 'public', 'apple-touch-icon.png')),
     'iOS needs apple-touch-icon.png beside the manifest'
   );
+}
+
+/**
+ * Run one planned scenario as a person would: every character is its own trusted touch, layout
+ * changes and modifier switches are taps, and the pauses are the plan's. The whole document, the
+ * caret, keyboard visibility and editor focus are asserted at the end, so a lost, doubled or
+ * reordered key cannot pass as a shorter suffix.
+ */
+async function runKeyboardScenario(page, cdp, shell, plan, keyPoints) {
+  const failWithPlan = (error) =>
+    new Error(
+      `keyboard stress seed ${plan.seed} failed: ${error.message}\n` +
+        `expected ${JSON.stringify(plan.expected)}\nplan ${JSON.stringify(plan.actions)}`
+    );
+  try {
+    await setEditorText(page, '', 0);
+    // Every plan is written on the letters page and hands the next one back there. A previous test
+    // can still have left 123 open, and assuming otherwise would read as a missing key.
+    if ((await shell.getByTestId('python-keyboard').getAttribute('data-page')) !== 'abc') {
+      await fastPoint(page, cdp, keyPoint(keyPoints, '123', 'python-key-layout'));
+      await waitForKeyboardPage(page, 'abc');
+    }
+    let pageName = 'abc';
+    for (const action of plan.actions) {
+      if (action.kind === 'wait') {
+        await page.waitForTimeout(action.ms);
+        continue;
+      }
+      if (action.kind === 'layout') {
+        check(pageName !== action.page, `seed ${plan.seed}: a layout action asked for its own page`);
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, 'python-key-layout'));
+        await waitForKeyboardPage(page, action.page);
+        pageName = action.page;
+        await page.waitForFunction(
+          () => Boolean(document.activeElement?.closest('.cm-editor')),
+          undefined,
+          { timeout: 1000 }
+        );
+        check(
+          (await shell.getAttribute('data-state')) === 'open',
+          `seed ${plan.seed}: switching to ${action.page} folded the keyboard`
+        );
+        if (action.after > 0) await page.waitForTimeout(action.after);
+        continue;
+      }
+      if (action.kind === 'shift') {
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, 'python-key-shift'));
+        await new Promise((resolve) => setTimeout(resolve, 8));
+        check(
+          (await shell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'true',
+          `seed ${plan.seed}: Shift did not arm`
+        );
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, `python-key-${action.key}`), {
+          after: action.after,
+        });
+        continue;
+      }
+      if (action.kind === 'fnDigit') {
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, 'python-key-fn'));
+        await new Promise((resolve) => setTimeout(resolve, 8));
+        check(
+          (await shell.getByTestId('python-keyboard').getAttribute('data-fn')) === '1',
+          `seed ${plan.seed}: Fn did not arm`
+        );
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, `python-key-${action.key}`));
+        await new Promise((resolve) => setTimeout(resolve, 6));
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, 'python-key-fn'), {
+          after: action.after,
+        });
+        continue;
+      }
+      const key = action.kind === 'backspace' ? 'python-key-backspace' : action.key;
+      await fastPoint(page, cdp, keyPoint(keyPoints, pageName, key), { after: action.after });
+    }
+    await page.waitForTimeout(30);
+    const actual = await getEditorCode(page);
+    check(
+      actual === plan.expected,
+      `seed ${plan.seed}: typed ${JSON.stringify(actual)}, expected ${JSON.stringify(plan.expected)}`
+    );
+    check(
+      !actual.includes('\n'),
+      `seed ${plan.seed}: a typing key produced ${JSON.stringify(actual)} with a line break`
+    );
+    check(
+      (await shell.getAttribute('data-state')) === 'open',
+      `seed ${plan.seed}: the keyboard folded during the scenario`
+    );
+    check(await editorHasFocus(page), `seed ${plan.seed}: the editor lost its caret`);
+    check(
+      (await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor())) ===
+        plan.expected.length,
+      `seed ${plan.seed}: the caret is not after the text the scenario typed`
+    );
+  } catch (error) {
+    throw failWithPlan(error);
+  }
+}
+
+/** The same plans against the first editable value in the Visual workspace. */
+async function runVisualScenario(page, cdp, shell, fieldButton, plan, keyPoints) {
+  const fieldId = await fieldButton.getAttribute('data-testid');
+  const input = page.getByTestId(`${fieldId}-input`);
+  try {
+    // Opening the field is not the interaction under test here; every key that follows is a real
+    // touch. A programmatic click avoids the dock and the sticky header moving between the scroll
+    // and the finger, which is the same reason the Visual suite opens its field this way.
+    await fieldButton.evaluate((element) => {
+      element.scrollIntoView({ block: 'center' });
+      element.click();
+    });
+    await page.waitForTimeout(60);
+    await input.waitFor({ state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(40);
+    check(
+      (await input.evaluate((element) => element === document.activeElement)),
+      `visual seed ${plan.seed}: the block field did not take the caret`
+    );
+    check(
+      (await shell.getAttribute('data-state')) === 'open',
+      `visual seed ${plan.seed}: the keyboard did not open on the field`
+    );
+    let pageName = 'abc';
+    for (const action of plan.actions) {
+      if (action.kind === 'layout') {
+        check(pageName !== action.page, `visual seed ${plan.seed}: a layout action asked for its own page`);
+        await fastPoint(page, cdp, keyPoint(keyPoints, pageName, 'python-key-layout'));
+        await waitForKeyboardPage(page, action.page);
+        pageName = action.page;
+        check(
+          (await shell.getAttribute('data-state')) === 'open',
+          `visual seed ${plan.seed}: the layout switch folded the keyboard`
+        );
+        check(
+          await input.evaluate((element) => element === document.activeElement),
+          `visual seed ${plan.seed}: the layout switch took the field caret`
+        );
+        if (action.after > 0) await page.waitForTimeout(action.after);
+        continue;
+      }
+      const key = action.kind === 'backspace' ? 'python-key-backspace' : action.key;
+      await fastPoint(page, cdp, keyPoint(keyPoints, pageName, key), { after: action.after });
+    }
+    await page.waitForTimeout(60);
+    check(
+      (await input.inputValue()) === plan.expected,
+      `visual seed ${plan.seed}: the field holds ${JSON.stringify(
+        await input.inputValue()
+      )}, expected ${JSON.stringify(plan.expected)}`
+    );
+    check(
+      (await input.inputValue()).split('\n').length === 1,
+      `visual seed ${plan.seed}: a typing key produced a line break in the field`
+    );
+    check(
+      (await shell.getAttribute('data-state')) === 'open',
+      `visual seed ${plan.seed}: the keyboard folded during the field scenario`
+    );
+    check(
+      await input.evaluate((element) => element === document.activeElement),
+      `visual seed ${plan.seed}: the field lost its caret`
+    );
+    await page.keyboard.press('Escape');
+    await input.waitFor({ state: 'hidden', timeout: 3000 });
+    await page.waitForTimeout(60);
+  } catch (error) {
+    throw new Error(
+      `visual keyboard stress seed ${plan.seed} failed: ${error.message}\n` +
+        `expected ${JSON.stringify(plan.expected)}\nplan ${JSON.stringify(plan.actions)}`
+    );
+  }
 }
 
 async function main() {
@@ -709,8 +970,8 @@ async function main() {
       for (let index = 0; index < keyCount; index += 1) {
         const key = await keys.nth(index).boundingBox();
         check(
-          Boolean(key) && key.height >= 40,
-          `keyboard key ${index} is ${key?.width}x${key?.height}, below the 40 px floor`
+          Boolean(key) && key.height >= 43.5,
+          `keyboard key ${index} is ${key?.width}x${key?.height}, below the 44 px target`
         );
         check(Boolean(key) && key.width >= 20, `keyboard key ${index} is only ${key?.width}px wide`);
       }
@@ -1041,7 +1302,11 @@ async function main() {
       const page = await context.newPage();
       const cdp = await context.newCDPSession(page);
       const pageErrors = [];
+      const consoleErrors = [];
       page.on('pageerror', (error) => pageErrors.push(error.message));
+      page.on('console', (message) => {
+        if (message.type() === 'error') consoleErrors.push(message.text());
+      });
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
       await page.getByTestId('phone-tab-nav').waitFor({ state: 'visible', timeout: 30000 });
 
@@ -1242,6 +1507,364 @@ async function main() {
       );
       for (let index = 0; index < 10; index += 1) await press(editorShell, 'python-key-backspace');
       check((await getEditorCode(page)) === baseline, 'the fast touches did not clean up');
+
+      // ---- The same key interaction at the five typing speeds the plan names ----
+      // Every character is its own touch; the wait is the person's inter-key interval, jittered
+      // around the WPM target rather than a fixed delay. The measured speed is printed from the
+      // wall clock, so this is a timing test and not a label on one.
+      console.log('\nindividual touches at 40, 70, 100, 120 and 150 WPM');
+      const speedText = 'fasttypingis';
+      // The caps do not move while the page is fixed, so the loop measures the finger's cadence
+      // rather than Playwright's box lookup. The boxes are still asserted by the gate above.
+      const speedPoints = await page.evaluate(() => {
+        const points = {};
+        for (const element of document.querySelectorAll('[data-testid^="python-key-"]')) {
+          const id = element.getAttribute('data-testid');
+          const key = id.slice('python-key-'.length);
+          const rect = element.getBoundingClientRect();
+          points[key] = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        }
+        return points;
+      });
+      for (const wpm of [40, 70, 100, 120, 150]) {
+        await setEditorText(page, baseline, baseline.length);
+        const random = mulberry32(6000 + wpm);
+        const started = performance.now();
+        for (const letter of speedText) {
+          const target = (60000 / (wpm * 5)) * (0.78 + random() * 0.44);
+          const at = performance.now();
+          await fastPoint(page, cdp, speedPoints[letter], {
+            hold: 7 + Math.floor(random() * 9),
+          });
+          const used = performance.now() - at;
+          if (target > used) await new Promise((resolve) => setTimeout(resolve, Math.round(target - used)));
+        }
+        const elapsed = performance.now() - started;
+        await page.waitForTimeout(50);
+        const actual = await getEditorCode(page);
+        check(
+          actual === `${baseline}${speedText}`,
+          `at ${wpm} WPM the editor holds ${JSON.stringify(actual.slice(-speedText.length - 4))}`
+        );
+        check(
+          actual.split('\n').length === baseline.split('\n').length,
+          `at ${wpm} WPM the typing produced a line break`
+        );
+        const measured = Math.round((speedText.length * 12000) / elapsed);
+        ok(`${String(wpm).padStart(3)} WPM target: ${speedText.length} touches, measured ${measured} WPM`);
+      }
+      await setEditorText(page, baseline, baseline.length);
+
+      // ---- Every symbol and operator, in one unbroken run ----
+      // The row-two symbols, the 123 page's punctuation and the operator row are all different
+      // code paths from a letter. Their exact inserted text is what is asserted, including the
+      // two-character operators that a backspace must later be able to split.
+      const mixed = [
+        ['open-paren', '('], ['close-paren', ')'], ['open-bracket', '['], ['close-bracket', ']'],
+        ['open-brace', '{'], ['close-brace', '}'], ['colon', ':'], ['comma', ','],
+        ['semicolon', ';'], ['single-quote', "'"], ['double-quote', '"'], ['equals', '='],
+        ['plus', '+'], ['minus', '-'], ['star', '*'], ['slash', '/'], ['percent', '%'],
+        ['less', '<'], ['greater', '>'], ['less-equal', '<='], ['greater-equal', '>='],
+        ['equal-equal', '=='], ['not-equal', '!='],
+      ];
+      const mixedText = mixed.map(([, value]) => value).join('');
+      await setEditorText(page, '', 0);
+      for (const [id, value] of mixed) {
+        await fastTouch(page, cdp, editorShell.getByTestId(`python-key-${id}`), {
+          after: 4,
+          label: `${id} (${value})`,
+        });
+        check((await getEditorCode(page)).endsWith(value), `the ${id} key did not type ${value}`);
+      }
+      check(
+        (await getEditorCode(page)) === mixedText,
+        `the symbol run typed ${JSON.stringify(await getEditorCode(page))}`
+      );
+      check(
+        (await getEditorCode(page)).split('\n').length === 1,
+        'a symbol or operator key produced a line break'
+      );
+      await setEditorText(page, baseline, baseline.length);
+
+      // ---- Enter is the only key that may make a line, and it makes exactly one ----
+      await setEditorText(page, '', 0);
+      for (let index = 0; index < 3; index += 1) {
+        await fastTouch(page, cdp, editorShell.getByTestId('python-key-newline'), {
+          after: 8,
+          label: 'Return in a rapid run',
+        });
+      }
+      await page.waitForTimeout(50);
+      check(
+        (await getEditorCode(page)) === '\n\n\n',
+        `three Return touches typed ${JSON.stringify(await getEditorCode(page))}`
+      );
+      for (let index = 0; index < 3; index += 1) {
+        await fastTouch(page, cdp, editorShell.getByTestId('python-key-backspace'), {
+          after: 5,
+          label: 'Backspace after Return',
+        });
+      }
+      check((await getEditorCode(page)) === '', 'three Backspace touches did not remove three Returns');
+
+      // A newline inside an indented suite is still one newline, and it keeps the suite's own
+      // indentation. No other key is allowed to add a line or move the caret.
+      await setEditorText(page, 'def f():\n    x = 1', 18);
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-newline'), {
+        hold: 10,
+        after: 20,
+        label: 'Return inside an indented suite',
+      });
+      await page.waitForTimeout(40);
+      check(
+        (await getEditorCode(page)) === 'def f():\n    x = 1\n    ',
+        `Return inside a suite typed ${JSON.stringify(await getEditorCode(page))}`
+      );
+      await setEditorText(page, 'abcdef', 3);
+      for (const letter of ['x', 'y']) {
+        await fastTouch(page, cdp, editorShell.getByTestId(`python-key-${letter}`), {
+          after: 5,
+          label: `${letter} in the middle of a line`,
+        });
+      }
+      check(
+        (await getEditorCode(page)) === 'abcxydef',
+        `typing in the middle produced ${JSON.stringify(await getEditorCode(page))}`
+      );
+      check(
+        (await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor())) === 5,
+        'typing in the middle left the caret away from the inserted text'
+      );
+
+      await page.keyboard.down('Shift');
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.up('Shift');
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-comma'), {
+        after: 10,
+        label: 'a key over a selection',
+      });
+      check(
+        (await getEditorCode(page)) === 'abc,def',
+        `a key over a selection produced ${JSON.stringify(await getEditorCode(page))}`
+      );
+      await page.keyboard.down('Shift');
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.up('Shift');
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-backspace'), {
+        after: 10,
+        label: 'Backspace over a selection',
+      });
+      check(
+        (await getEditorCode(page)) === 'abcdef',
+        `Backspace over a selection produced ${JSON.stringify(await getEditorCode(page))}`
+      );
+      await setEditorText(page, baseline, baseline.length);
+
+      // ---- A key immediately after a layout switch, with no settling pause ----
+      await setEditorText(page, '', 0);
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-layout'), {
+        label: '123 immediately before a digit',
+      });
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-digit-7'), {
+        label: 'a digit immediately after 123',
+      });
+      await page.waitForTimeout(20);
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-layout'), {
+        label: 'ABC immediately before a letter',
+      });
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-a'), {
+        label: 'a letter immediately after ABC',
+      });
+      await page.waitForTimeout(20);
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-fn'), {
+        label: 'Fn immediately before a digit',
+      });
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-q'), {
+        label: 'a digit immediately after Fn',
+      });
+      await page.waitForTimeout(20);
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-fn'), {
+        label: 'Fn off after the digit',
+      });
+      check(
+        (await getEditorCode(page)) === '7a1',
+        `keys immediately after a switch typed ${JSON.stringify(await getEditorCode(page))}`
+      );
+      check((await editorShell.getAttribute('data-state')) === 'open', 'a layout switch folded the keyboard');
+      check(await editorHasFocus(page), 'a layout switch took the editor caret');
+
+      // ---- Layout under the fastest possible repeated touch ----
+      // 5, 10, 20 and 50 taps with no pause between them. The page is a function of the previous
+      // state, so an out-of-order or lost touch shows up as the wrong page, not as a slow one.
+      await setEditorText(page, '', 0);
+      for (const count of [5, 10, 20, 50]) {
+        if ((await editorShell.getByTestId('python-keyboard').getAttribute('data-page')) !== 'abc') {
+          await fastTouch(page, cdp, editorShell.getByTestId('python-key-layout'), { label: 'ABC' });
+          await waitForKeyboardPage(page, 'abc');
+        }
+        for (let index = 0; index < count; index += 1) {
+          await fastTouch(page, cdp, editorShell.getByTestId('python-key-layout'), {
+            label: `${count} rapid layout switches`,
+          });
+        }
+        await page.waitForTimeout(80);
+        const expectedPage = count % 2 === 0 ? 'abc' : '123';
+        check(
+          (await editorShell.getByTestId('python-keyboard').getAttribute('data-page')) === expectedPage,
+          `${count} rapid layout touches ended on ${await editorShell
+            .getByTestId('python-keyboard')
+            .getAttribute('data-page')}, expected ${expectedPage}`
+        );
+        check((await editorShell.getAttribute('data-state')) === 'open', `${count} layout touches folded the keyboard`);
+        check(await editorHasFocus(page), `${count} layout touches took the editor caret`);
+        check((await getEditorCode(page)) === '', `${count} layout touches changed the code`);
+        if (expectedPage === '123') {
+          await fastTouch(page, cdp, editorShell.getByTestId('python-key-layout'), { label: 'ABC' });
+          await waitForKeyboardPage(page, 'abc');
+        }
+      }
+
+      // ---- 100 randomized combined scenarios, every key a real touch ----
+      // The plans mix letters, both symbol sets, the operator row, Fn digits, Shift, Backspace and
+      // page switches at burst and pause timings. Seed n is reproducible by running this block
+      // again with n; a failure carries the seed and the whole plan, and is never skipped.
+      await setEditorText(page, '', 0);
+      if ((await editorShell.getByTestId('python-keyboard').getAttribute('data-page')) !== 'abc') {
+        await fastTouch(page, cdp, editorShell.getByTestId('python-key-layout'), { label: 'ABC' });
+        await waitForKeyboardPage(page, 'abc');
+      }
+      const abcPoints = await captureKeyPoints(page);
+      await fastPoint(page, cdp, abcPoints['python-key-layout']);
+      await waitForKeyboardPage(page, '123');
+      const numericPoints = await captureKeyPoints(page);
+      await fastPoint(page, cdp, numericPoints['python-key-layout']);
+      await waitForKeyboardPage(page, 'abc');
+      const keyPoints = { abc: abcPoints, 123: numericPoints };
+      console.log(`\n${STRESS_COUNT} randomized combined touch scenarios`);
+      let stressTaps = 0;
+      let stressStarted = performance.now();
+      for (let seed = 1; seed <= STRESS_COUNT; seed += 1) {
+        const plan = planKeyboardScenario(seed);
+        stressTaps += countTaps(plan);
+        await runKeyboardScenario(page, cdp, editorShell, plan, keyPoints);
+        if (seed % 20 === 0) ok(`${seed} seeds and ${stressTaps} touches passed`);
+      }
+      const stressSeconds = ((performance.now() - stressStarted) / 1000).toFixed(1);
+      ok(
+        `${STRESS_COUNT} randomized scenarios passed: ${stressTaps} touches in ${stressSeconds}s (seeds 1-${STRESS_COUNT})`
+      );
+      await setEditorText(page, baseline, baseline.length);
+
+      // ---- Blur and refocus, through the keyboard's animation ----
+      // The caret leaves (a null relatedTarget, as a tap on the page gives it) and comes back by a
+      // real touch at the text's own coordinates. Ten cycles, each reopened before the previous
+      // slide has finished, so the visibility state cannot depend on an animation ending.
+      console.log('\nfocus and visibility cycles');
+      await setEditorText(page, '', 0);
+      await page.waitForTimeout(450);
+      const content = page.locator('.cm-content');
+      for (let cycle = 0; cycle < 10; cycle += 1) {
+        await page.evaluate(() => document.querySelector('.cm-content')?.blur());
+        await page.waitForTimeout(240);
+        check(
+          (await editorShell.getAttribute('data-state')) === 'closed',
+          `cycle ${cycle}: losing the caret did not fold the keyboard`
+        );
+        // The shell's slide changes the pane height, so the text is placed after the movement has
+        // finished. Playwright's `tap` is a real touchscreen tap in this context, and it re-measures
+        // the line each cycle instead of reusing a coordinate from before the keyboard moved.
+        await content.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(30);
+        const box = await content.boundingBox();
+        check(Boolean(box), `cycle ${cycle}: the code has no box to touch`);
+        await content.tap({ position: { x: 24, y: 12 }, timeout: 3000 });
+        await page.waitForTimeout(220);
+        const reopened =
+          (await editorShell.getAttribute('data-state')) === 'open' && (await editorHasFocus(page));
+        if (!reopened) {
+          const atPoint = await page.evaluate(
+            ({ x, y }) => {
+              const element = document.elementFromPoint(x, y);
+              return {
+                active: document.activeElement?.className ?? document.activeElement?.tagName,
+                atPoint: element?.className ?? element?.tagName ?? null,
+              };
+            },
+            { x: box.x + 24, y: box.y + 12 }
+          );
+          fail(
+            `cycle ${cycle}: touching the code did not reopen the keys (${JSON.stringify(atPoint)})`
+          );
+        }
+        check((await getEditorCode(page)) === '', `cycle ${cycle}: focus changed the code`);
+      }
+      ok('10 blur/refocus cycles never left the keys hidden or the editor disconnected');
+
+      // Done hides and the mode bar's key button shows, five times. The editor's own visibility is
+      // not the keyboard's: after Done the code is still there and a tap brings both back.
+      for (let cycle = 0; cycle < 5; cycle += 1) {
+        await fastTouch(page, cdp, editorShell.getByTestId('python-key-done'), {
+          hold: 20,
+          after: 120,
+          label: `Done in cycle ${cycle}`,
+        });
+        check(
+          (await editorShell.getAttribute('data-state')) === 'closed',
+          `hide/show cycle ${cycle}: Done did not fold the keys`
+        );
+        const toggle = page.locator('[data-testid="keyboard-toggle"]:visible').first();
+        await touchTap(page, cdp, toggle, {
+          hold: 30,
+          scroll: true,
+          label: `the Python keys button in cycle ${cycle}`,
+        });
+        await page.waitForFunction(
+          () =>
+            document.querySelector('[data-testid="mobile-keyboard-shell"]')?.getAttribute('data-state') ===
+            'open',
+          undefined,
+          { timeout: 1500 }
+        );
+        // The next cycle presses Done on the cap that is sliding into place; measure it where it
+        // settles rather than halfway up.
+        await page.waitForTimeout(240);
+      }
+      ok('five Done/show cycles kept the same shell and reopened the same page');
+
+      // ---- Input-to-render latency, measured at the DOM text CodeMirror updates ----
+      await setEditorText(page, '', 0);
+      const latencies = [];
+      for (let sample = 0; sample < 12; sample += 1) {
+        const expectedLength = sample + 1;
+        await page.evaluate((targetLength) => {
+          window.__latency = { start: performance.now(), done: null };
+          const root = document.querySelector('.cm-content');
+          const observer = new MutationObserver(() => {
+            if (window.__mechalabEditors['editor-main'].get().length >= targetLength) {
+              window.__latency.done = performance.now();
+              observer.disconnect();
+            }
+          });
+          observer.observe(root, { subtree: true, childList: true, characterData: true });
+        }, expectedLength);
+        await fastTouch(page, cdp, editorShell.getByTestId('python-key-a'), {
+          hold: 6,
+          label: `latency sample ${sample}`,
+        });
+        await page.waitForFunction(
+          () => typeof window.__latency?.done === 'number',
+          undefined,
+          { timeout: 1000 }
+        );
+        latencies.push(await page.evaluate(() => window.__latency.done - window.__latency.start));
+      }
+      latencies.sort((a, b) => a - b);
+      ok(
+        `touch-to-rendered-text latency: median ${latencies[6].toFixed(1)}ms, max ${latencies.at(-1).toFixed(1)}ms over 12 samples`
+      );
+      await setEditorText(page, baseline, baseline.length);
+      await page.waitForTimeout(120);
 
       // A held Backspace repeats like a phone's: one delete on the way down, then a steady run.
       for (const letter of 'holddeletetouch') {
@@ -1520,7 +2143,57 @@ async function main() {
         Math.abs(barOnKeys.y + barOnKeys.height - risen.y) <= 1,
         'the Study bar must ride on the editor keyboard as it opens'
       );
-      await press(editorShell, 'python-key-fn');
+
+      // ---- The same keys, the same touches, in Visual mode ----
+      // A block field is an input with its value selected, not CodeMirror, so its adapter and its
+      // first-key replacement are separate code paths. Twenty plans type, backspace and switch
+      // layouts in a field; Escape discards each, leaving main.py byte-for-byte as it was.
+      if ((await editorKeyboard.getAttribute('data-fn')) === '1') {
+        await press(editorShell, 'python-key-fn');
+      }
+      await setEditorText(page, baseline, baseline.length);
+      await page.waitForTimeout(80);
+      console.log('\nthe same keys in Visual mode');
+      await touchTap(page, cdp, page.getByTestId('editor-mode-visual'), {
+        hold: 40,
+        scroll: true,
+        label: 'the Visual mode button',
+      });
+      await page.getByTestId('python-block-editor').waitFor({ state: 'visible', timeout: 20000 });
+      await page.waitForTimeout(320);
+      const firstField = page.locator('[data-testid^="block-field-"]').first();
+      check((await firstField.count()) >= 1, 'the first Visual field was not found');
+      let visualTaps = 0;
+      const visualStarted = performance.now();
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const plan = planVisualScenario(seed);
+        visualTaps += countTaps(plan);
+        await runVisualScenario(page, cdp, editorShell, firstField, plan, keyPoints);
+        if (seed % 10 === 0) ok(`${seed} Visual seeds and ${visualTaps} touches passed`);
+      }
+      const visualSeconds = ((performance.now() - visualStarted) / 1000).toFixed(1);
+      ok(`20 randomized Visual scenarios passed: ${visualTaps} touches in ${visualSeconds}s (seeds 1-20)`);
+      check(
+        (await getEditorCode(page)) === baseline,
+        'typing in an escaped Visual field changed main.py'
+      );
+      await touchTap(page, cdp, page.getByTestId('editor-mode-code'), {
+        hold: 40,
+        scroll: true,
+        label: 'the Python Code mode button',
+      });
+      await page.waitForTimeout(220);
+      check(
+        (await editorShell.getAttribute('data-state')) === 'open',
+        'returning to Python Code left the custom keyboard hidden'
+      );
+      await setEditorText(page, baseline, baseline.length);
+      check((await getEditorCode(page)) === baseline, 'the Code editor did not come back to baseline');
+      check(await editorHasFocus(page), 'the Code editor did not come back to the caret');
+
+      if ((await editorKeyboard.getAttribute('data-fn')) === '1') {
+        await press(editorShell, 'python-key-fn');
+      }
       await press(editorShell, 'python-key-done');
       await page.waitForTimeout(320);
       ok('every editor key answers a touch, holds its preview, types fast, buzzes, and slides both ways');
@@ -1718,8 +2391,8 @@ async function main() {
       });
       check(smallKeys.count >= 60, `the 360px keyboard has only ${smallKeys.count} keys`);
       check(
-        smallKeys.minHeight >= 40 && smallKeys.minWidth >= 20,
-        `a 360px key measures ${smallKeys.minWidth}x${smallKeys.minHeight}, below the touch floor`
+        smallKeys.minHeight >= 43.5 && smallKeys.minWidth >= 20,
+        `a 360px key measures ${smallKeys.minWidth}x${smallKeys.minHeight}, below the 44 px target`
       );
       await assertKeyCentresHit(page, 'phone-field-keyboard', 'the 360px page keyboard');
       await page.setViewportSize(PHONE);
@@ -1728,6 +2401,48 @@ async function main() {
       check(
         Math.abs(restoredBox.y + restoredBox.height - PHONE.height) <= 2,
         `back at 390px the page keyboard ends at ${Math.round(restoredBox.y + restoredBox.height)}px`
+      );
+
+      // The same 44 px caps on a large phone and a small phone held sideways. At 740x390 the
+      // keyboard is nearly the whole viewport, so this also pins the shell to the bottom edge and
+      // proves every cap is still the element under its own centre rather than the header above it.
+      for (const size of [
+        { width: 428, height: 926, label: 'the large phone' },
+        { width: 740, height: 390, label: 'the landscape phone' },
+      ]) {
+        await page.setViewportSize({ width: size.width, height: size.height });
+        await page.waitForTimeout(420);
+        const fit = await page.evaluate(() => {
+          const shell = document.querySelector('[data-testid="phone-field-keyboard"]');
+          const shellRect = shell?.getBoundingClientRect();
+          const keys = [...shell.querySelectorAll('[data-testid^="python-key-"]')].map((key) =>
+            key.getBoundingClientRect()
+          );
+          return {
+            top: shellRect?.top ?? null,
+            bottom: shellRect?.bottom ?? null,
+            minHeight: Math.min(...keys.map((rect) => rect.height)),
+            minWidth: Math.min(...keys.map((rect) => rect.width)),
+            count: keys.length,
+          };
+        });
+        check(fit.count >= 60, `${size.label}: the keyboard has only ${fit.count} keys`);
+        check(
+          fit.top !== null && fit.top >= -1 && Math.abs(fit.bottom - size.height) <= 2,
+          `${size.label}: the keyboard occupies ${JSON.stringify({ top: fit.top, bottom: fit.bottom })}`
+        );
+        check(
+          fit.minHeight >= 43.5 && fit.minWidth >= 20,
+          `${size.label}: a key measures ${fit.minWidth}x${fit.minHeight}, below the 44 px target`
+        );
+        await assertNoSidewaysScroll(page, `${size.label} keyboard`);
+        await assertKeyCentresHit(page, 'phone-field-keyboard', `${size.label} keyboard`);
+      }
+      await page.setViewportSize(PHONE);
+      await page.waitForTimeout(420);
+      check(
+        await search.evaluate((element) => element === document.activeElement),
+        'the page field lost its caret after the screen-size round trip'
       );
 
       const fieldCloseFrames = await sampleKeyboardSlide(page, 'phone-field-keyboard', () =>
@@ -1951,6 +2666,10 @@ async function main() {
       ok('the calculator and the rich note composer both take the site keys under a finger');
 
       check(pageErrors.length === 0, `the touch session threw: ${pageErrors.join('; ')}`);
+      check(
+        consoleErrors.length === 0,
+        `the touch session logged ${consoleErrors.length} console error(s): ${consoleErrors.slice(0, 3).join('; ')}`
+      );
       await context.close();
     }
 

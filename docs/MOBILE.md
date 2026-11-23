@@ -47,12 +47,21 @@ flowchart LR
    space / Done. **Fn** makes the top row block verbs and the QWERTY row digits; **123** opens the
    digits and arithmetic page; Shift is one-shot, and a second quick tap locks capitals. Closing the
    keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
-   the page and the lighting stay remembered. Keys clear the app's 28 px floor at 40 px, because
-   they are hit repeatedly and without looking. A key cancels its pointer default, so the caret, the
-   field and the open keyboard stay put. It also compresses under the finger (a transform, so no
-   neighbour moves), raises its character above the cap, and asks for a light vibration where the
-   device has one; Enter is a medium tap and the mode keys answer with two ticks. iOS Safari has no
-   Vibration API, so there the press animation is the feedback, and no copy promises otherwise.
+   the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
+   raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
+   does not allow them to grow wider. A key cancels its pointer default, so the caret, the field and
+   the open keyboard stay put. It also compresses under the finger (a transform, so no neighbour
+   moves), raises its character above the cap, and asks for a light vibration where the device has
+   one; Enter is a medium tap and the mode keys answer with two ticks. iOS Safari has no Vibration
+   API, so there the press animation is the feedback, and no copy promises otherwise.
+
+   **Return and Backspace follow the file, not a timer.** A suite header opens its body at four
+   spaces (`indentUnit.of('    ')`), so Enter inside `if True:` continues the indent the starters and
+   lessons use. Backspace uses `deleteCharBackwardStrict`: one tap deletes one character, including
+   at the end of an indentation unit, where the indentation-aware command used to remove all four.
+   A held repeating key acts on the way down and consumes the click that follows its lift, however
+   late the browser makes it; a keyboard or switch activation (`detail === 0`) still fires once. No
+   time window decides whether a press was real.
 
    **The caret is the switch.** A focus in CodeMirror or in a block field opens the keys; a focus
    that lands on the lesson text, another tab or the page outside them folds them. The shell is kept
@@ -90,7 +99,7 @@ flowchart LR
    under `prefers-reduced-motion`. The choice is stored with the editor's other device preferences.
 
    Sizing is in CSS pixels inside the fixed shell and never reads the editor's `--editor-font-size`,
-   so zooming the code grows the code, not the keyboard; the keys keep their 40 px floor at every
+   so zooming the code grows the code, not the keyboard; the keys keep their 44 px floor at every
    viewport and `env(safe-area-inset-bottom)` keeps the last row clear of a home indicator. Pinch
    zoom stays the browser's, as does the text-size setting it exists for.
 
@@ -179,13 +188,13 @@ touch laptop gets them and a 390 px window with a mouse does not.
 | :--- | ---: | :--- |
 | `.btn` (primary actions) | 44 px | the comfortable target; Run, Start, Install |
 | `.action-tray .btn` | 40 px | header chrome, so the tray stays one line high |
-| punctuation keys | 40 × 40 px | repeated, without looking |
+| punctuation keys | 44 × 44 px | repeated, without looking |
 | small secondary controls | 28 × 28 px | the app-wide minimum |
 | text fields on touch | 16 px type | the size iOS will not zoom on focus |
 
 The element floors live in `@layer base` and the primitives in `@layer components`. That is not
 tidiness: an unlayered rule outranks every Tailwind utility whatever its specificity, and the first
-version of this block sat outside the layers — its 28 px floor flattened the `min-h-[40px]`
+version of this block sat outside the layers — its 28 px floor flattened the `min-h-[44px]`
 punctuation key back to 28, which the gate caught on its first run.
 
 ## Breakpoints
@@ -235,32 +244,38 @@ npm run icons             # regenerate the manifest PNGs from favicon.svg
 in order: the shell fits with the picker as its only nav row and the header publishing its measured
 height; all sixteen tabs are in the sheet with 44 px rows, Escape closes it and focus returns; a lab's
 plot opens at its own resolution and scrolls; Study opens on the text, Code mounts the editor, a
-punctuation key inserts at the caret, every key is 40 px, the Run bar ends on the bottom edge, and a
-sheet hides it; a reload inside Code comes back to Code and Lesson hides the editor without a remount;
-the lesson sheet closes from the list's own corner × and hands focus back, then selects another entry
-and the strip follows; the install row appears only with a
+punctuation key inserts at the caret, every key clears 43.5 px (the 44 px target), the Run bar ends on
+the bottom edge, and a sheet hides it; a reload inside Code comes back to Code and Lesson hides the
+editor without a remount; the lesson sheet closes from the list's own corner × and hands focus back,
+then selects another entry and the strip follows; the install row appears only with a
 prompt event (or the iOS UA) and calls the prompt exactly once; and at 768/1024 the rail is back with
 Predict sharing Run's row. Its last block drives the keyboard with Chromium's own touch events rather
 than mouse clicks, because every key cancels `pointerdown` and a mouse-only gate cannot see the
-difference: it taps the editor's keys and a page field's keys, holds one for its preview, types ten
-letters at an uninterrupted finger's pace, reads the haptics, locks capitals on a double Shift,
-holds Backspace for a second in the editor, a controlled search and the note composer and proves it
-repeats then stops, puts a finger in the gap between two
-caps and in both 123 and ABC without losing the caret, hands the editor and a page field to the OS
-keyboard and gets the site keys back, carries the keys between two fields without folding, and
-records the shell's position every frame so a slide cannot pass for a jump — at 390 and 360 px,
-including the calculator display and the rich note composer. It launches no interpreter: `test:e2e` and
+difference: it taps the editor's keys and a page field's keys, holds one for its preview, types at
+40, 70, 100, 120 and 150 WPM, then runs **100 seeded code plans (1,325 touches)** and **20 seeded
+Visual plans (192 touches)** mixing letters, symbols, operators, Return, Backspace, Shift, Fn and
+layout switches. It locks capitals on a double Shift, holds Backspace for a second in the editor, a
+controlled search and the note composer and proves it repeats then stops, puts a finger in the gap
+between two caps and in both 123 and ABC without losing the caret, hands the editor and a page field
+to the OS keyboard and gets the site keys back, carries the keys between two fields without folding,
+measures touch-to-rendered-text latency, and records the shell's position every frame so a slide
+cannot pass for a jump — at 360, 390, 428 and 740 px, including the calculator display and the rich
+note composer. Ten blur/refocus cycles and five Done/show cycles check that the keyboard's visibility
+belongs to its own state, not to an animation ending. The session fails on a page exception or a
+console error as well as on a wrong character. It launches no interpreter: `test:e2e` and
 `test:predict` own running code, and 10 MB on a throttled phone link would make this too slow to gate
 every pull request.
 
 Measured on the run that added it: header 107.75 px (budget 112), picker rows 56 px, punctuation keys
-40 × 40, phone Run 44 px, Study bar flush with the 844 px edge, and no horizontal scroll on the shell,
+44 × 44, phone Run 44 px, Study bar flush with the 844 px edge, and no horizontal scroll on the shell,
 a lab, either Study surface, or after a lesson change.
 
 ## Deliberate limits
 
 - **Landscape is not laid out separately.** A phone on its side is 844 × 390: the same single surface,
-  with less vertical room. The editor's 45dvh minimum is what keeps it usable.
+  with less vertical room. The keyboard is measured at 740 × 390 with every 44 px cap still hitting
+  its own centre, but it covers most of that height; the editor's 45dvh minimum is what keeps the
+  code usable above it.
 - **Pinch still zooms the page.** The plot expander is the answer for a trace; prose zoom stays the
   browser's own, because taking it over breaks the text-size setting a learner chose.
 - **The phone editor is deferred, not deferred forever.** Opening Code mounts it; a preset that shows

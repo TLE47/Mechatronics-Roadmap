@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.3`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.4`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,32 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-23] — The phone keyboard survives fast typing, and the suite proves it
+
+The custom phone keyboard was fast enough to lose a character before the finger had left the key.
+Two causes were confirmed in the browser. CodeMirror's default two-space indent unit made **Return**
+after a suite header open the body at half the file's four-space width, and the phone **Backspace**
+used the indentation-aware command, so one tap at the end of a four-space indent deleted all four
+spaces instead of the one character the key promises. The editor now sets `indentUnit` to four
+spaces and the phone handle uses `deleteCharBackwardStrict`.
+
+The repeat path no longer keeps time. A pointer press on a held Backspace already deletes; the
+browser's click on the lift could arrive after the old 700 ms guard and delete a second time. A
+repeat key now always consumes its pointer click (`detail > 0`) and still answers a keyboard or
+switch activation once, with no timer deciding whether the press was real. The shell also stamps
+`data-pressed-at` on pointer up, cancel and click, so a slow press that moves focus on the lift is
+not mistaken for the learner tapping out of the editor.
+
+Caps grew from 40 px to **44 px** (+10 %), the modest raise the horizontal budget allows; at 360 px
+the narrowest key still measures 44 px high. The gate now types on real Chromium touch input:
+40/70/100/120/150 WPM individual touches, **100 seeded code scenarios (1,325 touches)** and **20
+seeded Visual scenarios (192 touches)**, 10 blur/refocus cycles, five Done/show cycles, rapid layout
+switches, repeated Return and Backspace, indented and mid-line edits, and 360/390/428/740 px
+layouts. A 12-sample touch-to-text measurement reads around 30 ms median on the test VM. Every plan
+is reproducible from its seed. The gate also fails on any page exception or console error; it caught
+a React shorthand/longhand border warning in a selected Visual card, which now writes its four
+border sides as longhands.
 
 ## [2026-11-22] — The OS-keyboard dismissal is tested without a phone
 

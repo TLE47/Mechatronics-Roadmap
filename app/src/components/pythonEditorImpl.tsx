@@ -25,7 +25,7 @@ import React, {
 } from 'react';
 import {
   defaultKeymap,
-  deleteCharBackward,
+  deleteCharBackwardStrict,
   deleteLine as deleteLineCommand,
   history,
   historyKeymap,
@@ -36,7 +36,7 @@ import {
   redo as redoCommand,
   undo as undoCommand,
 } from '@codemirror/commands';
-import { bracketMatching, foldGutter, indentOnInput } from '@codemirror/language';
+import { bracketMatching, foldGutter, indentOnInput, indentUnit } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
 import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import {
@@ -419,7 +419,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         backspace: () => {
           const view = viewRef.current;
           if (!view) return;
-          deleteCharBackward(view);
+          // The handle's contract is one character, the way a phone's Backspace behaves. The
+          // indentation-aware command deleted a whole 4-space unit in one press at the end of an
+          // indent, which is not what the key says it does (and made a fast run unpredictable).
+          deleteCharBackwardStrict(view);
           view.focus();
         },
         indent: () => {
@@ -602,6 +605,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
             indentWithTab,
           ]),
           python(),
+          // The project's one tab width is four spaces (`insertTab` in PythonEditor), and the
+          // starters and lessons are written with it. CodeMirror's 2-space default made Enter after
+          // a suite header open a body at half the indentation of the rest of the file.
+          indentUnit.of('    '),
           pythonEditorTheme,
           sliderField,
           inlineValueField,

@@ -199,13 +199,13 @@ const PRESS =
 
 /** A key's surface: the raised white cap of the picture, themed by the app's own tokens. */
 const CAP =
-  `kb-key relative flex min-h-[40px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg border border-line-soft bg-panel text-body shadow-sm ${PRESS}`;
+  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg border border-line-soft bg-panel text-body shadow-sm ${PRESS}`;
 
 const ACTION_CAP =
-  `kb-key relative flex min-h-[40px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center gap-0.5 rounded-lg border border-line-soft bg-raise px-0.5 text-[9px] font-semibold leading-none text-body ${PRESS}`;
+  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center gap-0.5 rounded-lg border border-line-soft bg-raise px-0.5 text-[9px] font-semibold leading-none text-body ${PRESS}`;
 
 const OPERATOR_CAP =
-  `kb-key relative flex min-h-[40px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
+  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
 
 /** One key. `button` keeps the keyboard reachable from a switch or a screen reader. */
 function Key({
@@ -246,10 +246,6 @@ function Key({
 }) {
   const holdTimer = useRef<number | null>(null);
   const repeatTimer = useRef<number | null>(null);
-  const repeated = useRef(false);
-  // When this key last took a pointer. A click that follows a pointer belongs to the repeat path,
-  // which already acted; a keyboard's Enter/Space click has no pointer behind it.
-  const pointerAt = useRef(0);
 
   const stopRepeat = () => {
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
@@ -267,7 +263,6 @@ function Key({
   const beginRepeat = () => {
     if (!onRepeat) return;
     stopRepeat();
-    repeated.current = true;
     if (feedback !== 'none') haptic(feedback);
     onRepeat();
     holdTimer.current = window.setTimeout(() => {
@@ -290,7 +285,6 @@ function Key({
       // The editing surface keeps focus — and with it the caret, the scroll and the open field.
       onPointerDown={(event) => {
         event.preventDefault();
-        pointerAt.current = Date.now();
         if (onRepeat) {
           try {
             event.currentTarget.setPointerCapture(event.pointerId);
@@ -303,28 +297,23 @@ function Key({
       }}
       onPointerUp={() => {
         stopRepeat();
-        // The click follows the lift in the same task; let it see that this press already acted.
-        if (onRepeat) window.setTimeout(() => (repeated.current = false), 0);
         onPreview?.(null);
       }}
       onPointerCancel={() => {
         stopRepeat();
-        repeated.current = false;
-        pointerAt.current = 0;
         onPreview?.(null);
       }}
       onPointerLeave={() => {
         stopRepeat();
-        if (onRepeat) window.setTimeout(() => (repeated.current = false), 0);
         onPreview?.(null);
       }}
       onLostPointerCapture={() => stopRepeat()}
-      onClick={() => {
-        const fromPointer = Date.now() - pointerAt.current < 700;
-        if (repeated.current || (onRepeat && fromPointer)) {
-          repeated.current = false;
-          return;
-        }
+      onClick={(event) => {
+        // A repeating key already acted on the way down. Its click is the lift, however late the
+        // browser synthesises it, so a pointer click is never a second press. A keyboard's
+        // Enter/Space activation has `detail === 0` and no pointer behind it; that one press is the
+        // only way a switch or screen reader can use Backspace, so it still deletes once.
+        if (onRepeat && event.detail > 0) return;
         if (feedback !== 'none') haptic(feedback);
         onPress();
       }}
@@ -530,7 +519,17 @@ export function MobilePythonKeyboard({
         if (target.closest('input, textarea, select, label')) return;
         event.preventDefault();
       }}
+      // A slow press can outlast the guard's window: the stamp was taken on the way down, and iOS
+      // may move the focus on the lift or the click that follows it. The same press stamps again at
+      // each of those moments, so a keyboard-caused blur is never read as the learner leaving.
+      onPointerUpCapture={() =>
+        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()))
+      }
+      onPointerCancelCapture={() =>
+        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()))
+      }
       onClickCapture={(event) => {
+        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()));
         const target = event.target;
         const button = target instanceof Element ? target.closest('button') : null;
         if (!button || button.getAttribute('data-no-keep-focus') === '1') return;
@@ -602,7 +601,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
             <label
-              className="relative flex min-h-[40px] w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-raise font-mono text-[13px] text-muted focus-within:border-accent"
+              className="relative flex min-h-[44px] w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-raise font-mono text-[13px] text-muted focus-within:border-accent"
               title="Custom colour"
             >
               <span aria-hidden="true">+</span>
@@ -619,7 +618,7 @@ export function MobilePythonKeyboard({
               data-testid="rgb-color-indicator"
               aria-label={`Current colour ${rgb.color}`}
               title={`Current colour ${rgb.color}`}
-              className="flex min-h-[40px] w-9 shrink-0 items-center justify-center rounded-lg border bg-panel font-mono text-[13px] font-semibold"
+              className="flex min-h-[44px] w-9 shrink-0 items-center justify-center rounded-lg border bg-panel font-mono text-[13px] font-semibold"
               style={{ color: rgb.color, borderColor: rgb.color }}
             >
               Aa
@@ -628,7 +627,7 @@ export function MobilePythonKeyboard({
 
           {/* Row 3 — brightness and speed, the two knobs every mode shares. */}
           <div role="group" aria-label="Lighting strength" className="mt-1 flex min-w-0 gap-2" data-testid="rgb-sliders">
-            <label className="flex min-h-[40px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
+            <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Bright
               <input
                 type="range"
@@ -645,7 +644,7 @@ export function MobilePythonKeyboard({
                 {rgb.brightness}%
               </span>
             </label>
-            <label className="flex min-h-[40px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
+            <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Speed
               <input
                 type="range"
@@ -988,7 +987,7 @@ export function MobilePythonKeyboard({
             pressed={fn}
             onPress={() => setFn((on) => !on)}
             wide={1.15}
-            className="kb-key flex min-h-[40px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg font-mono text-[14px] font-bold"
+            className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg font-mono text-[14px] font-bold"
             style={{
               background: fn ? 'var(--accent-strong, var(--accent))' : 'var(--accent)',
               color: 'var(--inverse)',

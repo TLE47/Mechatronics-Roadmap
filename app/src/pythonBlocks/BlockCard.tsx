@@ -298,7 +298,11 @@ export function BlockCard({
         onPointerLeave={handlers.onCardPointerLeave}
         style={{
           background: colors.background,
-          border: `1px solid ${dropAfter ? 'var(--accent)' : selected ? 'var(--accent)' : colors.border}`,
+          // Longhands only: `border` plus `borderLeft` in one style object makes React warn that a
+          // shorthand is overwriting a longhand on every render of a selected card.
+          borderTop: `1px solid ${dropAfter || selected ? 'var(--accent)' : colors.border}`,
+          borderRight: `1px solid ${dropAfter || selected ? 'var(--accent)' : colors.border}`,
+          borderBottom: `1px solid ${dropAfter || selected ? 'var(--accent)' : colors.border}`,
           borderLeft: `3px solid ${colors.rule}`,
           borderRadius: 8,
           boxShadow: dropAfter

@@ -1266,7 +1266,7 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
 @media (pointer: coarse) {
   /* Element floors live in `base`, under every Tailwind utility. Unlayered rules outrank the
      utilities layer whatever their specificity, and the first version of this block sat outside
-     the layers: its 28 px floor flattened a `min-h-[40px]` punctuation key back to 28. A control
+           the layers: its 28 px floor flattened a `min-h-[44px]` punctuation key back to 28. A control
      that asks for more than the floor now keeps what it asked for. */
   @layer base {
     button,
