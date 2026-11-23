@@ -989,17 +989,30 @@ async function main() {
       let after = await getEditorCode(page);
       check(after.length === before.length + 1, 'a punctuation key must insert one character');
       check(after.slice(caret, caret + 1) === ':', 'the colon key did not insert at the caret');
-      // Backspace is also the hold-to-repeat key. A touch tap lifts in the same input batch as the
-      // press, so a slow frame under a loaded runner cannot turn the tap into a held repeat that
-      // deletes more than the one character the check is about.
-      const backspace = await page.getByTestId('python-key-backspace').boundingBox();
-      check(Boolean(backspace), 'the Backspace key has no box to touch');
-      await page.touchscreen.tap(
-        backspace.x + backspace.width / 2,
-        backspace.y + backspace.height / 2
+      const colonCursor = await page.evaluate(() =>
+        window.__mechalabEditors['editor-main'].getCursor()
       );
+      check(
+        colonCursor === caret + 1,
+        `the colon key left the caret at ${colonCursor}, not ${caret + 1}`
+      );
+      // Backspace is also the hold-to-repeat key, and a real lift can sit behind a busy main thread
+      // long enough to look like a hold. This one-character check presses and lifts in a single
+      // task; the finger-paced sections below still prove the real pointer path.
+      await page.getByTestId('python-key-backspace').evaluate((key) => {
+        key.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1 }));
+        key.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerId: 1 }));
+      });
       after = await getEditorCode(page);
-      check(after === before, 'Backspace did not remove the character the keyboard inserted');
+      const cursor = await page.evaluate(() =>
+        window.__mechalabEditors['editor-main'].getCursor()
+      );
+      check(
+        after === before,
+        `Backspace did not remove the character the keyboard inserted (caret ${caret} → ${cursor}; ${JSON.stringify(
+          { before, after }
+        )})`
+      );
 
       await page.getByTestId('python-key-fn').click();
       check(
