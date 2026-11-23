@@ -1434,6 +1434,47 @@ async function main() {
     await page.setViewportSize(PHONE);
     await page.waitForTimeout(200);
     await page.getByTestId('studio-view-code').click();
+    // The Studio's code card is content-sized, not a bounded lesson pane. When the band was
+    // measured but the wrappers around CodeMirror were not, a long, wrapped line made the editor's
+    // scroller as tall as the document: the caret sat under the keys and no key could move it.
+    await page.waitForSelector('[data-editor-face="code"][data-phone-band="1"]', { timeout: 15000 });
+    const longStudioLine = `note = "${'wrapped text '.repeat(40).trim()}"`;
+    await page.evaluate((text) => {
+      const editor = window.__mechalabEditors['editor-studio'];
+      editor.set(text);
+      editor.setCursor(text.length);
+      editor.focus();
+    }, longStudioLine);
+    await page.waitForTimeout(150);
+    await page.getByTestId('python-key-a').click();
+    await page.waitForTimeout(200);
+    const studioBand = await page.evaluate((base) => {
+      const editor = window.__mechalabEditors['editor-studio'];
+      const scroller = document.querySelector('[data-editor="editor-studio"] .cm-scroller');
+      const keys = document.querySelector('[data-testid="python-keyboard"]');
+      const coords = editor.coordsOf(editor.getCursor());
+      return {
+        text: editor.get(),
+        cursor: editor.getCursor(),
+        base,
+        caretBottom: coords ? coords.bottom : null,
+        keysTop: keys ? keys.getBoundingClientRect().top : 0,
+        scrollTop: scroller ? scroller.scrollTop : 0,
+        pageY: window.scrollY,
+      };
+    }, longStudioLine.length);
+    assert.equal(studioBand.text, `${longStudioLine}a`, 'a key in the studio must type at the caret');
+    assert.equal(studioBand.cursor, studioBand.base + 1, 'the studio caret did not follow the key');
+    assert.ok(
+      studioBand.caretBottom !== null && studioBand.caretBottom <= studioBand.keysTop + 1,
+      `the studio caret sits at ${studioBand.caretBottom}px, below the keys at ${studioBand.keysTop}px`
+    );
+    assert.ok(
+      studioBand.scrollTop > 0,
+      'the studio editor scroller never moved; a long line cannot be followed'
+    );
+    assert.equal(studioBand.pageY, 0, 'typing in the studio moved the locked page');
+    ok('a wrapped line in the studio keeps its caret inside the band above the keys');
     // The phone's Code view mounts the runner's editor with its keys up. They own the screen and
     // lock the page, so the studio's own view buttons are off-screen until Done gives them back —
     // the same door the lesson surfaces and the narrow audit use.

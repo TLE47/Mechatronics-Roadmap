@@ -130,7 +130,11 @@ flowchart LR
    picker are hidden (`data-phone-typing` on `<html>` and `<body>`), the mode bar is pinned to the
    top, and the page is locked — `overflow: hidden`, and, because iOS ignores that lock, the body
    is taken out of the document's flow and drawn at the offset that put the mode bar at the top
-   (`data-phone-lock`, `--phone-typing-top`); only the editor's own scroller moves. The editor
+   (`data-phone-lock`, `--phone-typing-top`); only the editor's own scroller moves. The band's
+   height reaches CodeMirror's scroller through every wrapper, in the Studio as well as in a
+   lesson: its code card is content-sized rather than a bounded lesson pane, so without that chain
+   a long wrapped line grew the editor past the band and the caret reveal had nothing to scroll.
+   The editor
    re-focuses only when focus was actually lost: iOS 26 ignores `preventScroll` (CodeMirror turns
    it off on Safari 26), so a focus on every key let Safari scroll the layout to reveal the
    contenteditable — the code sliding above the screen while the footer rose under the keys. The

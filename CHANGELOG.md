@@ -16,6 +16,17 @@ flowchart LR
 
 ---
 
+## [2026-11-23] — The studio's code card follows the caret
+
+On the Studio's phone Code card a wrapped line that filled the screen stopped following the caret:
+the words ran on behind the keys and nothing scrolled. The measured band was right (462 px at
+390×844), but only the lesson pane's bounded body stretched the wrappers between the band and
+CodeMirror's scroller. The Studio card is content-sized, so the editor and its scroller stayed at
+the height of the first lines and grew with the document, and CodeMirror's caret reveal had
+nothing to scroll. The band's wrappers now fill it, so a long line scrolls inside the band while
+the page stays locked. The Studio's phone gate types at the end of a wrapped line and pins the
+caret above the keys, the scroller's movement and an unmoved page.
+
 ## [2026-11-23] — The typing page cannot scroll at all
 
 The code still slid above the screen on an iPhone while a finger typed, and the page's footer rose

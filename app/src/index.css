@@ -1402,8 +1402,21 @@ body[data-phone-typing='1'][data-phone-lock='1'] {
 [data-editor-face='code'][data-phone-band='1'] .cm-scroller {
   min-height: 0;
 }
+/* The band's height has to reach the scroller. In the lesson pane the bounded body's flex chain
+   already stretches these wrappers, but the Studio's code card is content-sized: there the editor
+   and its scroller stayed at the height of the first lines, so a long file grew them past the band
+   and CodeMirror's caret reveal never moved anything — the line being typed sat behind the keys.
+   Every wrapper between the measured face and the scroller fills the band, so the document scrolls
+   inside it. */
+[data-editor-face='code'][data-phone-band='1'] > [data-editor],
+[data-editor-face='code'][data-phone-band='1'] .cm-host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
 [data-editor-face='code'][data-phone-band='1'] .cm-editor,
 [data-editor-face='code'][data-phone-band='1'] .cm-scroller {
+  flex: 1 1 auto;
   height: 100%;
   max-height: 100%;
 }
