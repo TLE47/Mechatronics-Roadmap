@@ -227,11 +227,16 @@ export function EditorCodePane({
       const header = document.querySelector('header[data-chrome="header"]');
       const headerHeight = header?.getBoundingClientRect().height ?? 0;
       const barTop = bar.getBoundingClientRect().top;
-      if (barTop < headerHeight || barTop > window.innerHeight - 76 - keyboardHeight - 60) {
-        // `instant`, not `auto`: the page sets `scroll-behavior: smooth` for its own in-page links,
-        // and `auto` inherits it. An animated placement meant the band was measured while the page
-        // was still moving — the editor got the 140 px floor — and it is the same travelling
-        // scrollbar the learner sees when Code opens.
+      // The keys are up, so put the mode bar directly under the header every time: the band is the
+      // largest the phone can give, not the room left where the page happened to be. The old test
+      // only moved a bar that was near the folds, so a reflow above the editor — a narrower width,
+      // a lesson that rewraps — could leave it 100 px down the screen and silently take that room
+      // from the code. On a 360×640 phone that was the difference between 139 px of band and 42 px.
+      // `instant`, not `auto`: the page sets `scroll-behavior: smooth` for its own in-page links,
+      // and `auto` inherits it. An animated placement meant the band was measured while the page
+      // was still moving — the editor got a floor while the page travelled — and it is the same
+      // travelling scrollbar the learner sees when Code opens.
+      if (Math.abs(barTop - headerHeight - 4) > 1) {
         window.scrollTo({ top: window.scrollY + barTop - headerHeight - 4, behavior: 'instant' });
       }
       const top = bar.getBoundingClientRect().bottom;
@@ -242,7 +247,12 @@ export function EditorCodePane({
       const study = studyBar?.getBoundingClientRect();
       const studyHeight = study && study.height > 0 ? study.height : 0;
       const bottom = window.innerHeight - keyboardHeight - studyHeight;
-      const next = Math.max(140, Math.round(bottom - top));
+      // Never taller than the room that exists. A 140 px floor overran the Study bar on a short
+      // phone: at 360×640 the bar began at 242 px while the face ended at 293 px, so the last 51 px
+      // of code — the line being typed — sat behind the bar while the editor's own scroller still
+      // believed the caret was visible. A smaller band is honest; a band that overlaps the keys
+      // hides the text the learner is writing.
+      const next = Math.max(0, Math.round(bottom - top));
       setEditorBand((current) => (Math.abs((current ?? 0) - next) <= 1 ? current : next));
     };
     compute();

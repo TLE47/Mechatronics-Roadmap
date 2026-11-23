@@ -10,14 +10,17 @@
  * was lost.
  *
  * Every plan is seeded and reproducible. A failure prints the seed, the plan's keys/gaps/holds and
- * the text the editor actually holds. No assertion is relaxed for a random scenario.
+ * the text the editor actually holds. No assertion is relaxed for a random scenario. The last
+ * section shrinks the phone to 360×640, where the band used to claim more height than the space
+ * between the mode bar and the Study bar, and types at random speeds with the caret sampled every
+ * frame against the bar's top.
  */
 
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 import { waitForEditor, getEditorCode } from './editor-code.mjs';
-import { planSpeedScenario } from './keyboard_stress.mjs';
+import { mulberry32, planSpeedScenario } from './keyboard_stress.mjs';
 
 const PHONE = { width: 390, height: 844 };
 const COUNT = Number(process.env.KEYBOARD_SPEED_COUNT ?? 100);
@@ -382,6 +385,140 @@ async function main() {
       'the editor scroller never moved; the caret cannot have been followed'
     );
     ok('a long file is a band above the keys, and typing scrolls only that band');
+
+    console.log('\nthe band fits a short phone, not only a tall one');
+
+    // The band used to have a 140 px floor whatever room existed. On a 360×640 phone the Study bar
+    // began at 242 px while a 140 px face ended at 293 px, so the last two lines — including the
+    // caret — sat behind the bar for the whole session. The face is now capped at the space
+    // between the mode bar and the bar it rests on; a small band is honest, an overlapping one
+    // hides the text being typed.
+    await page.setViewportSize({ width: 360, height: 640 });
+    await delay(500);
+    const shortFace = await page.evaluate(() => {
+      const face = document.querySelector(
+        '[data-testid="editor-panel"][data-phone-code="1"] [data-editor-face="code"]'
+      );
+      const bar = document.querySelector('[data-phone-bar]');
+      const box = face?.getBoundingClientRect();
+      return {
+        marked: face?.getAttribute('data-phone-band') ?? null,
+        top: box ? Math.round(box.top) : 0,
+        bottom: box ? Math.round(box.bottom) : 0,
+        height: box ? Math.round(box.height) : 0,
+        barTop: bar ? Math.round(bar.getBoundingClientRect().top) : 0,
+      };
+    });
+    check(shortFace.marked === '1', 'the 360x640 phone did not get a measured band');
+    check(
+      shortFace.bottom <= shortFace.barTop + 2,
+      `the code band overruns the Study bar (${shortFace.bottom}px > ${shortFace.barTop}px) on a 360x640 phone`
+    );
+    check(
+      shortFace.height >= 44,
+      `the 360x640 phone's code band is only ${shortFace.height}px tall`
+    );
+
+    // The keys moved with the shorter viewport; the touch dispatcher reads `points`, so refresh it
+    // in place rather than leaving the last phone's coordinates.
+    const shortPoints = await page.evaluate(() => {
+      const result = {};
+      for (const element of document.querySelectorAll('[data-testid^="python-key-"]')) {
+        const id = element.getAttribute('data-testid').slice('python-key-'.length);
+        const rect = element.getBoundingClientRect();
+        result[id] = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      }
+      return result;
+    });
+    Object.assign(points, shortPoints);
+
+    const shortFile = Array.from(
+      { length: 30 },
+      (_, index) => `short_${String(index).padStart(2, '0')} = sensor[${index}] + offset`
+    ).join('\n');
+    await page.evaluate((text) => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.set(text);
+      editor.setCursor(text.length);
+      editor.focus();
+    }, shortFile);
+    await delay(120);
+    // The press that brings the end of the long file into the small band. Sampling starts after it,
+    // so what follows measures typing, not the first reveal.
+    await dispatch('touchStart', [{ key: 'a', id: 1 }]);
+    await delay(6);
+    await dispatch('touchEnd', []);
+    await delay(160);
+
+    await page.evaluate(() => {
+      const samples = [];
+      window.__shortSamples = samples;
+      const scroller = document.querySelector(
+        '[data-testid="editor-panel"] [data-editor="editor-main"] .cm-scroller'
+      );
+      const bar = document.querySelector('[data-phone-bar]');
+      const sample = () => {
+        const editor = window.__mechalabEditors['editor-main'];
+        const coords = editor.coordsOf(editor.getCursor());
+        samples.push({
+          windowY: window.scrollY,
+          docH: document.documentElement.scrollHeight,
+          scrollTop: scroller ? scroller.scrollTop : 0,
+          caretBottom: coords ? coords.bottom : null,
+          // Read the bar every frame: it is the edge the text must stay above.
+          barTop: bar ? bar.getBoundingClientRect().top : null,
+        });
+        if (samples.length < 1500) window.__shortFrame = requestAnimationFrame(sample);
+      };
+      sample();
+    });
+
+    const shortRng = mulberry32(20261123);
+    const shortWord = 'shortband';
+    for (const key of shortWord) {
+      await dispatch('touchStart', [{ key, id: 1 }]);
+      await delay(2 + Math.floor(shortRng() * 11));
+      await dispatch('touchEnd', []);
+      await delay(4 + Math.floor(shortRng() ** 2 * 220));
+    }
+    await delay(140);
+    const shortRun = await page.evaluate(() => {
+      cancelAnimationFrame(window.__shortFrame);
+      return {
+        samples: window.__shortSamples ?? [],
+        text: window.__mechalabEditors['editor-main'].get(),
+        cursor: window.__mechalabEditors['editor-main'].getCursor(),
+        keys: document.querySelector('[data-testid="mobile-keyboard-shell"]')?.getAttribute('data-state'),
+        focused: Boolean(document.activeElement?.closest('.cm-editor')),
+      };
+    });
+
+    check(
+      shortRun.text === `${shortFile}a${shortWord}`,
+      `the short-phone run typed ${JSON.stringify(shortRun.text.slice(-24))}`
+    );
+    check(shortRun.cursor === shortRun.text.length, 'the caret did not follow the short-phone run');
+    check(shortRun.keys === 'open', 'the keyboard folded during the short-phone run');
+    check(shortRun.focused, 'the editor lost its caret during the short-phone run');
+    const shortHidden = shortRun.samples.filter(
+      (sample) => sample.caretBottom !== null && sample.barTop !== null && sample.caretBottom > sample.barTop + 0.5
+    );
+    check(
+      shortHidden.length === 0,
+      `${shortHidden.length} of ${shortRun.samples.length} frames typed behind the Study bar on a 360x640 phone`
+    );
+    const shortYs = new Set(shortRun.samples.map((sample) => Math.round(sample.windowY)));
+    check(shortYs.size === 1, `the short-phone page scrolled while typing (${[...shortYs].join(', ')})`);
+    const shortHeights = new Set(shortRun.samples.map((sample) => Math.round(sample.docH)));
+    check(
+      shortHeights.size === 1,
+      `the short-phone page changed height while typing (${[...shortHeights].join(', ')})`
+    );
+    check(
+      shortRun.samples.some((sample) => sample.scrollTop > 0),
+      'the short phone\'s editor scroller never moved; the caret cannot have been followed'
+    );
+    ok('a 360x640 phone keeps the caret above the Study bar with the page still');
 
     check(pageErrors.length === 0, `the speed session threw: ${pageErrors.join('; ')}`);
     check(

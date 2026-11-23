@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.6`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.7`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,24 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-23] — The phone's code band never grows into the Study bar
+
+On a short phone the code band had a floor of 140 px, but the space between the mode bar and the
+Study bar can be less. At 360×640 the bar began at 242 px and the code face ended at 293 px: the
+last 51 px of code — including the line being typed — sat behind the bar for the whole session.
+The editor's own scroller could not reveal it either, because it believed the caret was already
+visible. The face is now capped at the measured space, so a small band is honest instead of
+overlapping the text. The mode bar is also pinned under the header whenever the keys are up: a
+width change that rewrapped the lesson above the editor could leave the bar 97 px down the screen,
+and the old placement only moved a bar near the folds. At 360×640 that is now an 89 px band instead
+of a 42 px one.
+
+The speed gate now ends on that phone: it resizes to 360×640 after the long-file run, sets a
+30-line file with the caret at the end, and types `shortband` at seeded random speeds while
+sampling every frame. It asserts the band ends at the Study bar's top, the caret never falls behind
+that top, the page keeps one `window.scrollY` and one document height, and only the editor's
+scroller moves.
 
 ## [2026-11-23] — The phone's code editor is a band above the keys, and its caret stays in it
 

@@ -116,7 +116,14 @@ flowchart LR
    the safe-area inset alone. The pane measures the keyboard and reserves the same height at its
    end, and while the code face is showing it is a **measured band**, not a page-height document:
    `EditorCodePane` measures from the mode bar's bottom edge to the top of the Study bar that rides
-   on the keys, and the editor fills exactly that box. Before this the card was as tall as its
+   on the keys, and the editor fills exactly that box, never more than the room that exists. A
+   140 px floor used to overrun a short phone: at 360×640 the Study bar began at 242 px while the
+   face ended at 293 px, so the last two lines — the line being typed — were behind the bar. The
+   band is now capped at the measured space; a smaller band is honest, an overlapping one hides
+   the caret. While the keys are up the mode bar is pinned under the header, so a reflow above the
+   editor (a narrower width, a lesson that rewraps) cannot take room from the band; before, the
+   placement only moved a bar near the folds, and a 360×640 phone could drop from 89 px of code to
+   42 px without overlapping anything. Before this the card was as tall as its
    file — a 40-line starter made a 1048 px editor in a 3151 px page — so the editor's own scroller
    never moved, the page's scrollbar did the scrolling, and the caret sat far below the keys. The
    band is placed with an instant scroll (the page's own `scroll-behavior` is smooth, so `auto`
