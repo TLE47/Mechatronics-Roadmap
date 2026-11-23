@@ -105,7 +105,11 @@ flowchart LR
    Sizing is in CSS pixels inside the fixed shell and never reads the editor's `--editor-font-size`,
    so zooming the code grows the code, not the keyboard; the keys keep their 44 px floor at every
    viewport and `env(safe-area-inset-bottom)` keeps the last row clear of a home indicator. Pinch
-   zoom stays the browser's, as does the text-size setting it exists for.
+   zoom on the code stays the browser's, as does the text-size setting it exists for; the keyboard
+   itself is not a surface to pan or pinch (`touch-action: none`), because a fast thumb rolls while
+   it holds a key. That drift used to be read as a page gesture — a 48 px slide dragged the page
+   44 px and the next finger dragged it back, the recoil a learner saw while typing. The section and
+   every cap now opt out, while the RGB sliders still take a drag.
 
    The keyboard is **fixed to the bottom edge**, not in the page's flow: at 390 px the editor card
    is taller than the screen, and an in-flow keyboard sits thousands of pixels below the editor. It
@@ -132,7 +136,9 @@ flowchart LR
    the keys are up, because that undid the placement. The page's height no longer changes as lines
    wrap, so the scrollbar stays where the learner left it.
 
-   **Every key reveals the caret.** CodeMirror scrolls for the browser's own typing, but a
+   **Every key reveals the caret.** The code's scroller also contains its overscroll
+   (`overscroll-behavior: contain`), so reaching the first or last line never drags the page. CodeMirror
+   scrolls for the browser's own typing, but a
    key press goes through the editor's handle — `insertText`, `backspace`, `insertNewLine`,
    `insertTab`, indent, undo — and a command's dispatch is programmatic. Each of those now asks the
    view to scroll the caret into the band, with the 26 px `scrollMargins` bottom keeping the line

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.8`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.9`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,21 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-23] — A drifting thumb no longer drags the page
+
+Fast typing still made the page slide up and down, and the app was not asking for that scroll. The
+keys allowed browser touch panning, and a thumb that lands on a key and rolls a few pixels turns a
+tap into a page drag. In the browser a **48 px drift on one key moved `window.scrollY` by 44 px**,
+and sliding back moved it down again — the recoil. The keyboard now sets `touch-action: none` on the
+section and every cap, so a key press can neither pan nor pinch the page; it still types exactly
+once. The code's own scroller also gets `overscroll-behavior: contain`, so a drag that reaches the
+first or last line stops there instead of chaining into the page.
+
+The speed gate now holds a key and slides it 48 px down and back up: each press must type one
+character and leave `window.scrollY`, the document height and the editor's scroll position alone,
+with no zoom. Two thumbs landing together and sliding type both letters without moving or zooming
+the page either. The lighting sliders were checked under the same rule and still drag.
 
 ## [2026-11-23] — The band moves the page only when the bar costs it room
 

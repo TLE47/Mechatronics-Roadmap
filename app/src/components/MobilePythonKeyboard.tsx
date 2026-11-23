@@ -58,6 +58,11 @@ import {
  * on a held finger, then stops on the lift. The press also asks for a small vibration where the
  * device has one, and raises the pressed character above the cap in the iOS manner; neither is
  * required for a key to work.
+ *
+ * The section and every cap are `touch-action: none` on purpose. A real thumb drifts while it
+ * holds a key, and browser panning treated that drift as a page gesture: a 48 px slide dragged the
+ * page 44 px and the next finger dragged it back, which read as the page recoiling under the code
+ * while typing. The keys are not a surface to scroll; the editor's own band is the only scroller.
  */
 
 export type MobileKeyboardMode = 'code' | 'visual';
@@ -199,13 +204,13 @@ const PRESS =
 
 /** A key's surface: the raised white cap of the picture, themed by the app's own tokens. */
 const CAP =
-  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg border border-line-soft bg-panel text-body shadow-sm ${PRESS}`;
+  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel text-body shadow-sm ${PRESS}`;
 
 const ACTION_CAP =
-  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center gap-0.5 rounded-lg border border-line-soft bg-raise px-0.5 text-[9px] font-semibold leading-none text-body ${PRESS}`;
+  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center gap-0.5 rounded-lg border border-line-soft bg-raise px-0.5 text-[9px] font-semibold leading-none text-body ${PRESS}`;
 
 const OPERATOR_CAP =
-  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
+  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
 
 /** One key. `button` keeps the keyboard reachable from a switch or a screen reader. */
 function Key({
@@ -549,7 +554,7 @@ export function MobilePythonKeyboard({
         window.setTimeout(onKeepFocus, 0);
       }}
       style={lightingStyle}
-      className="relative min-w-0 select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
+      className="relative min-w-0 touch-none select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
       {/* The held character, above the cap it belongs to; never a target, never focused. */}
       {preview && (
@@ -997,7 +1002,7 @@ export function MobilePythonKeyboard({
             pressed={fn}
             onPress={() => setFn((on) => !on)}
             wide={1.15}
-            className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center rounded-lg font-mono text-[14px] font-bold"
+            className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg font-mono text-[14px] font-bold"
             style={{
               background: fn ? 'var(--accent-strong, var(--accent))' : 'var(--accent)',
               color: 'var(--inverse)',
@@ -1068,7 +1073,7 @@ export function MobilePythonKeyboard({
           keepFocus={false}
           onPress={onDone}
           wide={2.1}
-          className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-manipulation items-center justify-center gap-1 rounded-lg font-mono text-[13px] font-bold"
+          className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center gap-1 rounded-lg font-mono text-[13px] font-bold"
           style={{
             background: 'var(--emerald)',
             color: 'var(--inverse)',

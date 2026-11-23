@@ -386,6 +386,151 @@ async function main() {
     );
     ok('a long file is a band above the keys, and typing scrolls only that band');
 
+    console.log('\na drifting thumb types once, and the page stays still');
+
+    // A fast thumb is not a perfect tap: it lands on a key and slides while the key is held.
+    // Before the keyboard opted out of touch panning, that slide moved the whole page (44 px for a
+    // 48 px drift) and the next finger moved it back — the up-and-down recoil a learner sees while
+    // typing fast. The keys are not a surface to scroll, so a drift must type exactly once and move
+    // neither the page nor the code.
+    const driftStart = 'alpha = 1';
+    await page.evaluate((text) => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.set(text);
+      editor.setCursor(text.length);
+      editor.focus();
+    }, driftStart);
+    await delay(200);
+
+    const driftState = () =>
+      page.evaluate(() => {
+        const editor = window.__mechalabEditors['editor-main'];
+        const scroller = document.querySelector(
+          '[data-testid="editor-panel"] [data-editor="editor-main"] .cm-scroller'
+        );
+        return {
+          text: editor.get(),
+          cursor: editor.getCursor(),
+          y: Math.round(window.scrollY),
+          top: Math.round(scroller?.scrollTop ?? 0),
+          docH: Math.round(document.documentElement.scrollHeight),
+          scale: visualViewport?.scale ?? 1,
+          keys: document
+            .querySelector('[data-testid="mobile-keyboard-shell"]')
+            ?.getAttribute('data-state'),
+          focused: Boolean(document.activeElement?.closest('.cm-editor')),
+        };
+      });
+    const beforeDrift = await driftState();
+
+    /** Hold one key and slide the finger to where it actually went, then lift. */
+    const dragOnKey = async (key, dy) => {
+      await dispatch('touchStart', [{ key, id: 1 }]);
+      await delay(10);
+      for (let step = 1; step <= 5; step += 1) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove',
+          touchPoints: [
+            {
+              ...points[key],
+              y: points[key].y + (dy * step) / 5,
+              id: 1,
+              radiusX: 5,
+              radiusY: 5,
+              force: 1,
+            },
+          ],
+        });
+        await delay(8);
+      }
+      await dispatch('touchEnd', []);
+      await delay(180);
+    };
+
+    await dragOnKey('a', 48);
+    const afterDown = await driftState();
+    check(
+      afterDown.text === `${driftStart}a`,
+      `a key slid 48 px down typed ${JSON.stringify(afterDown.text.slice(-24))}`
+    );
+    check(
+      afterDown.y === beforeDrift.y,
+      `a downward drift scrolled the page (${beforeDrift.y} -> ${afterDown.y})`
+    );
+    check(
+      afterDown.top === beforeDrift.top,
+      `a downward drift scrolled the code (${beforeDrift.top} -> ${afterDown.top})`
+    );
+    check(
+      afterDown.docH === beforeDrift.docH,
+      `a downward drift changed the page height (${beforeDrift.docH} -> ${afterDown.docH})`
+    );
+    check(afterDown.scale === 1, `a key drift zoomed the page to ${afterDown.scale}`);
+    check(
+      afterDown.keys === 'open' && afterDown.focused,
+      'a key drift folded the keyboard or lost the caret'
+    );
+
+    await dragOnKey('a', -48);
+    const afterUp = await driftState();
+    check(
+      afterUp.text === `${driftStart}aa`,
+      `a key slid 48 px up typed ${JSON.stringify(afterUp.text.slice(-24))}`
+    );
+    check(
+      afterUp.y === beforeDrift.y,
+      `an upward drift scrolled the page (${beforeDrift.y} -> ${afterUp.y})`
+    );
+    check(afterUp.scale === 1, `an upward key drift zoomed the page to ${afterUp.scale}`);
+    ok('a finger that slides 48 px on a key types one letter and never moves the page');
+
+    // Two thumbs land together and both slide. The second finger used to be able to pinch the page
+    // or drag it while the first was still down.
+    const pairStart = 'alpha = 1';
+    await page.evaluate((text) => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.set(text);
+      editor.setCursor(text.length);
+      editor.focus();
+    }, pairStart);
+    await delay(160);
+    const beforePair = await driftState();
+    const pairA = points.a;
+    const pairS = points.s;
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [
+        { ...pairA, id: 1, radiusX: 5, radiusY: 5, force: 1 },
+        { ...pairS, id: 2, radiusX: 5, radiusY: 5, force: 1 },
+      ],
+    });
+    await delay(10);
+    for (let step = 1; step <= 4; step += 1) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [
+          { ...pairA, y: pairA.y + step * 8, id: 1, radiusX: 5, radiusY: 5, force: 1 },
+          { ...pairS, y: pairS.y + step * 8, id: 2, radiusX: 5, radiusY: 5, force: 1 },
+        ],
+      });
+      await delay(8);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await delay(180);
+    const afterPair = await driftState();
+    check(
+      afterPair.text.length === beforePair.text.length + 2,
+      `two sliding thumbs typed ${JSON.stringify(afterPair.text.slice(-24))}`
+    );
+    const typedPair = afterPair.text.slice(-2);
+    check(typedPair === 'as' || typedPair === 'sa', `two sliding thumbs typed ${JSON.stringify(typedPair)}`);
+    check(
+      afterPair.y === beforePair.y,
+      `two sliding thumbs scrolled the page (${beforePair.y} -> ${afterPair.y})`
+    );
+    check(afterPair.scale === 1, `two sliding thumbs zoomed the page to ${afterPair.scale}`);
+    ok('two sliding thumbs type both letters without moving or zooming the page');
+
     console.log('\nthe band fits a short phone, not only a tall one');
 
     // The band used to have a 140 px floor whatever room existed. On a 360×640 phone the Study bar
