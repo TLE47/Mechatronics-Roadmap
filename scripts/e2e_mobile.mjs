@@ -989,7 +989,15 @@ async function main() {
       let after = await getEditorCode(page);
       check(after.length === before.length + 1, 'a punctuation key must insert one character');
       check(after.slice(caret, caret + 1) === ':', 'the colon key did not insert at the caret');
-      await page.getByTestId('python-key-backspace').click();
+      // Backspace is also the hold-to-repeat key. A touch tap lifts in the same input batch as the
+      // press, so a slow frame under a loaded runner cannot turn the tap into a held repeat that
+      // deletes more than the one character the check is about.
+      const backspace = await page.getByTestId('python-key-backspace').boundingBox();
+      check(Boolean(backspace), 'the Backspace key has no box to touch');
+      await page.touchscreen.tap(
+        backspace.x + backspace.width / 2,
+        backspace.y + backspace.height / 2
+      );
       after = await getEditorCode(page);
       check(after === before, 'Backspace did not remove the character the keyboard inserted');
 

@@ -1434,6 +1434,10 @@ async function main() {
     await page.setViewportSize(PHONE);
     await page.waitForTimeout(200);
     await page.getByTestId('studio-view-code').click();
+    // The phone's Code view mounts the runner's editor with its keys up. They own the screen and
+    // lock the page, so the studio's own view buttons are off-screen until Done gives them back —
+    // the same door the lesson surfaces and the narrow audit use.
+    await page.getByTestId('python-key-done').click();
     assert.equal(
       await page.getByTestId('studio-note-pane').count(),
       0,
