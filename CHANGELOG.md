@@ -37,7 +37,9 @@ surface releases the layer at once.
 The phone speed gate now checks the hidden chrome, the document's typing layer, the locked page
 and the 403/199 px bands, alongside its existing zero caret frames, zero page/document-height
 changes and 48 px drift typing exactly once. The mobile gate covers the native handoff, Done, and
-the reopen after Done landing on the button.
+the reopen after Done landing on the button. The editor's own view tabs and run controls sit above
+the band while the keys are up; Done gives them back, and the narrow audit closes the keys before
+it reaches Requirements.
 
 ## [2026-11-23] — A drifting thumb no longer drags the page
 

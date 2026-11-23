@@ -134,7 +134,9 @@ flowchart LR
    96 at 320×568, where the old pin-and-scroll left 293, 116, 89 and 17. Leaving Code for Lesson
    releases the layer at once and brings the header and page scrolling back. When the keys close,
    the page is moved just far enough to put the mode bar under the header **and the sticky tab
-   picker**, so the way back to the keys is not left behind the chrome.
+   picker**, so the way back to the keys is not left behind the chrome. The editor's own view
+   tabs and run controls sit above the mode bar, so they are off-screen while the keys are up;
+   Done gives them back.
 
    The old card was as tall as its file — a 40-line starter made a 1048 px editor in a 3151 px
    page — so the editor's own scroller never moved, the page's scrollbar did the scrolling, and the

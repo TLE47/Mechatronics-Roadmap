@@ -92,6 +92,17 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
     await page.getByTestId('editor-panel').waitFor({ state: 'visible', timeout: 20000 });
     await expandEditorBody(page);
 
+    // The Python keys own a phone's screen while they are up: the chrome and the editor's view
+    // tabs sit above the band, and the page is locked under it. This audit is about the narrow
+    // Requirements pane, not the keys, so Done gives the page back before the tab is reached.
+    if (width <= 767) {
+      const done = page.getByTestId('python-key-done');
+      if (await done.isVisible().catch(() => false)) {
+        await done.click();
+        await page.waitForTimeout(250);
+      }
+    }
+
     await page.getByTestId('editor-tab-requirements').waitFor({ state: 'visible', timeout: 10000 });
     await page.getByTestId('editor-tab-requirements').click();
     await page.getByTestId('editor-requirements').waitFor({ state: 'visible', timeout: 20000 });
