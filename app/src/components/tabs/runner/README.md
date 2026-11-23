@@ -56,6 +56,7 @@ flowchart LR
 | `graphModel.ts` | The graph sheet's nouns: a row, what a row compiled into, the keypad's keys, the curve colours and a parameter's default range. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
+| `phoneSurfaceScroll.ts` | Where a phone's page sits after a Study switch: the 80 ms move to the chosen panel and the 180 ms move to a stored Code surface, both yielding to the editor pane while the Python keys are up. |
 | `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. In Read, Write and Debug, which have no rail column, that same button opens the lesson sheet. |
 | `LessonAmbience.tsx` | The pointer-free atmosphere behind the runner: aurora, instrument grid, orbit and four HUD chips. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. General settings can put the whole strip away; Compact drops its `run` module with it. |

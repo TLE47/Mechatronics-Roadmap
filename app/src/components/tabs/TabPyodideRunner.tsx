@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { showPassNotice } from './runner/PassNotice';
+import { revealPhoneSurface, revealStoredPhoneCode } from './runner/phoneSurfaceScroll';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { pyodideCdn } from '../../runtime/pyodideCdn';
@@ -273,49 +274,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * throw away CodeMirror's document, caret or undo history.
    */
   const choosePhoneSurface = (surface: PhoneSurface) => {
-    // The surface already on screen: the tap is not a move, and moving the page for it is the
-    // scrollbar jump a learner sees when they tap the Code tab they are already reading.
+    // A tap on the surface already on screen is not a move.
     if (isPhone && surface === phoneSurface) return;
     setPhoneSurface(writePhoneSurface(selectedId, surface));
     if (surface === 'code') setCodeOpened(true);
-    // The two surfaces are panels in one page, not two pages: move the page to the panel the
-    // learner just chose. The offset comes from `scroll-margin-top` in `index.css`, so the sticky
-    // header and tab picker do not cover its title.
-    if (isPhone && typeof window !== 'undefined') {
-      window.setTimeout(() => {
-        if (surface === 'code') {
-          // With the Python keys up the editor pane owns the page's position: it puts the mode bar
-          // under the header and sizes the code band above the keys (`EditorCodePane`). Scrolling
-          // to the card's top here would undo that and leave the mode bar half a screen down.
-          const keysUp = document.querySelector(
-            '[data-testid="mobile-keyboard-shell"][data-state="open"]'
-          );
-          if (keysUp) return;
-        }
-        const target =
-          surface === 'code'
-            ? document.getElementById('python-runner-editor')
-            : document.querySelector<HTMLElement>('[data-testid="lesson-reader"]');
-        target?.scrollIntoView({ block: 'start' });
-      }, 80);
-    }
+    if (isPhone) revealPhoneSurface(surface);
   };
 
-  // A stored Code surface reopens on the editor, not on the top of the page above it. The delay is
-  // for the lazy editor's first mount, which is what gives the card its height.
+  // A stored Code surface reopens on the editor, not on the top of the page above it.
   useEffect(() => {
     if (!isPhone || phoneSurface !== 'code') return;
-    const timer = window.setTimeout(() => {
-      // With the Python keys up the editor pane owns the page's position: it puts the mode bar
-      // under the header and sizes the code band above the keys (`EditorCodePane`). A second
-      // scroll to the card's top here would undo that and leave the mode bar half a screen down,
-      // which is the scrollbar moving on its own that a learner sees when Code opens.
-      if (document.querySelector('[data-testid="mobile-keyboard-shell"][data-state="open"]')) {
-        return;
-      }
-      document.getElementById('python-runner-editor')?.scrollIntoView({ block: 'start' });
-    }, 180);
-    return () => window.clearTimeout(timer);
+    return revealStoredPhoneCode();
     // Mount only: a later switch is handled by `choosePhoneSurface`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
