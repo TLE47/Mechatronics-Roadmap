@@ -207,6 +207,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 0,
       "UNREACHABLE": 13
     }
+  },
+  {
+    "date": "2026-11-23T16:35:34+00:00",
+    "urls": 608,
+    "served": 570,
+    "notChecked": 38,
+    "failed": 0,
+    "blocked": 32,
+    "unreachable": 6,
+    "serverError": 0,
+    "verdicts": {
+      "BLOCKED": 32,
+      "FAIL": 0,
+      "PASS": 570,
+      "SERVER_ERROR": 0,
+      "UNREACHABLE": 6
+    }
   }
 ];
 
@@ -230,7 +247,7 @@ export interface LatestLinkReport {
 
 /** Null only for a run recorded before the checker added structured report rows. */
 export const LATEST_LINK_REPORT: LatestLinkReport | null = {
-  "date": "2026-11-16T14:04:36+00:00",
+  "date": "2026-11-23T16:35:34+00:00",
   "totalUrls": 608,
   "hardFailures": [],
   "notChecked": [
@@ -239,13 +256,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "reason": "BLOCKED (403)",
       "sources": [
         "resources/textbooks-and-papers.md"
-      ]
-    },
-    {
-      "url": "https://compliantmechanisms.byu.edu/",
-      "reason": "BLOCKED (403)",
-      "sources": [
-        "02-mechanics-kinematics-dynamics/README.md"
       ]
     },
     {
@@ -371,20 +381,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
-      "url": "https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "00-foundations/README.md"
-      ]
-    },
-    {
-      "url": "https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:Step3_Introduction_to_the_UART",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "04-embedded-and-realtime/README.md"
-      ]
-    },
-    {
       "url": "https://ww1.microchip.com/downloads/en/AppNotes/00002590B.pdf",
       "reason": "BLOCKED (403)",
       "sources": [
@@ -413,6 +409,13 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "sources": [
         "01-electronics-and-power/README.md",
         "modules/01-electronics.T1.01b.md"
+      ]
+    },
+    {
+      "url": "https://www.blender.org/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/open-source-toolchains.md"
       ]
     },
     {
@@ -448,6 +451,13 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "reason": "BLOCKED (403)",
       "sources": [
         "07-systems-hil-and-production/README.md"
+      ]
+    },
+    {
+      "url": "https://www.pi.website/research/fast",
+      "reason": "BLOCKED (429)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
       ]
     },
     {
@@ -507,43 +517,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
-      "url": "https://www.st.com/",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "04-embedded-and-realtime/README.md",
-        "resources/lab-workbench-bom.md"
-      ]
-    },
-    {
-      "url": "https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "04-embedded-and-realtime/README.md",
-        "modules/04-embedded.T2.04a.md"
-      ]
-    },
-    {
-      "url": "https://www.st.com/resource/en/application_note/an4277-using-stm32-device-pwm-shut-down-features-for-motor-control-and-digital-power-conversion-stmicroelectronics.pdf",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "07-systems-hil-and-production/README.md"
-      ]
-    },
-    {
-      "url": "https://www.st.com/resource/en/application_note/an4839-level-1-cache-on-stm32f7-series-and-stm32h7-series-stmicroelectronics.pdf",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "04-embedded-and-realtime/README.md"
-      ]
-    },
-    {
-      "url": "https://www.st.com/resource/en/user_manual/um1052-stm32f-pmsm-singledual-foc-sdk-v43-stmicroelectronics.pdf",
-      "reason": "UNREACHABLE (The read operation timed out)",
-      "sources": [
-        "03-sensors-and-actuators/README.md"
-      ]
-    },
-    {
       "url": "https://www.w3.org/TR/audio-eq-cookbook/",
       "reason": "BLOCKED (403)",
       "sources": [
@@ -566,145 +539,145 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 10;
+export const HOST_RECURRENCE_RUNS: number = 11;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
-    "host": "st.com",
-    "runs": 10,
-    "urls": 5,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
     "host": "sciencedirect.com",
-    "runs": 10,
+    "runs": 11,
     "urls": 4,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 10,
+    "runs": 11,
     "urls": 3,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "ctms.engin.umich.edu",
-    "runs": 10,
+    "runs": 11,
     "urls": 2,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "doi.org",
-    "runs": 10,
+    "runs": 11,
     "urls": 2,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "mathworks.com",
-    "runs": 10,
+    "runs": 11,
     "urls": 2,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "raspberrypi.com",
-    "runs": 10,
+    "runs": 11,
     "urls": 2,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "advanced.onlinelibrary.wiley.com",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "dl.acm.org",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "elmerfem.org",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "iso.org",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "journals.sagepub.com",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "maxongroup.com",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "mitpress.mit.edu",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "ngspice.sourceforge.io",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "onlinelibrary.wiley.com",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "rug.nl",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "sapien.ucsd.edu",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "science.org",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "w3.org",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "wiki.linuxfoundation.org",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "ww1.microchip.com",
+    "runs": 11,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "st.com",
+    "runs": 10,
+    "urls": 0,
     "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "wiki.st.com",
     "runs": 10,
-    "urls": 2,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "dl.acm.org",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "elmerfem.org",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "iso.org",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "journals.sagepub.com",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "maxongroup.com",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "mitpress.mit.edu",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "ngspice.sourceforge.io",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "onlinelibrary.wiley.com",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "rug.nl",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "sapien.ucsd.edu",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "science.org",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "w3.org",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "wiki.linuxfoundation.org",
-    "runs": 10,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "ww1.microchip.com",
-    "runs": 10,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
@@ -720,34 +693,40 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
     "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
+    "host": "reddit.com",
+    "runs": 7,
+    "urls": 3,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "en.cppreference.com",
+    "runs": 7,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "summerschool.stiff-project.org",
+    "runs": 7,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
     "host": "fbsbook.org",
     "runs": 7,
     "urls": 0,
     "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
-    "host": "reddit.com",
-    "runs": 6,
-    "urls": 3,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
     "host": "compliantmechanisms.byu.edu",
     "runs": 6,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
-    "host": "en.cppreference.com",
-    "runs": 6,
+    "host": "telesens.co",
+    "runs": 3,
     "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
-    "host": "summerschool.stiff-project.org",
-    "runs": 6,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "learn.sparkfun.com",
@@ -774,16 +753,22 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
-    "host": "telesens.co",
-    "runs": 2,
-    "urls": 1,
-    "lastSeen": "2026-11-16T14:04:36+00:00"
-  },
-  {
     "host": "ieee-ies.org",
     "runs": 2,
     "urls": 0,
     "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "blender.org",
+    "runs": 1,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
+  },
+  {
+    "host": "pi.website",
+    "runs": 1,
+    "urls": 1,
+    "lastSeen": "2026-11-23T16:35:34+00:00"
   },
   {
     "host": "cs.stanford.edu",
