@@ -129,6 +129,17 @@ function focusSurface(view: EditorView): void {
   // back, so the next Backspace deleted the wrong character. Put the state's selection back after
   // the focus, without adding a selection step to undo.
   const selection = view.state.selection;
+  // The DOM selection the browser is about to restore, as a document position. Only that exact
+  // position may be repaired later: a key typed after the focus must win.
+  const staleHead = (() => {
+    const dom = view.contentDOM.ownerDocument.getSelection();
+    if (!dom?.anchorNode || !view.contentDOM.contains(dom.anchorNode)) return null;
+    try {
+      return view.posAtDOM(dom.anchorNode, dom.anchorOffset);
+    } catch {
+      return null;
+    }
+  })();
   view.contentDOM.focus({ preventScroll: true });
   // The focus can restore the contenteditable's old DOM selection, and CodeMirror's async
   // selectionchange handler reads that back into the state. Put the DOM caret where the state's
@@ -145,20 +156,20 @@ function focusSurface(view: EditorView): void {
       domSelection.addRange(range);
     }
   } catch {
-    // A caret a widget owns may not map to a DOM position; the state restore below is the fallback.
+    // A caret a widget owns may not map to a DOM position; the state repair below is the fallback.
   }
-  const restore = () => {
+  const repair = () => {
     if (!view.dom.isConnected || view.state.selection.eq(selection)) return;
-    // A transaction from elsewhere could have moved the document past this caret; never dispatch
-    // a position the document no longer has.
+    // Repair only the selection the focus restored; anything the learner typed since then wins.
+    if (staleHead === null || view.state.selection.main.head !== staleHead) return;
     if (selection.main.head > view.state.doc.length) return;
     view.dispatch({ selection, annotations: Transaction.addToHistory.of(false) });
   };
   // The reset can land during the focus or after the click that follows it; check now, then once
   // more before the next key can arrive.
-  restore();
-  window.setTimeout(restore, 0);
-  window.requestAnimationFrame(restore);
+  repair();
+  window.setTimeout(repair, 0);
+  window.requestAnimationFrame(repair);
   // If the browser scrolled anyway, the keys' page lock is the place to be — zero. Outside the
   // layer there is no such lock, and scrolling the page here would be a surprise of its own.
   if (document.body.dataset.phoneTyping === '1' && window.scrollY !== 0) {
