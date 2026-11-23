@@ -1508,6 +1508,19 @@ async function main() {
       for (let index = 0; index < 10; index += 1) await press(editorShell, 'python-key-backspace');
       check((await getEditorCode(page)) === baseline, 'the fast touches did not clean up');
 
+      // A switch or screen reader activates a button with a click that has no pointer behind it
+      // (`detail === 0`). That path must still act exactly once now that pointer presses act on the
+      // way down and their own clicks are swallowed.
+      await setEditorText(page, '', 0);
+      await page.evaluate(() => document.querySelector('[data-testid="python-key-a"]')?.click());
+      await page.waitForTimeout(40);
+      check(
+        (await getEditorCode(page)) === 'a',
+        `programmatic key activation typed ${JSON.stringify(await getEditorCode(page))}`
+      );
+      await press(editorShell, 'python-key-backspace');
+      check((await getEditorCode(page)) === '', 'programmatic key activation did not clean up');
+
       // ---- The same key interaction at the five typing speeds the plan names ----
       // Every character is its own touch; the wait is the person's inter-key interval, jittered
       // around the WPM target rather than a fixed delay. The measured speed is printed from the
@@ -1941,12 +1954,20 @@ async function main() {
         (await preview.textContent())?.trim() === 'a',
         `the held key previewed ${JSON.stringify(await preview.textContent())}`
       );
-      check((await getEditorCode(page)) === baseline, 'a held key typed before the finger lifted');
+      // A native keyboard types on the way down, not on the lift. The hold must not have to end
+      // before the character appears, and the lift's synthetic click must not type it a second time.
+      const heldCode = await getEditorCode(page);
+      check(
+        heldCode.length === baseline.length + 1 && heldCode.slice(caret, caret + 1) === 'a',
+        `a held key typed ${JSON.stringify(heldCode.slice(caret, caret + 2))} before the finger lifted`
+      );
       await touchUp(page, cdp);
       await page.waitForTimeout(140);
       check((await preview.count()) === 0, 'the character preview stayed after the finger lifted');
-      code = await getEditorCode(page);
-      check(code.slice(caret, caret + 1) === 'a', 'lifting the finger did not type the held letter');
+      check(
+        (await getEditorCode(page)) === heldCode,
+        'lifting the finger typed the held letter again'
+      );
       await press(editorShell, 'python-key-backspace');
 
       await clearVibrations();
@@ -2060,24 +2081,23 @@ async function main() {
       await press(editorShell, 'python-key-native');
       await page.waitForTimeout(260);
       await page.evaluate(() => document.querySelector('.cm-content')?.blur());
-      await page.waitForTimeout(180);
-      const codeContent = await page.locator('.cm-content').boundingBox();
-      check(Boolean(codeContent), 'the code editor has no box to touch after the native handoff');
-      const codePoint = { x: codeContent.x + 24, y: codeContent.y + 24 };
-      check(
-        codePoint.y > 0 && codePoint.y < PHONE.height,
-        `the code's first line is off screen at ${Math.round(codePoint.y)}px`
-      );
-      await cdp.send('Input.dispatchTouchEvent', {
-        type: 'touchStart',
-        touchPoints: [{ x: codePoint.x, y: codePoint.y, id: 1, force: 1 }],
-      });
-      await page.waitForTimeout(60);
-      await touchUp(page, cdp);
+      // The folding shell moves the pane under the code; wait for that movement. Playwright's
+      // touchscreen tap re-measures the line, scrolls it away from sticky chrome and refuses a
+      // point another control intercepts — a manual coordinate here once landed on Predict.
+      await page.waitForTimeout(260);
+      const codeLine = page.locator('.cm-line').first();
+      await codeLine.scrollIntoViewIfNeeded();
+      await codeLine.tap({ timeout: 3000 });
       await page.waitForTimeout(320);
+      const nativeReturn = await page.evaluate(() => ({
+        active: document.activeElement?.className ?? document.activeElement?.tagName ?? null,
+        inputmode: document.querySelector('.cm-content')?.getAttribute('inputmode') ?? null,
+      }));
       check(
         (await editorShell.getAttribute('data-state')) === 'open',
-        'the site keyboard did not come back after the native field was left'
+        `the site keyboard did not come back after the native field was left (${JSON.stringify(
+          nativeReturn
+        )})`
       );
       check(
         await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
@@ -2206,6 +2226,7 @@ async function main() {
       await page.getByTestId('lesson-reader').waitFor({ state: 'visible', timeout: 10000 });
       await touchTap(page, cdp, page.getByTestId('btn-lessons'), {
         hold: 40,
+        scroll: true,
         label: 'the lesson list',
       });
       await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });

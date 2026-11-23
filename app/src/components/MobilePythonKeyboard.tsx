@@ -274,6 +274,10 @@ function Key({
     ...(index === undefined ? {} : ({ '--i': index } as CSSProperties)),
     ...style,
   };
+  const press = () => {
+    if (feedback !== 'none') haptic(feedback);
+    onPress();
+  };
   return (
     <button
       type="button"
@@ -282,8 +286,13 @@ function Key({
       aria-label={label}
       aria-pressed={pressed}
       title={label}
-      // The editing surface keeps focus — and with it the caret, the scroll and the open field.
+      // A key acts on the way down, like a native keyboard, not on the synthetic click after the
+      // lift. Two fingers can overlap while typing quickly, and Chromium (like a phone browser)
+      // does not synthesise a click for every touch in a multi-touch sequence. Waiting for it lost
+      // those characters entirely; acting on pointerdown also removes the lift from the latency.
+      // The editing surface still keeps focus: `preventDefault` stops the button from taking it.
       onPointerDown={(event) => {
+        if (event.button !== 0) return;
         event.preventDefault();
         if (onRepeat) {
           try {
@@ -292,6 +301,8 @@ function Key({
             // A browser without capture still gets the closing pointerup on the key.
           }
           beginRepeat();
+        } else {
+          press();
         }
         if (preview) onPreview?.({ text: preview, button: event.currentTarget });
       }}
@@ -309,13 +320,12 @@ function Key({
       }}
       onLostPointerCapture={() => stopRepeat()}
       onClick={(event) => {
-        // A repeating key already acted on the way down. Its click is the lift, however late the
-        // browser synthesises it, so a pointer click is never a second press. A keyboard's
-        // Enter/Space activation has `detail === 0` and no pointer behind it; that one press is the
-        // only way a switch or screen reader can use Backspace, so it still deletes once.
-        if (onRepeat && event.detail > 0) return;
-        if (feedback !== 'none') haptic(feedback);
-        onPress();
+        // Every pointer press has already acted on the way down. Its click is the lift, however
+        // late the browser synthesises it, so it is never a second press. A keyboard's Enter/Space
+        // activation has `detail === 0` and no pointer behind it; that one press is the only way a
+        // switch or screen reader can use a key, so it still acts once.
+        if (event.detail > 0) return;
+        press();
       }}
       className={className}
       style={wide ? { ...merged, flexGrow: wide } : merged}

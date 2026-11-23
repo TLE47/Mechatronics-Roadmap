@@ -331,6 +331,10 @@ async function main() {
     // the divider and the phone pane toggle without being remounted.
     { label: 'resources2e', script: 'e2e_resource_workspace.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-b', browser: true },
     { label: 'mobile2e', script: 'e2e_mobile.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
+    // Fast typing with sudden speed changes and overlapping thumbs: the click-on-release path
+    // dropped every key in a multi-touch overlap, so this gate is separate from the constant-speed
+    // broad phone sweep.
+    { label: 'keyspeed2e', script: 'e2e_keyboard_speed.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     // These two used to be extra `npm run` steps queued behind a shard, each booting its own server
     // and browser. Both speak the same dev server this runner already has, so they are suites now.

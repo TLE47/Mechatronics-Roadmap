@@ -211,6 +211,58 @@ export function planVisualScenario(seed) {
   return baseScenario(seed, { visual: true });
 }
 
+/**
+ * A speed plan: the same letters typed through a changing rhythm, including the two-thumb case.
+ *
+ * `overlap` means the next finger lands before the oldest one lifts, which is what a fast thumb
+ * transition does on a real phone. A plan never changes page; the executor caches these keys once
+ * and the scenario stays on the letters page.
+ */
+export function planSpeedScenario(seed) {
+  const random = mulberry32(seed);
+  const mode = random() < 0.55 ? 'overlap' : 'single';
+  const length = 12 + Math.floor(random() * 13);
+  const keys = [];
+  const gaps = [];
+  const holds = [];
+  let expected = '';
+  const letters = [...'asdfghjklqwertyuiopzxcvbnm'];
+  let last = '';
+
+  for (let index = 0; index < length; index += 1) {
+    // Letters only. A Backspace held while the test process stalls could cross its 420 ms repeat
+    // threshold and delete more than one character; the combined stress plans already cover
+    // Backspace, so this gate isolates registration and cadence.
+    let key = pick(random, letters);
+    while (key === last) key = pick(random, letters);
+    keys.push(key);
+    expected += key;
+    last = key;
+
+    // The first gaps are slow, then the same run accelerates without warning: the failure the
+    // learner reported is a speed *change*, not a constant speed. Every plan has both cadences.
+    if (index < 3) {
+      gaps.push(90 + Math.floor(random() * 70));
+    } else if (index === 3 || (index > 3 && random() < 0.08)) {
+      gaps.push(6 + Math.floor(random() * 10));
+    } else if (random() < 0.18) {
+      gaps.push(55 + Math.floor(random() * 70));
+    } else {
+      gaps.push(7 + Math.floor(random() * 14));
+    }
+
+    // In overlap mode the oldest finger stays down across the next one's landing. In single mode
+    // it lifts well before the next landing, so the two paths are distinct.
+    holds.push(
+      mode === 'overlap'
+        ? 28 + Math.floor(random() * 65)
+        : Math.min(4 + Math.floor(random() * 7), Math.max(2, gaps[index] - 2))
+    );
+  }
+
+  return { seed, mode, keys, gaps, holds, expected };
+}
+
 /** The taps a plan will make, for the final report and for a seed's reproduction note. */
 export function countTaps(plan) {
   return plan.actions.reduce((total, action) => {

@@ -49,11 +49,15 @@ flowchart LR
    keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
    the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
    raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
-   does not allow them to grow wider. A key cancels its pointer default, so the caret, the field and
-   the open keyboard stay put. It also compresses under the finger (a transform, so no neighbour
-   moves), raises its character above the cap, and asks for a light vibration where the device has
-   one; Enter is a medium tap and the mode keys answer with two ticks. iOS Safari has no Vibration
-   API, so there the press animation is the feedback, and no copy promises otherwise.
+   does not allow them to grow wider. A key acts on **pointerdown**, the way a native keyboard does,
+   rather than waiting for the synthetic click on the lift. That is also what makes two overlapping
+   thumbs work: a browser does not synthesise a click for every touch in a multi-touch sequence, so
+   the old click-only key lost those characters entirely. A keyboard or switch activation has
+   `detail === 0` and still acts exactly once. A key cancels its pointer default, so the caret, the
+   field and the open keyboard stay put. It also compresses under the finger (a transform, so no
+   neighbour moves), raises its character above the cap, and asks for a light vibration where the
+   device has one; Enter is a medium tap and the mode keys answer with two ticks. iOS Safari has no
+   Vibration API, so there the press animation is the feedback, and no copy promises otherwise.
 
    **Return and Backspace follow the file, not a timer.** A suite header opens its body at four
    spaces (`indentUnit.of('    ')`), so Enter inside `if True:` continues the indent the starters and
@@ -235,9 +239,10 @@ a throw, and blocked storage leaves the switch working for the visit.
 ## The gate
 
 ```bash
-npm run test:phone        # the pure rules: surface migration and the install offer
-npm run test:e2e:mobile   # 390×844 at DPR 3 with touch, then 768 and 1024
-npm run icons             # regenerate the manifest PNGs from favicon.svg
+npm run test:phone               # the pure rules: surface migration and the install offer
+npm run test:e2e:mobile          # 390×844 at DPR 3 with touch, then 768 and 1024
+npm run test:e2e:keyboard-speed  # sudden speed changes and overlapping thumbs
+npm run icons                    # regenerate the manifest PNGs from favicon.svg
 ```
 
 `scripts/e2e_mobile.mjs` is a real Chromium at 390 × 844, `isMobile`, `hasTouch`, DPR 3. It asserts,
@@ -268,7 +273,16 @@ every pull request.
 
 Measured on the run that added it: header 107.75 px (budget 112), picker rows 56 px, punctuation keys
 44 × 44, phone Run 44 px, Study bar flush with the 844 px edge, and no horizontal scroll on the shell,
-a lab, either Study surface, or after a lesson change.
+a lab, either Study surface, or after a lesson change. The same gate's 12-sample touch-to-rendered-text
+measurement reads **median 15.4–21.2 ms, max 29.1 ms across runs** after keys began acting on
+pointerdown; the click-on-release path measured 34.2 ms median on the same VM.
+
+`scripts/e2e_keyboard_speed.mjs` is the changing-speed gate. It first types a fixed slow opening that
+accelerates to 8 ms keys, then the exact two-thumb overlap that typed nothing before keys acted on
+pointerdown. Its 100 seeded plans (1,744 touches; 41 single-thumb and 59 overlapping) mix 90–160 ms
+opening gaps with 6–20 ms bursts and occasional pauses, and two fingers whose touches overlap by
+14 ms. Each plan asserts the complete document, caret, focus, keyboard state and no
+console/page error; every seed prints its keys, gaps and holds if it fails.
 
 ## Deliberate limits
 

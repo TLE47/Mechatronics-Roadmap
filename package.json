@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "4.19.4",
+  "version": "4.19.5",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py && python3 scripts/generate_learning_resources.py",
@@ -148,6 +148,7 @@
     "test:studyclock:e2e": "node --experimental-strip-types scripts/e2e_study_clock.mjs",
     "test:phone": "node --experimental-strip-types scripts/test_phone_surface.mjs",
     "test:e2e:mobile": "node scripts/e2e_mobile.mjs",
+    "test:e2e:keyboard-speed": "node scripts/e2e_keyboard_speed.mjs",
     "icons": "node scripts/generate_app_icons.mjs",
     "test:portfolio": "node --experimental-strip-types scripts/test_portfolio.mjs",
     "test:storage": "node --experimental-strip-types scripts/test_storage.mjs",

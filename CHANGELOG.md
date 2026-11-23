@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.4`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.19.5`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,27 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-23] — A phone key types when the finger lands, not when it lifts
+
+Fast two-thumb typing could lose whole runs of characters. Ordinary keys acted in `onClick`, and a
+browser does not synthesise a click for every touch in a multi-touch sequence: when the next thumb
+landed before the previous one lifted, those touches produced pointer events but no click. A
+Chromium probe typed **nothing** for a three-key overlapping sequence. Keys now act on
+**pointerdown**, which is when a native keyboard types. The lift's click is swallowed, while a
+keyboard or switch activation (`detail === 0`) still acts once.
+
+Acting on the way down also removes the liftoff from the latency. The existing 12-sample
+input-to-rendered-text measurement fell from **34.2 ms median** on the click path to **15.4–21.2 ms
+median across runs** (max 29.1 ms) on the same VM, about one 60 Hz frame. The pressed character preview and haptic still fire once, and
+the editor keeps the caret because the key still cancels its pointer default.
+
+A new `npm run test:e2e:keyboard-speed` gate types a slow opening that accelerates to 8 ms keys,
+then the exact overlapping-thumb sequence that previously produced no text. It follows with **100
+seeded speed plans (1,744 touches: 41 single-thumb and 59 overlapping)**, mixing 90–160 ms openings,
+6–20 ms bursts and pauses, with every plan asserting the complete document, caret, focus,
+keyboard state and zero page/console errors. The existing 100 code and 20 Visual stress scenarios
+still pass with the same exact-text assertions.
 
 ## [2026-11-23] — The phone keyboard survives fast typing, and the suite proves it
 
