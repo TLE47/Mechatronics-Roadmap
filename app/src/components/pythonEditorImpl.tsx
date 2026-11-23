@@ -123,7 +123,16 @@ function revealCaret(view: EditorView): void {
  */
 function focusSurface(view: EditorView): void {
   if (view.hasFocus) return;
+  // The caret a key just placed lives in the state. Taking focus makes the browser restore the
+  // contenteditable's old DOM selection, and CodeMirror reads that back into the state: a key
+  // pressed after the caret had left the editor inserted its character and then snapped the caret
+  // back, so the next Backspace deleted the wrong character. Put the state's selection back after
+  // the focus, without adding a selection step to undo.
+  const selection = view.state.selection;
   view.contentDOM.focus({ preventScroll: true });
+  if (!view.state.selection.eq(selection)) {
+    view.dispatch({ selection, annotations: Transaction.addToHistory.of(false) });
+  }
   // If the browser scrolled anyway, the keys' page lock is the place to be — zero. Outside the
   // layer there is no such lock, and scrolling the page here would be a surprise of its own.
   if (document.body.dataset.phoneTyping === '1' && window.scrollY !== 0) {

@@ -1339,6 +1339,13 @@ async function main() {
       const fieldShell = page.getByTestId('phone-field-keyboard');
       const press = (keys, id, hold = 40) =>
         touchTap(page, cdp, keys.getByTestId(id), { hold, label: id });
+      // Backspace is the hold-to-repeat key. A tap of it is one character, and its lift must not
+      // wait behind the delete's render: under load that turns a tap into a held repeat. The
+      // dedicated hold below still exercises the repeat with a real finger.
+      const tapBackspace = () =>
+        fastTouch(page, cdp, editorShell.getByTestId('python-key-backspace'), {
+          label: 'Backspace',
+        });
       const vibrations = () => page.evaluate(() => window.__touch.vibrations);
       const clearVibrations = () =>
         page.evaluate(() => {
@@ -1398,8 +1405,17 @@ async function main() {
         await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
         'a finger on a key took the caret away from the editor'
       );
-      await press(editorShell, 'python-key-backspace');
-      check((await getEditorCode(page)) === baseline, 'Backspace under a finger did not remove the letter');
+      await tapBackspace();
+      const afterBackspace = await getEditorCode(page);
+      const cursorAfterBackspace = await page.evaluate(() =>
+        window.__mechalabEditors['editor-main'].getCursor()
+      );
+      check(
+        afterBackspace === baseline,
+        `Backspace under a finger did not remove the letter (${baseline.length} → ${
+          afterBackspace.length
+        } chars; caret ${caret} → ${cursorAfterBackspace})`
+      );
 
       await press(editorShell, 'python-key-shift');
       check(
@@ -1413,7 +1429,7 @@ async function main() {
         (await editorShell.getByTestId('python-key-shift').getAttribute('aria-pressed')) === 'false',
         'Shift must let go after one letter'
       );
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
 
       const editorKeyboard = editorShell.getByTestId('python-keyboard');
 
@@ -1451,7 +1467,7 @@ async function main() {
         code.slice(caret + 2, caret + 3) === 'c',
         `letters stayed ${JSON.stringify(code.slice(caret, caret + 3))} after caps lock was released`
       );
-      for (let index = 0; index < 3; index += 1) await press(editorShell, 'python-key-backspace');
+      for (let index = 0; index < 3; index += 1) await tapBackspace();
       check((await getEditorCode(page)) === baseline, 'the caps-lock letters did not clean up');
       await press(editorShell, 'python-key-fn');
       check((await editorKeyboard.getAttribute('data-fn')) === '1', 'Fn must arm on a touch');
@@ -1459,7 +1475,7 @@ async function main() {
       code = await getEditorCode(page);
       check(code.slice(caret, caret + 1) === '1', 'Fn + Q must type a 1');
       await press(editorShell, 'python-key-fn');
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
 
       await press(editorShell, 'python-key-layout');
       check(
@@ -1481,16 +1497,16 @@ async function main() {
           (await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor')))),
         'ABC folded the keyboard instead of switching its page'
       );
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
 
       await press(editorShell, 'python-key-space');
       code = await getEditorCode(page);
       check(code.slice(caret, caret + 1) === ' ', 'Space must type a space');
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
       await press(editorShell, 'python-key-colon');
       code = await getEditorCode(page);
       check(code.slice(caret, caret + 1) === ':', 'the colon key did not type under a finger');
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
 
       for (const letter of ['h', 'e', 'l', 'l', 'o']) {
         await press(editorShell, `python-key-${letter}`, 18);
@@ -1530,7 +1546,7 @@ async function main() {
         await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
         'typing fast took the caret away from the editor'
       );
-      for (let index = 0; index < 10; index += 1) await press(editorShell, 'python-key-backspace');
+      for (let index = 0; index < 10; index += 1) await tapBackspace();
       check((await getEditorCode(page)) === baseline, 'the fast touches did not clean up');
 
       // A switch or screen reader activates a button with a click that has no pointer behind it
@@ -1543,7 +1559,7 @@ async function main() {
         (await getEditorCode(page)) === 'a',
         `programmatic key activation typed ${JSON.stringify(await getEditorCode(page))}`
       );
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
       check((await getEditorCode(page)) === '', 'programmatic key activation did not clean up');
 
       // ---- The same key interaction at the five typing speeds the plan names ----
@@ -1933,7 +1949,7 @@ async function main() {
       const remaining = afterHold.length - baseline.length;
       check(remaining >= 0, 'holding Backspace deleted text that was there before it was held');
       for (let index = 0; index < remaining; index += 1) {
-        await press(editorShell, 'python-key-backspace');
+        await tapBackspace();
       }
       check((await getEditorCode(page)) === baseline, 'the held Backspace did not clean up');
 
@@ -1993,7 +2009,7 @@ async function main() {
         (await getEditorCode(page)) === heldCode,
         'lifting the finger typed the held letter again'
       );
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
 
       await clearVibrations();
       await press(editorShell, 'python-key-q');
@@ -2001,14 +2017,14 @@ async function main() {
         JSON.stringify(await vibrations()) === '[8]',
         `a letter asked for ${JSON.stringify(await vibrations())}, not one 8 ms tap`
       );
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
       await clearVibrations();
       await press(editorShell, 'python-key-newline');
       check(
         JSON.stringify(await vibrations()) === '[18]',
         `Return asked for ${JSON.stringify(await vibrations())}, not the medium tap`
       );
-      await press(editorShell, 'python-key-backspace');
+      await tapBackspace();
       check((await getEditorCode(page)) === baseline, 'Return + Backspace did not restore the line');
       await clearVibrations();
       await press(editorShell, 'python-key-layout');
