@@ -986,15 +986,20 @@ async function main() {
         window.__mechalabEditors['editor-main'].getCursor()
       );
       await page.getByTestId('python-key-colon').click();
+      // A key that had to take focus back settles the caret before the next finger arrives.
+      await page.waitForTimeout(60);
       let after = await getEditorCode(page);
       check(after.length === before.length + 1, 'a punctuation key must insert one character');
       check(after.slice(caret, caret + 1) === ':', 'the colon key did not insert at the caret');
       const colonCursor = await page.evaluate(() =>
         window.__mechalabEditors['editor-main'].getCursor()
       );
+      const colonFocus = await page.evaluate(() =>
+        Boolean(document.activeElement?.closest?.('.cm-editor'))
+      );
       check(
         colonCursor === caret + 1,
-        `the colon key left the caret at ${colonCursor}, not ${caret + 1}`
+        `the colon key left the caret at ${colonCursor}, not ${caret + 1} (editor focused: ${colonFocus})`
       );
       // Backspace is also the hold-to-repeat key, and a real lift can sit behind a busy main thread
       // long enough to look like a hold. This one-character check presses and lifts in a single

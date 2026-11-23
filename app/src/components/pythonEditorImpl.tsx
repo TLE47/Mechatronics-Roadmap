@@ -130,9 +130,35 @@ function focusSurface(view: EditorView): void {
   // the focus, without adding a selection step to undo.
   const selection = view.state.selection;
   view.contentDOM.focus({ preventScroll: true });
-  if (!view.state.selection.eq(selection)) {
-    view.dispatch({ selection, annotations: Transaction.addToHistory.of(false) });
+  // The focus can restore the contenteditable's old DOM selection, and CodeMirror's async
+  // selectionchange handler reads that back into the state. Put the DOM caret where the state's
+  // caret is now, so the handler reads the position the key just placed.
+  try {
+    const doc = view.contentDOM.ownerDocument;
+    const domSelection = doc.getSelection();
+    if (domSelection) {
+      const at = view.domAtPos(selection.main.head);
+      const range = doc.createRange();
+      range.setStart(at.node, at.offset);
+      range.collapse(true);
+      domSelection.removeAllRanges();
+      domSelection.addRange(range);
+    }
+  } catch {
+    // A caret a widget owns may not map to a DOM position; the state restore below is the fallback.
   }
+  const restore = () => {
+    if (!view.dom.isConnected || view.state.selection.eq(selection)) return;
+    // A transaction from elsewhere could have moved the document past this caret; never dispatch
+    // a position the document no longer has.
+    if (selection.main.head > view.state.doc.length) return;
+    view.dispatch({ selection, annotations: Transaction.addToHistory.of(false) });
+  };
+  // The reset can land during the focus or after the click that follows it; check now, then once
+  // more before the next key can arrive.
+  restore();
+  window.setTimeout(restore, 0);
+  window.requestAnimationFrame(restore);
   // If the browser scrolled anyway, the keys' page lock is the place to be — zero. Outside the
   // layer there is no such lock, and scrolling the page here would be a surprise of its own.
   if (document.body.dataset.phoneTyping === '1' && window.scrollY !== 0) {
