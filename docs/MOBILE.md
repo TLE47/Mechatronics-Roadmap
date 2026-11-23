@@ -119,22 +119,29 @@ flowchart LR
    the screen edge, and Run/Lesson stay one press away. The keys' own inset is
    the safe-area inset alone. The pane measures the keyboard and reserves the same height at its
    end, and while the code face is showing it is a **measured band**, not a page-height document:
-   `EditorCodePane` measures from the mode bar's bottom edge to the top of the Study bar that rides
-   on the keys, and the editor fills exactly that box, never more than the room that exists. A
-   140 px floor used to overrun a short phone: at 360×640 the Study bar began at 242 px while the
-   face ended at 293 px, so the last two lines — the line being typed — were behind the bar. The
-   band is now capped at the measured space; a smaller band is honest, an overlapping one hides
-   the caret. When the room left would be under 140 px the mode bar is pinned under the header, so
-   a reflow above the editor (a narrower width, a lesson that rewraps) cannot take room from the
-   band; a phone whose band is already full is left where the learner scrolled it. Before, the
-   placement only moved a bar near the folds, and a 360×640 phone could drop from 89 px of code to
-   42 px without overlapping anything. Before this the card was as tall as its
-   file — a 40-line starter made a 1048 px editor in a 3151 px page — so the editor's own scroller
-   never moved, the page's scrollbar did the scrolling, and the caret sat far below the keys. The
-   band is placed with an instant scroll (the page's own `scroll-behavior` is smooth, so `auto`
-   would animate a measurement), and the surface switch does not scroll to the card's top while
-   the keys are up, because that undid the placement. The page's height no longer changes as lines
-   wrap, so the scrollbar stays where the learner left it.
+   `EditorCodePane` measures from the mode bar's bottom edge to the nearer of the Study bar that
+   rides on the keys, the keys themselves, and — for the OS keyboard — the visual viewport's
+   bottom edge. The editor fills exactly that box, never more than the room that exists. A 140 px
+   floor used to overrun a short phone: at 360×640 the Study bar began at 242 px while the face
+   ended at 293 px, so the last two lines — the line being typed — were behind the bar. The band
+   is capped at the measured space; a smaller band is honest, an overlapping one hides the caret.
+
+   **While the keys are up, the typing layer owns the screen.** The global header and the tab
+   picker are hidden (`data-phone-typing` on `<html>` and `<body>`), the mode bar is pinned to the
+   top, and the page is locked with `overflow: hidden` plus a guard that restores the locked
+   `window.scrollY`; only the editor's own scroller moves. The chrome's 153 px, less the mode bar's
+   own 43, go to the code: the band is **403 px at 390×844**, 225 at 375×667, 199 at 360×640 and
+   96 at 320×568, where the old pin-and-scroll left 293, 116, 89 and 17. Leaving Code for Lesson
+   releases the layer at once and brings the header and page scrolling back. When the keys close,
+   the page is moved just far enough to put the mode bar under the header **and the sticky tab
+   picker**, so the way back to the keys is not left behind the chrome.
+
+   The old card was as tall as its file — a 40-line starter made a 1048 px editor in a 3151 px
+   page — so the editor's own scroller never moved, the page's scrollbar did the scrolling, and the
+   caret sat far below the keys. The band is placed with an instant scroll (the page's own
+   `scroll-behavior` is smooth, so `auto` would animate a measurement), and the surface switch
+   does not scroll to the card's top while the keys are up. The page's height no longer changes as
+   lines wrap, so the scrollbar stays where the learner left it.
 
    **Every key reveals the caret.** The code's scroller also contains its overscroll
    (`overscroll-behavior: contain`), so reaching the first or last line never drags the page. CodeMirror
@@ -146,10 +153,16 @@ flowchart LR
    not. Custom keys put `inputmode=none` on CodeMirror's content and on the focused
    block field, which is the only way to keep the OS keyboard shut while the custom one is the
    keyboard; the **native** key removes it and focuses the real editor in the same gesture, so the
-   OS keyboard rises as the custom shell slides away. The mode bar's key button is the way back: it
-   re-applies `inputmode=none`, blurs and focuses the surface so the OS keyboard closes, and the
-   caret and selection never moved. **Done** folds the keyboard and leaves that button in its place. In Visual the toolbox dock folds while the keyboard is up, and a focused
-   field is scrolled into the band above the keys.
+   OS keyboard rises as the custom shell slides away. The band follows
+   `visualViewport.height + offsetTop` while the OS keyboard is up, because iOS keeps `innerHeight`
+   full; the Study bar is its edge only when its top is actually above that visual bottom (Android
+   shrinks the layout viewport, iOS leaves the bar behind the keyboard). The mode bar's key button
+   is the way back: it re-applies `inputmode=none`, blurs and focuses the surface so the OS keyboard
+   closes, and the caret and selection never moved. A press on the mode bar holds the typing layer
+   until its click lands, so the button cannot move out from under the finger; the blur that
+   dismisses the OS keyboard is not read as leaving the editor. **Done** folds the keyboard and
+   leaves that button in its place, under the chrome. In Visual the toolbox dock folds while the
+   keyboard is up, and a focused field is scrolled into the band above the keys.
 6. **A plot opens at its own resolution.** A 320 px Bode card cannot be read for a phase margin.
    `components/PlotExpander.tsx` snapshots the live canvas with `toDataURL` and shows it in a sheet
    that scrolls both ways; the snapshot is taken when the sheet opens, because the canvas redraws every

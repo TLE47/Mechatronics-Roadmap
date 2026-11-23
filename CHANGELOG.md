@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.19.9`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.20.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,29 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-23] — The typing screen belongs to the code
+
+The words were still below the fold on a short phone: the header and the tab picker took 153 px of
+the screen while a finger typed, and the band could only use what was left. The phone's typing
+layer now hides the global header and the tab picker (`data-phone-typing` on `<html>` and `<body>`),
+pins the mode bar at the top, and locks the page while the custom or OS keyboard is up; only the
+code's own scroller moves, and a scroll guard restores the locked `window.scrollY` if a browser
+tries to reveal a focused editor. The band grows from **293 to 403 px at 390×844**, **89 to 199 at
+360×640**, **116 to 225 at 375×667** and **17 to 96 at 320×568**. The OS keyboard's
+`visualViewport` is the band's bottom edge too, so the native handoff gets the same screen; the
+Study bar is used as the edge only when it is actually above the visual viewport (Android), not
+when it is behind the keyboard (iOS).
+
+Closing the keys restores the header and scrolls the mode bar under the header **and the sticky tab
+picker**, so the “Python keys” button is not left behind the chrome. A press on the mode bar holds
+the typing layout until its click lands, which fixes the native-to-Python return, and the Lesson
+surface releases the layer at once.
+
+The phone speed gate now checks the hidden chrome, the document's typing layer, the locked page
+and the 403/199 px bands, alongside its existing zero caret frames, zero page/document-height
+changes and 48 px drift typing exactly once. The mobile gate covers the native handoff, Done, and
+the reopen after Done landing on the button.
 
 ## [2026-11-23] — A drifting thumb no longer drags the page
 

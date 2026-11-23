@@ -260,18 +260,40 @@ async function main() {
         '[data-testid="editor-panel"][data-phone-code="1"] [data-editor-face="code"]'
       );
       const box = face?.getBoundingClientRect();
+      const header = document.querySelector('header[data-chrome="header"]');
+      const rail = document.querySelector('[data-chrome="rail"]');
       return {
         marked: face?.getAttribute('data-phone-band') ?? null,
         height: box ? Math.round(box.height) : 0,
         keysTop: Math.round(
           document.querySelector('[data-testid="python-keyboard"]')?.getBoundingClientRect().top ?? 0
         ),
+        bodyAttr: document.body.dataset.phoneTyping ?? null,
+        rootAttr: document.documentElement.dataset.phoneTyping ?? null,
+        header: header ? getComputedStyle(header).display : 'missing',
+        rail: rail ? getComputedStyle(rail).display : 'missing',
+        overflow: [
+          getComputedStyle(document.documentElement).overflow,
+          getComputedStyle(document.body).overflow,
+        ],
       };
     });
     check(band.marked === '1', 'the phone code face is not a measured band');
     check(
-      band.height > 120 && band.height < band.keysTop,
-      `the code face is not a band above the keys (${band.height}px of ${band.keysTop}px)`
+      band.height >= 360 && band.height < band.keysTop,
+      `the code face does not use the typing layer's room (${band.height}px of ${band.keysTop}px)`
+    );
+    check(
+      band.bodyAttr === '1' && band.rootAttr === '1',
+      'the phone typing layer is not marked on the document'
+    );
+    check(
+      band.header === 'none' && band.rail === 'none',
+      'the header and tab picker are still taking the typing screen'
+    );
+    check(
+      band.overflow[0] === 'hidden' && band.overflow[1] === 'hidden',
+      `the page is not locked while typing (${band.overflow.join(', ')})`
     );
 
     // A file the band cannot hold, with the caret at its end. The first real key is the press that
@@ -552,6 +574,9 @@ async function main() {
         bottom: box ? Math.round(box.bottom) : 0,
         height: box ? Math.round(box.height) : 0,
         barTop: bar ? Math.round(bar.getBoundingClientRect().top) : 0,
+        layer: [document.body.dataset.phoneTyping ?? null, document.documentElement.dataset.phoneTyping ?? null],
+        header: getComputedStyle(document.querySelector('header[data-chrome="header"]')).display,
+        rail: getComputedStyle(document.querySelector('[data-chrome="rail"]')).display,
       };
     });
     check(shortFace.marked === '1', 'the 360x640 phone did not get a measured band');
@@ -560,8 +585,12 @@ async function main() {
       `the code band overruns the Study bar (${shortFace.bottom}px > ${shortFace.barTop}px) on a 360x640 phone`
     );
     check(
-      shortFace.height >= 44,
-      `the 360x640 phone's code band is only ${shortFace.height}px tall`
+      shortFace.height >= 170,
+      `the 360x640 phone's typing layer left only ${shortFace.height}px of code`
+    );
+    check(
+      shortFace.layer[0] === '1' && shortFace.layer[1] === '1' && shortFace.header === 'none' && shortFace.rail === 'none',
+      'the short phone dropped the typing layer or brought its chrome back'
     );
 
     // The keys moved with the shorter viewport; the touch dispatcher reads `points`, so refresh it

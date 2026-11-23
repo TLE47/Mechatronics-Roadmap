@@ -3,8 +3,6 @@ import { Blocks, Code2, Keyboard } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MobilePythonKeyboard } from '../../MobilePythonKeyboard';
 
-/** Below this the mode bar is pinned under the header; a phone with this much room is left alone. */
-const MIN_PHONE_BAND = 140;
 import type { PythonBlockEditorHandle } from '../../../pythonBlocks/PythonBlockEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import { FIELD_KEYBOARD_OPEN_EVENT } from '../../../keyboard/fieldTarget';
@@ -127,12 +125,43 @@ export function EditorCodePane({
   // folded away; the mode bar's key button is the way back from both that and Done.
   const [keyboardOpen, setKeyboardOpen] = useState(isPhone);
   const [keyboardNative, setKeyboardNative] = useState(false);
+  // A press on the mode bar holds the typing layout until its click has landed. Without the hold,
+  // a tap from the OS keyboard blurs the editor first, the native state falls, the header comes
+  // back and the button moves out from under the finger before the click is delivered.
+  const [modeBarHolding, setModeBarHolding] = useState(false);
   // Custom is the phone's resting mode, not only its open state: with `inputmode=none` already on
   // the editing surface, tapping code or a block field raises *this* keyboard instead of the OS
   // one. Native is the one state that gives the OS keyboard the screen back.
   const keyboardMode = !isPhone ? 'off' : keyboardNative ? 'native' : 'custom';
+  const phoneTyping =
+    isPhone && mode === 'code' && (keyboardOpen || keyboardNative || modeBarHolding);
   const nativeRef = useRef(keyboardNative);
   nativeRef.current = keyboardNative;
+  // The blur that dismisses the OS keyboard on the way back to the Python keys is not the learner
+  // leaving the editor: it must not fold the keys that are being reopened under it.
+  const nativeReturnBlurRef = useRef(false);
+  // A press on the mode bar is not a departure from the editor either, but some phone browsers
+  // report that blur with no `relatedTarget` at all. The press is remembered long enough for its
+  // own click to run, so the keys it is switching stay up.
+  const modeBarPressRef = useRef(false);
+  const modeBarPressTimerRef = useRef(0);
+  const releaseModeBarHold = () => {
+    window.clearTimeout(modeBarPressTimerRef.current);
+    modeBarPressRef.current = false;
+    setModeBarHolding(false);
+  };
+  const noteModeBarPress = () => {
+    modeBarPressRef.current = true;
+    // Hold an already-active typing layer; do not summon one from a closed keyboard, or the bar
+    // jumps to the top under the press and the click lands nowhere. When the keys are closed, the
+    // click opens them and the layer starts after it, not under the finger.
+    if (phoneTyping) setModeBarHolding(true);
+    window.clearTimeout(modeBarPressTimerRef.current);
+    modeBarPressTimerRef.current = window.setTimeout(() => {
+      modeBarPressRef.current = false;
+      setModeBarHolding(false);
+    }, 600);
+  };
   // The viewport height when Native was chosen, before the OS keyboard can change it. Android
   // shrinks `innerHeight` with the visual viewport, so their difference is not a keyboard signal.
   const nativeViewportBaseRef = useRef(0);
@@ -165,6 +194,11 @@ export function EditorCodePane({
     // The native handoff lasts only while the caret does. When the OS keyboard's field is left,
     // the next focus is the custom keyboard's again instead of a one-way trip.
     if (nativeRef.current) setKeyboardNative(false);
+    if (nativeReturnBlurRef.current) {
+      nativeReturnBlurRef.current = false;
+      return;
+    }
+    if (modeBarPressRef.current) return;
     if (keyboardPressedRecently()) return;
     if (
       related instanceof Element &&
@@ -211,55 +245,86 @@ export function EditorCodePane({
    * in `pythonEditorImpl.tsx` keeps a line of air above the keys. It is re-measured for a keyboard
    * that grows, a bar that wraps, a rotation, and over the next few frames for the page clamp the
    * new height can cause.
+   *
+   * While the keys are up the global header and the tab picker are hidden and the page is locked
+   * (`data-phone-typing` in `index.css`). The mode bar becomes the top row, the 153 px the chrome
+   * took goes to the code, and no browser scroll can move the page under the band. The OS
+   * keyboard's visible viewport is the band's edge too: on iOS `innerHeight` stays full while
+   * `visualViewport` shrinks, so the native handoff measures the visual viewport instead.
    */
   useIsomorphicLayoutEffect(() => {
-    if (!isPhone || mode !== 'code' || !keyboardOpen || keyboardNative) {
+    const root = document.documentElement;
+    const body = document.body;
+    if (!phoneTyping) {
       setEditorBand(null);
+      delete body.dataset.phoneTyping;
+      delete root.dataset.phoneTyping;
       return;
     }
     const bar = modeBarRef.current;
     if (!bar) return;
     const studyBar = document.querySelector<HTMLElement>('[data-phone-bar]');
+    let lockedY = window.scrollY;
+
     const compute = () => {
       // The card is hidden on the Lesson surface; a hidden bar measures zero and has no place to
-      // put. Its ResizeObserver fires when Code shows it again.
-      if (bar.getBoundingClientRect().height === 0) return;
-      // Put the mode bar under the sticky header first: the editor then fills the band between the
-      // two instead of starting below the fold. This is the only place that decides the page's
-      // position while the keys are up, so it is not undone by a second scroll from the surface.
-      const header = document.querySelector('header[data-chrome="header"]');
-      const headerHeight = header?.getBoundingClientRect().height ?? 0;
-      // The band ends where the Study bar begins. Deriving it from the bar's height rather than its
-      // current `top` keeps this independent of the CSS variable that rides the bar on the keys:
-      // that variable is applied by an effect, and a first paint can precede it. A sheet hides the
-      // bar (zero height), and then the keys are the edge.
-      const study = studyBar?.getBoundingClientRect();
-      const studyHeight = study && study.height > 0 ? study.height : 0;
-      const bottom = window.innerHeight - keyboardHeight - studyHeight;
-      const barTop = bar.getBoundingClientRect().top;
-      const beforePin = bar.getBoundingClientRect().bottom;
-      // The page has left the mode bar lower than a usable band needs: a reflow above the editor —
-      // a narrower width, a lesson that rewraps — could put it 97 px down the screen and take that
-      // room from the code. On a 360×640 phone that was the difference between 89 px and 42 px.
-      // Pin it under the header only when the band is under the comfort floor; a full-height phone
-      // already has its 293 px, so the learner's own scroll is left alone.
-      // `instant`, not `auto`: the page sets `scroll-behavior: smooth` for its own in-page links,
-      // and `auto` inherits it. An animated placement meant the band was measured while the page
-      // was still moving — the editor got a floor while the page travelled — and it is the same
-      // travelling scrollbar the learner sees when Code opens.
-      if (bottom - beforePin < MIN_PHONE_BAND && Math.abs(barTop - headerHeight - 4) > 1) {
-        window.scrollTo({ top: window.scrollY + barTop - headerHeight - 4, behavior: 'instant' });
+      // put. Its ResizeObserver fires when Code shows it again. The header and page must come back
+      // on a surface that is not being typed on, so a hidden card also releases the typing layer.
+      if (bar.getBoundingClientRect().height === 0) {
+        delete body.dataset.phoneTyping;
+        delete root.dataset.phoneTyping;
+        return;
       }
+      // The typing layer owns the screen. The global header and the tab picker are not part of it:
+      // hiding them gives their 153 px to the code and leaves the mode bar at the top, instead of
+      // making the page scroll to put the bar there. The page is locked while they are hidden.
+      body.dataset.phoneTyping = '1';
+      root.dataset.phoneTyping = '1';
+      const viewport = window.visualViewport;
+      // The OS keyboard shrinks the visual viewport (iOS does not shrink `innerHeight`); the custom
+      // keys are a fixed element already inside the layout viewport, and the Study bar rides them.
+      const viewTop = keyboardNative ? Math.round(viewport?.offsetTop ?? 0) : 0;
+      // The visible bottom is the keys on the custom layout, and the visual viewport when the OS
+      // keyboard shrinks it. The Study bar is an edge too — on Android the layout viewport shrinks
+      // with the OS keyboard, so the bar sits above it, while on iOS the bar is behind the keyboard
+      // and its top is below the visible bottom. Taking the nearer of the two covers both; a sheet
+      // hides the bar, and then the keys or the viewport are the edge.
+      const study = studyBar?.getBoundingClientRect();
+      const visibleBottom = keyboardNative
+        ? viewTop + Math.round(viewport?.height ?? window.innerHeight)
+        : window.innerHeight - keyboardHeight;
+      const bottom = Math.min(visibleBottom, study && study.height > 0 ? study.top : Infinity);
+      const box = bar.getBoundingClientRect();
+      // Put the mode bar at the top of the typing layer. On a custom-keyboard open the header and
+      // picker were taking exactly this room, so this is usually already true and does not scroll.
+      // `instant`, not `auto`: the page's own scroll-behavior is smooth, and an animated placement
+      // measured a band while the page was still travelling.
+      if (Math.abs(box.top - viewTop) > 1) {
+        window.scrollTo({ top: window.scrollY + box.top - viewTop, behavior: 'instant' });
+      }
+      lockedY = window.scrollY;
       const top = bar.getBoundingClientRect().bottom;
-      // Never taller than the room that exists. A 140 px floor overran the Study bar on a short
-      // phone: at 360×640 the bar began at 242 px while the face ended at 293 px, so the last 51 px
-      // of code — the line being typed — sat behind the bar while the editor's own scroller still
-      // believed the caret was visible. A smaller band is honest; a band that overlaps the keys
-      // hides the text the learner is writing.
+      // Never taller than the room that exists. A floor overran the Study bar on a short phone: at
+      // 360×640 the bar began at 242 px while a 140 px face ended at 293 px, so the last 51 px of
+      // code — the line being typed — sat behind the bar while the editor's own scroller still
+      // believed the caret was visible. A smaller band is honest; an overlapping one hides the
+      // text the learner is writing.
       const next = Math.max(0, Math.round(bottom - top));
       setEditorBand((current) => (Math.abs((current ?? 0) - next) <= 1 ? current : next));
     };
     compute();
+
+    // The page is a still surface while a finger types. A browser can still try to scroll it to
+    // reveal a focused contenteditable (iOS does), so any scroll outside the placement is undone;
+    // only the editor's own scroller moves. The listener starts after the first placement so that
+    // placement's own instant scroll is not treated as a recoil.
+    const guard = () => {
+      if (Math.abs(window.scrollY - lockedY) > 1) {
+        window.scrollTo({ top: lockedY, behavior: 'instant' });
+      }
+    };
+    window.addEventListener('scroll', guard, { passive: true });
+
     // Sizing the editor changes the page's height by hundreds of pixels, and the first frame can
     // land before that layout exists. Settle over a handful of frames so the placement and the band
     // are read from the page the learner actually has; each pass is idempotent, and a pass whose
@@ -276,12 +341,56 @@ export function EditorCodePane({
     observer.observe(bar);
     if (studyBar) observer.observe(studyBar);
     window.addEventListener('resize', compute);
+    const viewport = window.visualViewport;
+    viewport?.addEventListener('resize', compute);
+    viewport?.addEventListener('scroll', compute);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      window.removeEventListener('scroll', guard);
       window.removeEventListener('resize', compute);
+      viewport?.removeEventListener('resize', compute);
+      viewport?.removeEventListener('scroll', compute);
+      delete body.dataset.phoneTyping;
+      delete root.dataset.phoneTyping;
     };
-  }, [isPhone, mode, keyboardOpen, keyboardNative, keyboardHeight, deferPhoneEditor, openHelper]);
+  }, [phoneTyping, keyboardNative, keyboardHeight, deferPhoneEditor, openHelper]);
+
+  // When the typing layer ends, the header comes back over the page and can cover the mode bar —
+  // including the button that brings the Python keys back. Put the bar just under the header, as it
+  // sat before the keys took the screen, instead of leaving it behind the sticky chrome.
+  const wasPhoneTypingRef = useRef(false);
+  useIsomorphicLayoutEffect(() => {
+    if (phoneTyping) {
+      wasPhoneTypingRef.current = true;
+      return;
+    }
+    if (!wasPhoneTypingRef.current) return;
+    wasPhoneTypingRef.current = false;
+    const bar = modeBarRef.current;
+    if (!bar || !bar.isConnected) return;
+    const barBox = bar.getBoundingClientRect();
+    // The Lesson surface keeps the card mounted but hidden; its zero-height bar is not a place the
+    // page should scroll to.
+    if (barBox.height === 0) return;
+    // The header and the tab picker both sit over the page. The picker is sticky under the header,
+    // so its final bottom is the header's height plus the picker's own height; measuring its
+    // transient rect while the page is still settling put the bar back underneath it.
+    const header = document.querySelector<HTMLElement>('header[data-chrome="header"]');
+    const rail = document.querySelector<HTMLElement>('[data-chrome="rail"]');
+    const visible = (element: HTMLElement | null): element is HTMLElement =>
+      element !== null && getComputedStyle(element).display !== 'none';
+    const headerHeight = visible(header) ? header.getBoundingClientRect().height : 0;
+    const railHeight = visible(rail) ? rail.getBoundingClientRect().height : 0;
+    if (headerHeight + railHeight === 0) return;
+    const target = headerHeight + railHeight + 4;
+    if (barBox.top < target - 1) {
+      window.scrollTo({
+        top: window.scrollY - (target - barBox.top),
+        behavior: 'instant',
+      });
+    }
+  }, [phoneTyping]);
 
   // The Study bar is outside this pane, so the one number it needs travels as a custom property:
   // the bar's `bottom` is this height, which puts it on top of the keys rather than under them.
@@ -339,6 +448,7 @@ export function EditorCodePane({
   }, [isPhone, keyboardNative]);
 
   const chooseMode = (next: BlockMode) => {
+    releaseModeBarHold();
     if (next === mode) return;
     setMode(next);
     if (next === 'visual') setVisualOpened(true);
@@ -369,6 +479,7 @@ export function EditorCodePane({
   };
 
   const toggleKeyboard = () => {
+    releaseModeBarHold();
     // Native feels closed (the custom keys are gone) but the way back has to open them, not run
     // the close a third time. Only a showing, non-native keyboard closes on this press.
     if (keyboardOpen && !keyboardNative) {
@@ -383,6 +494,7 @@ export function EditorCodePane({
     // surface, the blur is what makes a phone put its own keyboard away; the focus after it keeps
     // the caret where the learner left it.
     window.setTimeout(() => {
+      nativeReturnBlurRef.current = true;
       if (mode === 'visual') {
         visualRef.current?.blurField();
         visualRef.current?.focusField();
@@ -390,6 +502,12 @@ export function EditorCodePane({
         mainEditorRef.current?.blur();
         mainEditorRef.current?.focus();
       }
+      // The focus normally opens the custom keys again; stating it after the blur, rather than
+      // relying on that event, keeps the return from depending on the editor's focus timing.
+      setKeyboardOpen(true);
+      window.setTimeout(() => {
+        nativeReturnBlurRef.current = false;
+      }, 350);
     }, 40);
   };
 
@@ -477,6 +595,7 @@ export function EditorCodePane({
           <div
             ref={modeBarRef}
             data-testid="editor-mode-bar"
+            onPointerDown={noteModeBarPress}
             className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-line-soft bg-canvas px-2 py-1"
           >
             <div

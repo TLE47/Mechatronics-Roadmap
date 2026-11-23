@@ -1349,6 +1349,20 @@ body:has([data-testid='phone-field-keyboard'][data-mobile-keyboard='1']) [data-p
   bottom: var(--mobile-keyboard-height, 0px);
 }
 
+/* The phone's code keys own the screen: the global header and the tab picker are not part of the
+   typing surface. Hiding them gives their 153 px to the code and leaves the mode bar at the top,
+   so the band grows instead of the page scrolling to put the bar under the chrome. The page itself
+   is locked: while a finger types, the only scroller is the code band. */
+body[data-phone-typing='1'] header[data-chrome='header'],
+body[data-phone-typing='1'] [data-chrome='rail'] {
+  display: none !important;
+}
+html[data-phone-typing='1'],
+body[data-phone-typing='1'] {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* The phone's Study surface fills the editor with the space it has. The theme reads the three
    variables, so the desktop editor keeps its 288/360 px frame and the phone's Code surface gets a
    taller body and a 16 px line. */
