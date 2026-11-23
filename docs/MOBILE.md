@@ -128,15 +128,21 @@ flowchart LR
 
    **While the keys are up, the typing layer owns the screen.** The global header and the tab
    picker are hidden (`data-phone-typing` on `<html>` and `<body>`), the mode bar is pinned to the
-   top, and the page is locked with `overflow: hidden` plus a guard that restores the locked
-   `window.scrollY`; only the editor's own scroller moves. The chrome's 153 px, less the mode bar's
-   own 43, go to the code: the band is **403 px at 390×844**, 225 at 375×667, 199 at 360×640 and
-   96 at 320×568, where the old pin-and-scroll left 293, 116, 89 and 17. Leaving Code for Lesson
-   releases the layer at once and brings the header and page scrolling back. When the keys close,
-   the page is moved just far enough to put the mode bar under the header **and the sticky tab
-   picker**, so the way back to the keys is not left behind the chrome. The editor's own view
-   tabs and run controls sit above the mode bar, so they are off-screen while the keys are up;
-   Done gives them back.
+   top, and the page is locked — `overflow: hidden`, and, because iOS ignores that lock, the body
+   is taken out of the document's flow and drawn at the offset that put the mode bar at the top
+   (`data-phone-lock`, `--phone-typing-top`); only the editor's own scroller moves. The editor
+   re-focuses only when focus was actually lost: iOS 26 ignores `preventScroll` (CodeMirror turns
+   it off on Safari 26), so a focus on every key let Safari scroll the layout to reveal the
+   contenteditable — the code sliding above the screen while the footer rose under the keys. The
+   band follows `visualViewport.offsetTop` as well, so a pan of the visible viewport takes the
+   code with it instead of leaving an empty card. The chrome's 153 px, less the mode bar's own 43,
+   go to the code: the band is **403 px at 390×844**, 225 at 375×667, 199 at 360×640 and 96 at
+   320×568, where the old pin-and-scroll left 293, 116, 89 and 17. Leaving Code for Lesson
+   releases the layer at once and brings the header and page scrolling back at the position it
+   held. When the keys close, the page is moved just far enough to put the mode bar under the
+   header **and the sticky tab picker**, so the way back to the keys is not left behind the
+   chrome. The editor's own view tabs and run controls sit above the mode bar, so they are
+   off-screen while the keys are up; Done gives them back.
 
    The old card was as tall as its file — a 40-line starter made a 1048 px editor in a 3151 px
    page — so the editor's own scroller never moved, the page's scrollbar did the scrolling, and the
@@ -320,6 +326,10 @@ Measured on the run that added it: header 107.75 px (budget 112), picker rows 56
 a lab, either Study surface, or after a lesson change. The same gate's 12-sample touch-to-rendered-text
 measurement reads **median 15.4–21.2 ms, max 29.1 ms across runs** after keys began acting on
 pointerdown; the click-on-release path measured 34.2 ms median on the same VM.
+
+The speed gate also checks the lock itself: the body is `position: fixed` with no page scroll, the
+mode bar is at the top of the screen, and the editable's computed type is at least 16 px, the size
+iOS refuses to zoom on focus.
 
 `scripts/e2e_keyboard_speed.mjs` is the changing-speed gate. It first types a fixed slow opening that
 accelerates to 8 ms keys, then the exact two-thumb overlap that typed nothing before keys acted on

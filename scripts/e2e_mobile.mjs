@@ -869,6 +869,10 @@ async function main() {
         editorTabs.ids.includes('editor-tab-workflow'),
         `the Workflow view is missing from the phone's editor tabs: ${editorTabs.ids.join(', ')}`
       );
+      // While the keys are up the typing layer owns the screen and the editor's view tabs sit
+      // above the mode bar, off-screen on purpose; the page is locked, so nothing can scroll to
+      // them. Done gives the chrome and the tabs back — the same door the narrow audit uses.
+      await page.getByTestId('python-key-done').click();
       await page.getByTestId('editor-tab-workflow').click();
       await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 10000 });
       ok('every editor view is on screen at 390 px, Workflow included');

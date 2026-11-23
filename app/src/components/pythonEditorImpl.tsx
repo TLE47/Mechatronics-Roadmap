@@ -93,7 +93,7 @@ function revealLine(view: EditorView, line: number): void {
   const number = Math.max(1, Math.min(Math.round(line), view.state.doc.lines));
   const target = view.state.doc.line(number);
   view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
-  view.focus();
+  focusSurface(view);
 }
 
 /**
@@ -109,6 +109,26 @@ function revealCaret(view: EditorView): void {
   view.dispatch({
     effects: EditorView.scrollIntoView(view.state.selection.main.head, { y: 'nearest' }),
   });
+}
+
+/**
+ * Focus the editing surface without letting the browser scroll the page to do it.
+ *
+ * The phone's keys cancel their pointer default, so CodeMirror keeps the caret while a finger
+ * types and this is a no-op. Calling `view.focus()` on every key anyway was the recoil: iOS 26
+ * ignores `preventScroll` (CodeMirror disables it on Safari 26) and scrolls the layout to reveal
+ * the focused editor, so the code slid above the screen and the page's footer rose under the
+ * keys. The caret is already placed by `revealCaret`; focus only needs restoring when something
+ * else took it.
+ */
+function focusSurface(view: EditorView): void {
+  if (view.hasFocus) return;
+  view.contentDOM.focus({ preventScroll: true });
+  // If the browser scrolled anyway, the keys' page lock is the place to be — zero. Outside the
+  // layer there is no such lock, and scrolling the page here would be a surprise of its own.
+  if (document.body.dataset.phoneTyping === '1' && window.scrollY !== 0) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
 }
 
 /** The robot's box is a line decoration, so it moves with the document and never steals the caret. */
@@ -388,7 +408,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     useImperativeHandle(
       ref,
       () => ({
-        focus: () => viewRef.current?.focus(),
+        focus: () => {
+          const view = viewRef.current;
+          if (view) focusSurface(view);
+        },
         getValue: () => viewRef.current?.state.doc.toString() ?? value,
         setValue: (text: string) => {
           const view = viewRef.current;
@@ -442,7 +465,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // `replaceSelection` keeps a selection replaceable — a learner who selected a word and
           // tapped `(` gets a bracket around it rather than after it, which is what an editor does.
           view.dispatch({ ...view.state.replaceSelection(text), scrollIntoView: true });
-          view.focus();
+          focusSurface(view);
         },
         backspace: () => {
           const view = viewRef.current;
@@ -452,21 +475,21 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // indent, which is not what the key says it does (and made a fast run unpredictable).
           deleteCharBackwardStrict(view);
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         indent: () => {
           const view = viewRef.current;
           if (!view) return;
           indentMore(view);
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         dedent: () => {
           const view = viewRef.current;
           if (!view) return;
           indentLess(view);
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         insertNewLine: () => {
           const view = viewRef.current;
@@ -475,27 +498,27 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // one thing a phone keyboard cannot see to type.
           insertNewlineAndIndent(view);
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         insertTab: () => {
           const view = viewRef.current;
           if (!view) return;
           view.dispatch({ ...view.state.replaceSelection('    '), scrollIntoView: true });
-          view.focus();
+          focusSurface(view);
         },
         undo: () => {
           const view = viewRef.current;
           if (!view) return;
           undoCommand(view);
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         redo: () => {
           const view = viewRef.current;
           if (!view) return;
           redoCommand(view);
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         duplicate: () => {
           const view = viewRef.current;
@@ -519,7 +542,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
               scrollIntoView: true,
             });
           }
-          view.focus();
+          focusSurface(view);
         },
         deleteLine: () => {
           const view = viewRef.current;
@@ -531,7 +554,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
             deleteLineCommand(view);
           }
           revealCaret(view);
-          view.focus();
+          focusSurface(view);
         },
         blur: () => viewRef.current?.contentDOM.blur(),
         openNativeKeyboard: () => {
@@ -541,6 +564,8 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // A fresh focus is what a phone listens for; the attribute alone only decides whether the
           // next focus may open the OS keyboard.
           view.contentDOM.blur();
+          // The focus is the gesture that raises the OS keyboard; the keyboard's own viewport is
+          // the band's edge, so this one focus is meant to move the visible viewport.
           view.focus();
         },
       }),
@@ -719,17 +744,17 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         set: (text: string) => {
           view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
         },
-        focus: () => view.focus(),
+        focus: () => focusSurface(view),
         setCursor: (pos: number) => {
           const clamped = Math.max(0, Math.min(pos, view.state.doc.length));
           view.dispatch({ selection: { anchor: clamped } });
-          view.focus();
+          focusSurface(view);
         },
         getCursor: () => view.state.selection.main.head,
         revealLine: (line: number) => revealLine(view, line),
         setRunLine: (line: number | null) => showRunLine(view, line),
         startCompletion: () => {
-          view.focus();
+          focusSurface(view);
           startCompletion(view);
         },
         coordsOf: (pos: number) => {

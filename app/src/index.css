@@ -1362,6 +1362,18 @@ body[data-phone-typing='1'] {
   overflow: hidden;
   overscroll-behavior: none;
 }
+/* `overflow: hidden` is not a page lock on iOS: it still scrolls the layout to reveal a focused
+   editor (iOS 26 ignores `preventScroll`), which put the code above the screen and the footer
+   under the keys on every key press. Taking the body out of the document's flow and drawing it at
+   the offset the keys opened at — `--phone-typing-top`, written by the typing layer — is the
+   lock the browser honours. The layer removes it when the keys close. */
+body[data-phone-typing='1'][data-phone-lock='1'] {
+  position: fixed;
+  top: var(--phone-typing-top, 0px);
+  right: 0;
+  left: 0;
+  width: 100%;
+}
 
 /* The phone's Study surface fills the editor with the space it has. The theme reads the three
    variables, so the desktop editor keeps its 288/360 px frame and the phone's Code surface gets a

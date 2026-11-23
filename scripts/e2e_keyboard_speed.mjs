@@ -276,6 +276,17 @@ async function main() {
           getComputedStyle(document.documentElement).overflow,
           getComputedStyle(document.body).overflow,
         ],
+        // `overflow: hidden` alone does not lock iOS. The body leaves the flow and is drawn at the
+        // offset that put the mode bar at the top, so a focus scroll cannot move the page.
+        pagePosition: getComputedStyle(document.body).position,
+        pageLock: document.body.dataset.phoneLock ?? null,
+        pageY: Math.round(window.scrollY),
+        barTop: Math.round(
+          document.querySelector('[data-testid="editor-mode-bar"]')?.getBoundingClientRect().top ?? 0
+        ),
+        // iOS zooms the page on focus when the editable is smaller than 16 px. That would make the
+        // code a magnified, panned fragment of itself no matter where the band is.
+        codeFont: parseFloat(getComputedStyle(document.querySelector('.cm-content')).fontSize),
       };
     });
     check(band.marked === '1', 'the phone code face is not a measured band');
@@ -294,6 +305,18 @@ async function main() {
     check(
       band.overflow[0] === 'hidden' && band.overflow[1] === 'hidden',
       `the page is not locked while typing (${band.overflow.join(', ')})`
+    );
+    check(
+      band.pagePosition === 'fixed' && band.pageLock === '1' && band.pageY === 0,
+      `the page is still a scrolling document while typing (${band.pagePosition}, y ${band.pageY})`
+    );
+    check(
+      Math.abs(band.barTop) <= 1,
+      `the mode bar is ${band.barTop}px from the top of the typing screen`
+    );
+    check(
+      band.codeFont >= 16,
+      `the phone's code is ${band.codeFont}px, small enough for iOS to zoom on focus`
     );
 
     // A file the band cannot hold, with the caret at its end. The first real key is the press that

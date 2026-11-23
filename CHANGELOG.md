@@ -16,6 +16,21 @@ flowchart LR
 
 ---
 
+## [2026-11-23] — The typing page cannot scroll at all
+
+The code still slid above the screen on an iPhone while a finger typed, and the page's footer rose
+under the keys. The band was not the cause: iOS 26 ignores `preventScroll` (CodeMirror disables it
+on Safari 26), so every key's `view.focus()` let Safari scroll the layout to reveal the editable,
+and `overflow: hidden` did not stop it.
+
+The phone typing layer now takes the body out of the document's flow and draws it at the offset
+that put the mode bar at the top (`data-phone-lock` and `--phone-typing-top`), which is the page
+lock iOS honours; it restores the page where the learner left it when the keys close. The editor
+only focuses when focus was actually lost, never on every key, and the band follows
+`visualViewport.offsetTop` so a pan of the visible viewport moves the code with it instead of
+leaving an empty card. The speed gate pins the fixed page, the mode bar at the top and the
+editable's 16 px type — the size iOS does not zoom on focus.
+
 ## [2026-11-23] — The typing screen belongs to the code
 
 The words were still below the fold on a short phone: the header and the tab picker took 153 px of
