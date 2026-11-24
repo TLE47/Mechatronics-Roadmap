@@ -7,6 +7,7 @@ import {
   stepAt,
   type FirstRunStep,
 } from '../tour';
+import { PHONE_VIEWPORT_QUERY } from '../phoneViewport';
 
 /**
  * The coach mark (`app/src/components/FirstRunTour.tsx`).
@@ -112,7 +113,7 @@ export const FirstRunTour: React.FC<FirstRunTourProps> = ({
   const [cardHeight, setCardHeight] = useState(0);
   const [isPhone, setIsPhone] = useState<boolean>(() => {
     try {
-      return window.matchMedia('(max-width: 767px)').matches;
+      return window.matchMedia(PHONE_VIEWPORT_QUERY).matches;
     } catch {
       return false;
     }
@@ -201,7 +202,7 @@ export const FirstRunTour: React.FC<FirstRunTourProps> = ({
   useEffect(() => {
     const query = (() => {
       try {
-        return window.matchMedia('(max-width: 767px)');
+        return window.matchMedia(PHONE_VIEWPORT_QUERY);
       } catch {
         return null;
       }

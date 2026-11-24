@@ -776,6 +776,23 @@ async function main() {
         (await rightEdge(page, 'phone-tab-nav')) <= PHONE.width + 1,
         'the tab picker runs past the right edge'
       );
+      // A phone turned on its side is 844 × 390: wider than the `md` breakpoint and still a phone.
+      // Its shell must stay the phone shell — the picker, not the desktop rail — because the Study
+      // loop, the fixed bar and the coding keyboard all read the same question (`phoneViewport.ts`),
+      // and a width-only answer would draw a desktop rail over a 390 px-tall page.
+      await page.setViewportSize({ width: 844, height: 390 });
+      await page.waitForTimeout(320);
+      check(
+        await page.getByTestId('phone-tab-nav').isVisible(),
+        'a phone turned on its side lost the phone tab picker'
+      );
+      check(
+        !(await page.getByTestId('tab-rail').isVisible()),
+        'a landscape phone drew the desktop tab rail'
+      );
+      await assertNoSidewaysScroll(page, 'the landscape phone shell');
+      await page.setViewportSize(PHONE);
+      await page.waitForTimeout(320);
 
       // Two rows by design — the brand above the swipeable action strip — and no more. A third row
       // (a wrapped tray, or the course-level links coming back) is what this ceiling catches.
@@ -2624,12 +2641,15 @@ async function main() {
         `back at 390px the page keyboard ends at ${Math.round(restoredBox.y + restoredBox.height)}px`
       );
 
-      // The same 44 px caps on a large phone and a small phone held sideways. At 740x390 the
-      // keyboard is nearly the whole viewport, so this also pins the shell to the bottom edge and
-      // proves every cap is still the element under its own centre rather than the header above it.
+      // The same 44 px caps on a large phone and on two phones held sideways. The keyboard still ends
+      // on the bottom edge and every cap is still the element under its own centre; on its side the
+      // rows also flow into two columns, so the keys leave a code band instead of filling the screen.
+      // The 844 px case is wider than `md`: it is the landscape phone the width breakpoint used to
+      // hand to the desktop shell, and the keyboard host must still answer for it.
       for (const size of [
         { width: 428, height: 926, label: 'the large phone' },
         { width: 740, height: 390, label: 'the landscape phone' },
+        { width: 844, height: 390, label: 'a phone on its side, wider than md' },
       ]) {
         await page.setViewportSize({ width: size.width, height: size.height });
         await page.waitForTimeout(420);
@@ -2656,6 +2676,16 @@ async function main() {
           fit.minHeight >= 43.5 && fit.minWidth >= 20,
           `${size.label}: a key measures ${fit.minWidth}x${fit.minHeight}, below the 44 px target`
         );
+        if (size.width > size.height) {
+          // The reason the sideways layout exists: the code band must survive the rotation. Four
+          // rows of caps and the bottom row cost 212 px, so more than a third of a 390 px screen is
+          // left.
+          check(
+            fit.top !== null && fit.top >= size.height * 0.35,
+            `${size.label}: a ${Math.round((fit.bottom ?? 0) - (fit.top ?? 0))}px keyboard starts at ` +
+              `${fit.top}px of ${size.height} and leaves no code band`
+          );
+        }
         await assertNoSidewaysScroll(page, `${size.label} keyboard`);
         await assertKeyCentresHit(page, 'phone-field-keyboard', `${size.label} keyboard`);
       }

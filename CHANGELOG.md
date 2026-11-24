@@ -16,6 +16,28 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — The phone keyboard fits the screen it is on, either way up
+
+The keys were 44 px high with 16 px letters on every phone, and seven rows of them is a 368 px
+keyboard: a strip of small stamps on a 430 px screen, and taller than the whole screen when a phone
+was held sideways. The wider-than-`md` width made the landscape case worse — 844 × 390 read as a
+desktop, so the phone shell and the coding keyboard were not drawn at all. The cap height, the
+letters, the symbols, the small digits and the press bubble are now one scale on the keyboard's
+section (`index.css`): 44 px caps and 16 px letters on the smallest phones, 46/17 from 390 px and
+48/18 from 430 px. The 44 px thumb floor is never lowered and the 8 px gaps are unchanged, because
+the gap is a hit area (`.kb-key::after`). On its side the rows flow into two columns of three —
+editing and symbols on the left, the letter rows and Backspace on the right — with `123` / native /
+space / Done across both underneath, so seven rows become four and the keyboard takes 212 px of a
+390 px screen instead of 368.
+
+The phone arrangement is now one query for the React shell and the stylesheet
+(`phoneViewport.ts`: `(max-width: 767px), (max-height: 500px) and (pointer: coarse)`), so an 844 × 390
+phone keeps the picker, the fixed Study bar and the surface switch. The phone gate measures the
+landscape shell at 844 × 390 (picker shown, no desktop rail, no sideways scroll) and the keyboard at
+740 × 390 and 844 × 390 — sixty-plus keys, every cap at 44 px, ending on the bottom edge and leaving
+more than a third of the screen for code — while the portrait checks at 390, 428 and 360 px still
+hold. The stylesheet grew 415 B gzipped, 37,444 of 37,800.
+
 ## [2026-11-24] — A phone keystroke no longer re-renders the keyboard
 
 A press used to rebuild the keyboard's sixty caps twice: the code update re-rendered the pane that

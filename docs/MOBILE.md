@@ -1,8 +1,9 @@
 # MOBILE.md — the workbench on a phone
 
 MechaLab is a course, and a course read on a bus is a phone. This page is the phone's map: what the
-workbench does differently below 768 px, which module owns each piece, what it costs in pixels, and
-the gate that measures all of it. It is written for the next person to change a phone layout, and it
+workbench does differently below 768 px (and on a phone held sideways, which is wider than that and
+still a phone), which module owns each piece, what it costs in pixels, and the gate that measures all
+of it. It is written for the next person to change a phone layout, and it
 records the failures that produced each rule rather than only the rule.
 
 ```mermaid
@@ -49,7 +50,10 @@ flowchart LR
    keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
    the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
    raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
-   does not allow them to grow wider. The caps sit **8 px** apart in both directions, up from 6 px,
+   does not allow them to grow wider. That is the floor, not one size for every phone: the cap height
+   and its type step up with the screen (`--kb-cap` 44 px and 16 px letters, 46/17 from 390 px,
+   48/18 from 430 px), so a large phone does not draw the smallest phone's keyboard and a 320 px one
+   keeps the target. The press bubble is sized from the same cap. The caps sit **8 px** apart in both directions, up from 6 px,
    and the gate measures both gaps. The gap is printed, not touched: each cap's finger target
    reaches 4 px into it (`index.css`, `.kb-key::after`), so the two halves meet in the middle and
    every point of the keyboard belongs to the key nearest it. A drifting thumb that lands between
@@ -108,8 +112,9 @@ flowchart LR
    used rather than `window.innerHeight` because Android shrinks both together. The touch gate stubs
    `visualViewport` and sends its resize events to exercise that dismissal while the editor keeps
    focus, so the path is covered without a real phone. Number, date, range, colour and file controls keep the browser's own
-   keyboard — their keypads are the honest ones. Above 768 px the host renders nothing, and a phone
-   that never types draws no second keyboard until a field first asks.
+   keyboard — their keypads are the honest ones. Above 768 px the host renders nothing unless the
+   screen is short and the pointer is a thumb (`phoneViewport.ts`), and a phone that never types
+   draws no second keyboard until a field first asks.
 
    **Fn → 123 / ABC is the lighting layer**, not a second keyboard. The Fn row's `123` / `ABC` key
    prints `RGB` while Fn is on; one press swaps the three non-letter rows for the six modes (off,
@@ -121,7 +126,21 @@ flowchart LR
 
    Sizing is in CSS pixels inside the fixed shell and never reads the editor's `--editor-font-size`,
    so changing the code's type size grows the code, not the keyboard; the keys keep their 44 px floor
-   at every viewport and `env(safe-area-inset-bottom)` keeps the last row clear of a home indicator.
+   at every viewport, and `env(safe-area-inset-*)` keeps the last row clear of a home indicator and the
+   outer columns off a landscape notch.
+
+   **On its side the keyboard is two columns.** A phone in landscape is 844 × 390: wider than 768,
+   and shorter than the seven rows of 44 px caps that used to be drawn there — the keyboard filled the
+   whole screen and left the code nowhere. The rows now flow into two columns of three (editing and
+   symbols on the left, the letter rows and Backspace on the right) with the `123` / native / space /
+   Done row across both underneath: four rows of height, 212 px, every cap still 44 px. The `123` page
+   has three rows, so it fills two columns and needs one row less again.
+
+   **The phone shell is not a width.** `phoneViewport.ts` answers one question for the whole app —
+   `(max-width: 767px), (max-height: 500px) and (pointer: coarse)` — and `index.css` repeats it for the
+   pieces the CSS owns: the picker instead of the rail, the fixed Study bar, the one layout select and
+   no Predict tab in the file row (the bar has its own). A width-only answer handed an 844 × 390 phone
+   the desktop shell — no Study bar, no surface switch, and the coding keyboard not drawn at all.
    A page zoom is not the same thing: it magnifies the fixed keyboard with the page, and it is why
    every preset's editor is 16 px on a coarse pointer — iOS raises that zoom itself when a smaller
    editable takes focus, and the keys' right columns and bottom row then sit outside the screen.
@@ -320,7 +339,7 @@ a throw, and blocked storage leaves the switch working for the visit.
 
 ```bash
 npm run test:phone               # the pure rules: surface migration and the install offer
-npm run test:e2e:mobile          # 390×844 at DPR 3 with touch, then 768 and 1024
+npm run test:e2e:mobile          # 390×844 at DPR 3 with touch, then 768, 1024 and 844×390
 npm run test:e2e:keyboard-speed  # sudden speed changes and overlapping thumbs
 npm run icons                    # regenerate the manifest PNGs from favicon.svg
 ```
@@ -334,7 +353,8 @@ the bottom edge, and a sheet hides it; a reload inside Code comes back to Code a
 editor without a remount; the lesson sheet closes from the list's own corner × and hands focus back,
 then selects another entry and the strip follows; the install row appears only with a
 prompt event (or the iOS UA) and calls the prompt exactly once; and at 768/1024 the rail is back with
-Predict sharing Run's row. Its last block drives the keyboard with Chromium's own touch events rather
+Predict sharing Run's row, while an 844 × 390 phone keeps the phone shell. Its last block drives the
+keyboard with Chromium's own touch events rather
 than mouse clicks, because every key cancels `pointerdown` and a mouse-only gate cannot see the
 difference: it taps the editor's keys and a page field's keys, holds one for its preview, types at
 40, 70, 100, 120 and 150 WPM, then runs **100 seeded code plans (1,325 touches)** and **20 seeded
@@ -344,8 +364,9 @@ controlled search and the note composer and proves it repeats then stops, puts a
 between two caps and in both 123 and ABC without losing the caret, hands the editor and a page field
 to the OS keyboard and gets the site keys back, carries the keys between two fields without folding,
 measures touch-to-rendered-text latency, and records the shell's position every frame so a slide
-cannot pass for a jump — at 360, 390, 428 and 740 px, including the calculator display and the rich
-note composer. Ten blur/refocus cycles and five Done/show cycles check that the keyboard's visibility
+cannot pass for a jump — at 360, 390, 428, 740 and 844 px, including the calculator display and the rich
+note composer. On its side the keyboard is also measured twice: sixty-plus keys at 44 px, pinned to
+the bottom edge, and starting no higher than 65 % of the screen so the code band survives the rotation. Ten blur/refocus cycles and five Done/show cycles check that the keyboard's visibility
 belongs to its own state, not to an animation ending. The session fails on a page exception or a
 console error as well as on a wrong character. It launches no interpreter: `test:e2e` and
 `test:predict` own running code, and 10 MB on a throttled phone link would make this too slow to gate

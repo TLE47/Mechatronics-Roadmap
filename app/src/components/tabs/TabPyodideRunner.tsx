@@ -4,6 +4,7 @@ import { revealPhoneSurface, revealStoredPhoneCode } from './runner/phoneSurface
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { pyodideCdn } from '../../runtime/pyodideCdn';
+import { PHONE_VIEWPORT_QUERY } from '../../phoneViewport';
 
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson, exerciseTask, starterHoles } from '../../lessonCoach';
@@ -235,7 +236,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The first-run tour owns its own record and gates (`runner/useFirstRunTour.ts`).
   const [isPhone, setIsPhone] = useState<boolean>(() => {
     try {
-      return window.matchMedia('(max-width: 767px)').matches;
+      return window.matchMedia(PHONE_VIEWPORT_QUERY).matches;
     } catch {
       return false;
     }
@@ -1585,7 +1586,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     const query = (() => {
       try {
-        return window.matchMedia('(max-width: 767px)');
+        return window.matchMedia(PHONE_VIEWPORT_QUERY);
       } catch {
         return null;
       }

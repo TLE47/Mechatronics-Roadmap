@@ -5,6 +5,7 @@ import {
   robotTourAnnouncement,
   type RobotTourStep,
 } from './robotTour';
+import { PHONE_VIEWPORT_QUERY } from '../phoneViewport';
 
 /**
  * The Robot tab's first-run coach mark (`app/src/robotSim/RobotCoach.tsx`).
@@ -83,7 +84,7 @@ export function RobotCoach({ step, index, onNext, onBack, onDismiss }: RobotCoac
   const [cardHeight, setCardHeight] = useState(0);
   const [isPhone, setIsPhone] = useState<boolean>(() => {
     try {
-      return window.matchMedia('(max-width: 767px)').matches;
+      return window.matchMedia(PHONE_VIEWPORT_QUERY).matches;
     } catch {
       return false;
     }
@@ -160,7 +161,7 @@ export function RobotCoach({ step, index, onNext, onBack, onDismiss }: RobotCoac
   useEffect(() => {
     let query: MediaQueryList;
     try {
-      query = window.matchMedia('(max-width: 767px)');
+      query = window.matchMedia(PHONE_VIEWPORT_QUERY);
     } catch {
       return;
     }

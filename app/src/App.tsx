@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Header } from './components/Header';
 import { StudyTips } from './components/StudyTips';
+import { PHONE_VIEWPORT_QUERY } from './phoneViewport';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
 // The palette is opened on demand — `⌘K`, the header's Search button — so it is its own chunk,
@@ -197,9 +198,10 @@ const IntroPage = React.lazy(() =>
  */
 type WholePage = HomePage;
 
+/** A phone is a narrow screen or a short one with a thumb: a landscape phone is 844 px wide. */
 function isPhoneViewport(): boolean {
   try {
-    return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+    return typeof window !== 'undefined' && window.matchMedia(PHONE_VIEWPORT_QUERY).matches;
   } catch {
     return false;
   }

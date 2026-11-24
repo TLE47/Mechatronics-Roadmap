@@ -43,6 +43,7 @@ const WorkflowCanvas = lazy(() =>
 );
 import { iconForKind } from './workflowIcons.ts';
 import { useMediaQuery } from '../useMediaQuery.ts';
+import { PHONE_VIEWPORT_QUERY } from '../phoneViewport.ts';
 
 /**
  * The workflow tab (`components/WorkflowPanel.tsx`) — layout and view state.
@@ -200,7 +201,7 @@ export function WorkflowPanel({
   // cards are 24 wrapped lines, and the canvas below them started ~1,900 px down the page. A
   // desktop has the room and opens the list. A press pins the learner's choice; until then the list
   // follows the viewport, so a rotation does not leave it folded on a desktop or open on a phone.
-  const phone = useMediaQuery('(max-width: 767px)');
+  const phone = useMediaQuery(PHONE_VIEWPORT_QUERY);
   const [checksChoice, setChecksChoice] = useState<boolean | null>(null);
   const checksOpen = checksChoice ?? !phone;
   const checksId = useId();

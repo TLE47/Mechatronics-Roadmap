@@ -219,13 +219,13 @@ const PRESS =
 
 /** A key's surface: the raised white cap of the picture, themed by the app's own tokens. */
 const CAP =
-  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel text-body shadow-sm ${PRESS}`;
+  `kb-key relative flex min-h-[var(--kb-cap)] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel text-body shadow-sm ${PRESS}`;
 
 const ACTION_CAP =
-  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center gap-0.5 rounded-lg border border-line-soft bg-raise px-0.5 text-[9px] font-semibold leading-none text-body ${PRESS}`;
+  `kb-key relative flex min-h-[var(--kb-cap)] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center gap-0.5 rounded-lg border border-line-soft bg-raise px-0.5 text-[9px] font-semibold leading-none text-body ${PRESS}`;
 
 const OPERATOR_CAP =
-  `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
+  `kb-key relative flex min-h-[var(--kb-cap)] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
 
 /**
  * One tick, placed where the cap sits. A key is a button, so the smart keyboard has a light and a
@@ -341,8 +341,8 @@ const KeyPreview = forwardRef<KeyPreviewHandle, { section: RefObject<HTMLElement
         data-testid="python-key-preview"
         className={`kb-key-pop pointer-events-none absolute z-20 flex items-center justify-center whitespace-nowrap rounded-xl border border-line-strong bg-raise text-center font-mono font-semibold text-body shadow-lg ${
           preview.text.length <= 2
-            ? 'h-[3.25rem] min-w-[3.25rem] px-1 text-[26px] leading-none'
-            : 'min-w-[2.5rem] px-2.5 py-1 text-[15px] leading-6'
+            ? 'h-[var(--kb-pop)] min-w-[var(--kb-pop)] px-1 [font-size:var(--kb-pop-type)] leading-none'
+            : 'min-w-[2.5rem] px-2.5 py-1 [font-size:var(--kb-note)] leading-6'
         }`}
         style={{
           left: preview.left,
@@ -693,7 +693,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
         window.setTimeout(onKeepFocus, 0);
       }}
       style={lightingStyle}
-      className="relative min-w-0 touch-none select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
+      className="relative min-w-0 touch-none select-none border-t border-line-soft bg-canvas shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
       {/* A magnified copy of the pressed cap, directly above it; never a target, never focused.
           It holds its own state so a press does not re-render the keys (see `KeyPreview`). */}
@@ -702,6 +702,10 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
         {rgbOpen ? `Keyboard lighting: ${lightingName}, colour ${rgb.color}` : ''}
       </p>
 
+      {/* Every row of the keyboard, whichever page or layer draws it. One container so the phone's
+          sideways layout can flow the rows into two columns without a second copy of them
+          (`index.css`): on a 390 px-tall screen seven rows do not fit, four do. */}
+      <div className="kb-rows">
       {rgbOpen ? (
         <>
           {/* Row 1 — the six modes. Each is the same key component as a character. */}
@@ -747,7 +751,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
               </Key>
             ))}
             <label
-              className="relative flex min-h-[44px] w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-raise font-mono text-[13px] text-muted focus-within:border-accent"
+              className="relative flex min-h-[var(--kb-cap)] w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line-soft bg-raise font-mono text-[13px] text-muted focus-within:border-accent"
               title="Custom colour"
             >
               <span aria-hidden="true">+</span>
@@ -764,7 +768,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
               data-testid="rgb-color-indicator"
               aria-label={`Current colour ${rgb.color}`}
               title={`Current colour ${rgb.color}`}
-              className="flex min-h-[44px] w-9 shrink-0 items-center justify-center rounded-lg border bg-panel font-mono text-[13px] font-semibold"
+              className="flex min-h-[var(--kb-cap)] w-9 shrink-0 items-center justify-center rounded-lg border bg-panel font-mono text-[13px] font-semibold"
               style={{ color: rgb.color, borderColor: rgb.color }}
             >
               Aa
@@ -773,7 +777,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
 
           {/* Row 3 — brightness and speed, the two knobs every mode shares. */}
           <div role="group" aria-label="Lighting strength" className="mt-2 flex min-w-0 gap-2" data-testid="rgb-sliders">
-            <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
+            <label className="flex min-h-[var(--kb-cap)] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Bright
               <input
                 type="range"
@@ -790,7 +794,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 {rgb.brightness}%
               </span>
             </label>
-            <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
+            <label className="flex min-h-[var(--kb-cap)] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Speed
               <input
                 type="range"
@@ -821,10 +825,10 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={noop}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">{key}</span>
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">{key}</span>
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-0.5 right-1 text-[9px] leading-none text-faint"
+                  className="absolute bottom-0.5 right-1 [font-size:var(--kb-sub)] leading-none text-faint"
                 >
                   {digit}
                 </span>
@@ -842,7 +846,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={noop}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">{key}</span>
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">{key}</span>
               </Key>
             ))}
           </div>
@@ -866,7 +870,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={noop}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">{key}</span>
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">{key}</span>
               </Key>
             ))}
             <Key
@@ -958,7 +962,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 label={symbol.name}
                 preview={symbol.label}
                 onPress={() => onInsertText(symbol.insert)}
-                className={`${CAP} font-mono text-[15px]`}
+                className={`${CAP} font-mono [font-size:var(--kb-sym)]`}
               >
                 {symbol.label}
               </Key>
@@ -977,12 +981,12 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={() => (fn ? onInsertText(digit) : letter(key))}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">
                   {fn ? digit : capital ? key.toUpperCase() : key}
                 </span>
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-0.5 right-1 text-[9px] leading-none text-faint"
+                  className="absolute bottom-0.5 right-1 [font-size:var(--kb-sub)] leading-none text-faint"
                 >
                   {fn ? key : digit}
                 </span>
@@ -1002,7 +1006,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={() => letter(key)}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">
                   {capital ? key.toUpperCase() : key}
                 </span>
               </Key>
@@ -1038,7 +1042,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={() => letter(key)}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">
                   {capital ? key.toUpperCase() : key}
                 </span>
               </Key>
@@ -1070,7 +1074,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 onPress={() => onInsertText(digit)}
                 className={CAP}
               >
-                <span className="text-[16px] font-medium leading-none">{digit}</span>
+                <span className="[font-size:var(--kb-glyph)] font-medium leading-none">{digit}</span>
               </Key>
             ))}
           </div>
@@ -1082,7 +1086,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 label={symbol.name}
                 preview={symbol.label}
                 onPress={() => onInsertText(symbol.label)}
-                className={`${CAP} font-mono text-[15px]`}
+                className={`${CAP} font-mono [font-size:var(--kb-sym)]`}
               >
                 {symbol.label}
               </Key>
@@ -1096,7 +1100,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
                 label={symbol.name}
                 preview={symbol.label}
                 onPress={() => onInsertText(symbol.label)}
-                className={`${CAP} font-mono text-[15px]`}
+                className={`${CAP} font-mono [font-size:var(--kb-sym)]`}
               >
                 {symbol.label}
               </Key>
@@ -1126,7 +1130,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
             pressed={fn}
             onPress={() => setFn((on) => !on)}
             wide={1.15}
-            className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg font-mono text-[14px] font-bold"
+            className="kb-key flex min-h-[var(--kb-cap)] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg font-mono text-[14px] font-bold"
             style={{
               background: fn ? 'var(--accent-strong, var(--accent))' : 'var(--accent)',
               color: 'var(--inverse)',
@@ -1196,7 +1200,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
           keepFocus={false}
           onPress={onDone}
           wide={2.1}
-          className="kb-key flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center gap-1 rounded-lg font-mono text-[13px] font-bold"
+          className="kb-key flex min-h-[var(--kb-cap)] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center gap-1 rounded-lg font-mono text-[13px] font-bold"
           style={{
             background: 'var(--emerald)',
             color: 'var(--inverse)',
@@ -1206,6 +1210,7 @@ export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
         >
           Done
         </Key>
+      </div>
       </div>
     </section>
   );

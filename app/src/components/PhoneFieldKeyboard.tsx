@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MobilePythonKeyboard } from './MobilePythonKeyboard';
 import { useMediaQuery } from '../useMediaQuery';
+import { PHONE_VIEWPORT_QUERY } from '../phoneViewport';
 import {
   FIELD_KEYBOARD_OPEN_EVENT,
   backspaceField,
@@ -45,7 +46,7 @@ import {
  * `FIELD_KEYBOARD_OPEN_EVENT`, so the two shells never share the bottom edge.
  */
 export function PhoneFieldKeyboard() {
-  const phone = useMediaQuery('(max-width: 767px)');
+  const phone = useMediaQuery(PHONE_VIEWPORT_QUERY);
   const [target, setTarget] = useState<TextField | null>(null);
   const [height, setHeight] = useState(0);
   // The keys are not drawn until a field first asks for them: two mounted keyboards would give every

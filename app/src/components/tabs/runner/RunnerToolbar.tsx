@@ -167,7 +167,7 @@ export function RunnerToolbar({
       {/* A phone gets one native select instead of four preset buttons and a dock sentence: the same
           four layouts, one row, and a 16 px control iOS will not zoom on. The buttons come back at
           `md`, where there is room to print their shortcut keys. */}
-      <label className="mr-1 flex items-center md:hidden">
+      <label data-testid="phone-layout-select" className="mr-1 flex items-center md:hidden">
         <span className="sr-only">Workspace layout</span>
         <select
           data-testid="layout-select"

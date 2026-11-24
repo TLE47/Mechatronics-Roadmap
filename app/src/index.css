@@ -2081,3 +2081,111 @@ number-flow {
     transform: none;
   }
 }
+
+/* ============================================================================
+   The keyboard's size, and its sideways arrangement
+   ----------------------------------------------------------------------------
+   The drawing code names a part — the cap, the letter, the symbol, the small
+   digit, the press bubble — and the screen picks the size here. The caps were
+   44 px and the letters 16 px on every phone, which is a strip of small stamps
+   on a 430 px screen and a full cap on a 320 px one; both now follow the width
+   in steps. The floor does not move: 44 px is a thumb target before it is a
+   look, and the phone gate measures it at 390 and 360 px. The gaps stay 8 px at
+   every size, because the gap is where a drifting thumb lands (`.kb-key::after`
+   gives it to the nearest cap); scaling it would trade hit area for
+   proportion. The side padding is the notch's: a phone held sideways has a
+   safe-area inset to its left and right, not only under its last row.
+   ========================================================================== */
+[data-testid='python-keyboard'] {
+  --kb-cap: 44px;
+  --kb-glyph: 16px;
+  --kb-sym: 15px;
+  --kb-sub: 9px;
+  --kb-note: 15px;
+  --kb-pop: calc(var(--kb-cap) * 1.18);
+  --kb-pop-type: calc(var(--kb-cap) * 0.59);
+  padding:
+    6px max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom))
+    max(6px, env(safe-area-inset-left));
+}
+@media (min-width: 390px) {
+  [data-testid='python-keyboard'] {
+    --kb-cap: 46px;
+    --kb-glyph: 17px;
+    --kb-sym: 16px;
+    --kb-sub: 9.5px;
+  }
+}
+@media (min-width: 430px) {
+  [data-testid='python-keyboard'] {
+    --kb-cap: 48px;
+    --kb-glyph: 18px;
+    --kb-sym: 17px;
+    --kb-sub: 10px;
+  }
+}
+
+/* A phone on its side has the width and not the height. Seven rows of caps filled the whole 390 px
+   viewport, so the code the learner was typing had nowhere to be. The rows keep their order and
+   flow into two columns of three — the editing and symbol rows on the left, the letter rows and
+   Backspace on the right — and the bottom row (123 / native / space / Done) spans both under them.
+   Four rows of height instead of seven, every cap still 44 px. The 123 page has only three rows,
+   so it fills two columns and needs one row less again. */
+@media (orientation: landscape) and (max-height: 520px) {
+  [data-testid='python-keyboard'] {
+    --kb-cap: 44px;
+    --kb-glyph: 16px;
+    --kb-sym: 15px;
+    --kb-sub: 9px;
+  }
+  [data-testid='python-keyboard'] .kb-rows {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, auto);
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+  [data-testid='python-keyboard'][data-page='123'][data-layer='keys'] .kb-rows {
+    grid-template-rows: repeat(2, auto);
+  }
+  [data-testid='python-keyboard'] .kb-rows > * {
+    margin-top: 0;
+  }
+  /* The bottom row spans both columns under them, and says which row it is: left to auto-placement,
+     a definite column span is placed before the auto items and takes the first row, which pushed two
+     rows into a third column and left the keyboard 161 px tall. */
+  [data-testid='python-keyboard'] .kb-rows > :last-child {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  [data-testid='python-keyboard'][data-page='123'][data-layer='keys'] .kb-rows > :last-child {
+    grid-row: 3;
+  }
+}
+
+/* The phone shell's CSS answer to `phoneViewport.ts`. Each of these is a `md:` utility in the
+   components, written for "a phone" when a phone was only a narrow window; a landscape phone is
+   844 px wide, so they are restated here for the short-and-coarse case too. They are unlayered, so
+   they beat Tailwind's utilities whatever order the layer is emitted in, and a sheet's own
+   `display: none !important` still hides the bar over it. */
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  body [data-testid='phone-tab-nav'] {
+    display: block;
+  }
+  body [data-testid='tab-rail'] {
+    display: none;
+  }
+  body [data-testid='phone-bar'] {
+    display: block;
+  }
+  body [data-testid='phone-layout-select'] {
+    display: flex;
+  }
+  body [data-testid='layout-presets'] {
+    display: none;
+  }
+  body [data-testid='editor-tab-predict'] {
+    display: none;
+  }
+}
