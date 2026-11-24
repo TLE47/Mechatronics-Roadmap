@@ -2088,9 +2088,12 @@ number-flow {
    The drawing code names a part — the cap, the letter, the symbol, the small
    digit, the press bubble — and the screen picks the size here. The caps were
    44 px and the letters 16 px on every phone, which is a strip of small stamps
-   on a 430 px screen and a full cap on a 320 px one; both now follow the width
-   in steps. The floor does not move: 44 px is a thumb target before it is a
-   look, and the phone gate measures it at 390 and 360 px. The gaps stay 8 px at
+   on a 430 px screen and a full cap on a 320 one; the type now follows the
+   width in steps. The floor does not move: 44 px is a thumb target before it is
+   a look, and the phone gate measures it at 390 and 360 px. The cap only grows
+   from 430 px, where the extra 2 px of height per row still leave the code band
+   its measured floor — a 46 px cap at 390 shortened it from 367 to 359 px and
+   `e2e_keyboard_speed` caught it. The gaps stay 8 px at
    every size, because the gap is where a drifting thumb lands (`.kb-key::after`
    gives it to the nearest cap); scaling it would trade hit area for
    proportion. The side padding is the notch's: a phone held sideways has a
@@ -2104,13 +2107,14 @@ number-flow {
   --kb-note: 15px;
   --kb-pop: calc(var(--kb-cap) * 1.18);
   --kb-pop-type: calc(var(--kb-cap) * 0.59);
+  /* The sides take the notch; the bottom is only the home indicator, exactly as before. A 6 px floor
+     under the last row would take 6 px from the 360 × 640 phone's 170 px code band. */
   padding:
-    6px max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom))
+    6px max(6px, env(safe-area-inset-right)) env(safe-area-inset-bottom)
     max(6px, env(safe-area-inset-left));
 }
 @media (min-width: 390px) {
   [data-testid='python-keyboard'] {
-    --kb-cap: 46px;
     --kb-glyph: 17px;
     --kb-sym: 16px;
     --kb-sub: 9.5px;
@@ -2118,7 +2122,7 @@ number-flow {
 }
 @media (min-width: 430px) {
   [data-testid='python-keyboard'] {
-    --kb-cap: 48px;
+    --kb-cap: 46px;
     --kb-glyph: 18px;
     --kb-sym: 17px;
     --kb-sub: 10px;

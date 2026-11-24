@@ -2678,7 +2678,7 @@ async function main() {
         );
         if (size.width > size.height) {
           // The reason the sideways layout exists: the code band must survive the rotation. Four
-          // rows of caps and the bottom row cost 212 px, so more than a third of a 390 px screen is
+          // rows of caps and the bottom row cost 207 px, so more than a third of a 390 px screen is
           // left.
           check(
             fit.top !== null && fit.top >= size.height * 0.35,

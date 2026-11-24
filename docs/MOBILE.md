@@ -50,10 +50,10 @@ flowchart LR
    keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
    the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
    raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
-   does not allow them to grow wider. That is the floor, not one size for every phone: the cap height
-   and its type step up with the screen (`--kb-cap` 44 px and 16 px letters, 46/17 from 390 px,
-   48/18 from 430 px), so a large phone does not draw the smallest phone's keyboard and a 320 px one
-   keeps the target. The press bubble is sized from the same cap. The caps sit **8 px** apart in both directions, up from 6 px,
+   does not allow them to grow wider. That is the floor, not one size for every phone: the type steps
+   up with the screen (16 px letters on the smallest phones, 17 from 390 px, 18 from 430), and the cap
+   grows with it only from 430 px (44 → 46), because a 46 px cap at 390 took 8 px off the code band and
+   `e2e_keyboard_speed` measures that band's 360 px floor. The press bubble is sized from the cap. The caps sit **8 px** apart in both directions, up from 6 px,
    and the gate measures both gaps. The gap is printed, not touched: each cap's finger target
    reaches 4 px into it (`index.css`, `.kb-key::after`), so the two halves meet in the middle and
    every point of the keyboard belongs to the key nearest it. A drifting thumb that lands between
@@ -133,7 +133,7 @@ flowchart LR
    and shorter than the seven rows of 44 px caps that used to be drawn there — the keyboard filled the
    whole screen and left the code nowhere. The rows now flow into two columns of three (editing and
    symbols on the left, the letter rows and Backspace on the right) with the `123` / native / space /
-   Done row across both underneath: four rows of height, 212 px, every cap still 44 px. The `123` page
+   Done row across both underneath: four rows of height, 207 px, every cap still 44 px. The `123` page
    has three rows, so it fills two columns and needs one row less again.
 
    **The phone shell is not a width.** `phoneViewport.ts` answers one question for the whole app —
