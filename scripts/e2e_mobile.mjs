@@ -32,7 +32,7 @@
  *   9. The keyboard answers a real finger, not a mouse: Chromium's touch events tap the editor's keys
  *      and a page field's keys, hold one to raise its preview, type at an uninterrupted finger's
  *      pace, read the haptics, lock capitals on a double Shift, repeat Backspace while it is held,
- *      keep the caret through the gap between two caps and through 123/ABC, return after a native
+ *      type the nearest key from the gap between two caps and through 123/ABC, return after a native
  *      handoff, retarget between two fields without folding, answer the sound bus as its own key
  *      tick, and measure the slide up and the slide down at 390 and 360 px. A key that cancels
  *      `pointerdown` is exactly where a mouse-only gate lies.
@@ -2029,34 +2029,49 @@ async function main() {
       }
       check((await getEditorCode(page)) === baseline, 'the held Backspace did not clean up');
 
-      // The gap between two caps belongs to the keyboard too: it must not move the caret.
+      // The caps stand 8 px apart, but the gap is printed, not touched: a phone keyboard has no
+      // dead strip, and a light or hurried tap that lands on an edge must type the key it was
+      // aimed at rather than nothing — a lost letter is the word going missing. Each cap's finger
+      // target reaches 4 px into the gap, so the two halves meet in the middle: 2 px from a cap is
+      // that cap, and the exact seam is one of the two neighbours.
       const gapPoints = await page.evaluate(() => {
         const q = document.querySelector('[data-testid="python-key-q"]').getBoundingClientRect();
         const w = document.querySelector('[data-testid="python-key-w"]').getBoundingClientRect();
         const a = document.querySelector('[data-testid="python-key-a"]').getBoundingClientRect();
         return {
-          horizontal: { x: q.right + 2, y: q.top + q.height / 2 },
-          vertical: { x: q.left + q.width / 2, y: (q.bottom + a.top) / 2 },
+          horizontal: { x: q.right + 2, y: q.top + q.height / 2, expect: ['q'] },
+          vertical: { x: q.left + q.width / 2, y: q.bottom + 2, expect: ['q'] },
+          seam: {
+            x: q.right + (w.left - q.right) / 2,
+            y: q.top + q.height / 2,
+            expect: ['q', 'w'],
+          },
           horizontalGap: w.left - q.right,
           verticalGap: a.top - q.bottom,
         };
       });
       check(
         gapPoints.horizontalGap >= 7,
-        `the gap between two letters is only ${gapPoints.horizontalGap}px: a thumb cannot miss`
+        `the gap between two letters is only ${gapPoints.horizontalGap}px: the caps need their air`
       );
       check(
         gapPoints.verticalGap >= 7,
-        `the gap between two rows is only ${gapPoints.verticalGap}px: a thumb cannot miss`
+        `the gap between two rows is only ${gapPoints.verticalGap}px: the caps need their air`
       );
-      for (const name of ['horizontal', 'vertical']) {
+      for (const name of ['horizontal', 'vertical', 'seam']) {
         const point = gapPoints[name];
+        await setEditorText(page, '', 0);
         await cdp.send('Input.dispatchTouchEvent', {
           type: 'touchStart',
           touchPoints: [{ x: point.x, y: point.y, id: 1, force: 1 }],
         });
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
         await page.waitForTimeout(220);
+        const typed = await getEditorCode(page);
+        check(
+          typed.length === 1 && point.expect.includes(typed),
+          `a finger in the ${name} gap typed ${JSON.stringify(typed)}, expected one of ${point.expect.join('/')} and nothing else`
+        );
         check(
           (await editorShell.getAttribute('data-state')) === 'open',
           `a finger in the ${name} gap folded the keyboard`
@@ -2065,15 +2080,16 @@ async function main() {
           await page.evaluate(() => Boolean(document.activeElement?.closest('.cm-editor'))),
           `a finger in the ${name} gap took the caret away from the editor`
         );
-        await page.evaluate(
-          ({ text, at }) => {
-            const editor = window.__mechalabEditors['editor-main'];
-            editor.set(text);
-            editor.setCursor(at);
-          },
-          { text: baseline, at: caret }
-        );
       }
+      // The rest of the suite reads the lesson's own line, so put it (and the caret) back.
+      await page.evaluate(
+        ({ text, at }) => {
+          const editor = window.__mechalabEditors['editor-main'];
+          editor.set(text);
+          editor.setCursor(at);
+        },
+        { text: baseline, at: caret }
+      );
 
       await fingerDown(page, cdp, editorShell.getByTestId('python-key-a'), { label: 'the A key' });
       await page.waitForTimeout(180);

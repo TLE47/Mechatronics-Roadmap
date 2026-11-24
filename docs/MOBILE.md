@@ -50,9 +50,13 @@ flowchart LR
    the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
    raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
    does not allow them to grow wider. The caps sit **8 px** apart in both directions, up from 6 px,
-   so the gap between two caps is real dead space: a drifting thumb lands there and types nothing,
-   and the gate measures both gaps. The rows stop at 8 px rather than a phone keyboard's wider
-   vertical pitch because a 360×640 phone must still leave 170 px of code above the keys. A key acts on **pointerdown**, the way a native keyboard does,
+   and the gate measures both gaps. The gap is printed, not touched: each cap's finger target
+   reaches 4 px into it (`index.css`, `.kb-key::after`), so the two halves meet in the middle and
+   every point of the keyboard belongs to the key nearest it. A drifting thumb that lands between
+   two caps therefore types the letter it was aimed at instead of nothing — the way a phone's own
+   keyboard has no dead strip — while the caps still look 8 px apart. The rows stop at 8 px rather
+   than a phone keyboard's wider vertical pitch because a 360×640 phone must still leave 170 px of
+   code above the keys. A key acts on **pointerdown**, the way a native keyboard does,
    rather than waiting for the synthetic click on the lift. That is also what makes two overlapping
    thumbs work: a browser does not synthesise a click for every touch in a multi-touch sequence, so
    the old click-only key lost those characters entirely. A keyboard or switch activation has

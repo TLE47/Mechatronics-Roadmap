@@ -1977,6 +1977,21 @@ number-flow {
   opacity: 0;
   transition: opacity 140ms ease;
 }
+/* The gap between two caps is printed, not touched. The caps stand 8 px apart in both directions
+   (`gap-2` in `MobilePythonKeyboard.tsx`), and a thumb typing quickly does not land on the middle
+   of a cap: it lands on an edge, and the strip between two caps used to be dead space that typed
+   nothing — which read as a lost letter. A phone keyboard has no dead strip: every point belongs
+   to the cap nearest it. Each cap's finger target therefore reaches 4 px into the gap on every
+   side, so this cap owns its half of the gap and its neighbour owns the other half. The two areas
+   meet exactly in the middle and never overlap, so a press is still answered by exactly one key —
+   the one the finger was nearest — and no cap can steal a tap from a neighbour's own surface.
+   The extension is a hit area only: it paints nothing, moves nothing, and the cap's press, its
+   magnified preview and its action are unchanged. */
+.kb-key::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
 
 /* The magnified key over the pressed cap pops the way a phone's does, then floats above it with
    the gap the cap rows leave. The component positions it with an inline `translate`; the keyframes

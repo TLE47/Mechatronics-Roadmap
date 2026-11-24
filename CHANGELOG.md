@@ -16,6 +16,18 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — The phone keyboard's gaps are printed, not touched
+
+The caps sit 8 px apart, and the strip between two of them was real dead space. A thumb typing
+quickly does not land on the middle of a cap — it lands on an edge — and that edge was outside
+every key, so the letter was simply lost and the word came out short. Each cap's finger target now
+reaches 4 px into the gap on every side (`index.css`, `.kb-key::after`), so the two halves meet
+exactly in the middle and every point of the keyboard belongs to the key nearest it, the way a
+phone's own keyboard answers a touch. The extensions are hit areas only: nothing is drawn, the caps
+still look 8 px apart, and a press still previews and acts on one key. The phone gate now types
+from the middle of a horizontal gap, from just under a cap and from the seam between two caps, and
+requires exactly the nearest letter each time.
+
 ## [2026-11-24] — Every phone field computes 16 px without growing
 
 The block fields were fixed one at a time, but the rest of the workbench still named its own small
