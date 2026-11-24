@@ -130,6 +130,9 @@ async function main() {
     // Leaving Home for a lesson must not take the Micro door with it: the workbench header has
     // its own branch, and that branch once forgot this prop.
     await page.getByTestId('btn-open-lessons').click();
+    await page.getByTestId('learning-path').waitFor({ timeout: 30000 });
+    await page.getByTestId('lp-lesson-P.1').click();
+    await page.getByTestId('lp-preview-action').click();
     await page.getByTestId('lesson-brief').waitFor({ timeout: 30000 });
     assert.equal(
       await page.getByTestId('btn-open-micro').count(),

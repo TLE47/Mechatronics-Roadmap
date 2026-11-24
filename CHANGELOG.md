@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.21.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.22.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,32 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-24] — The Lessons tray opens a Learning Path, and its first six platforms stand on it
+
+The Lessons button had one job and did it well: put the runner on screen. It now opens a page of its
+own (`?view=lessons`) where the course is a city — six platforms in the order the registry teaches
+them (P.1, P.2, P.2.5, P.3, P.4, P.5), a road that winds between them on desktop and runs down one
+side of a phone, and a landmark per lesson kind instead of a numbered card. The tray entry, the tab
+list and the runner are unchanged; a learner who wants the old list presses "All 97 lessons" or
+uses the chooser as before.
+
+The states are the verified map, not a second progress store. A verified lesson is completed; the
+first unverified one is current; the one after it is available; the rest are locked, and a locked
+platform still opens a preview that names the lesson immediately before it as the prerequisite and
+refuses to start. That is this page's rule only: `?lesson=` and the runner can open any lesson in
+the registry, and the suite pins both facts. The four states carry glyphs and words as well as
+colour, the labels are always printed, and the phone uses the existing `Sheet` rather than a
+floating card.
+
+Starting a lesson pushes the lesson's address before `openLesson`, so Back returns to the path and
+the path returns to the offset it was left at (one `sessionStorage` record); one `popstate`
+listener restores the page and, when the address names one, the lesson. The page is a lazy chunk
+with its own stylesheet (5.3 kB + 2.4 kB gzipped), so the workbench's first paint and the sixteen-tab
+snapshot do not move. New gates: `test_learning_path.mjs` (states, order, serpentine, scroll
+memory) and `e2e_learning_path.mjs` (the real door, seeded progress, preview, Start, Back, lock,
+Escape, phone); `e2e_micro.mjs` now goes through the path to reach the runner. The weight ceilings
+moved by hand after measurement with a `_why_budget_2026_11_24_learning_path` note.
 
 ## [2026-11-24] — The phone keyboard fits the screen it is on, either way up
 

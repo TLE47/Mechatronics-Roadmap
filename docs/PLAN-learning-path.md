@@ -1,8 +1,22 @@
 # MechaLab Learning Path — implementation plan
 
-Status: **Phase 1, awaiting approval. No application code has been changed.**
-This page answers the fourteen questions the brief asks of the first task. It names real files and real
-line numbers, and it records where the brief's assumptions do not match the repository.
+Status: **Phases 2 and 3 shipped in 4.22.0.** The page, the model and the six-lesson prototype are
+implemented and gated; the rest of the phased order in §13 is still planned. This page answers the
+fourteen questions the brief asks of the first task. It names real files and real line numbers, and
+it records where the brief's assumptions do not match the repository — the references below are the
+ones the plan was written against, not a claim that later work left them at those lines.
+
+**What shipped (2026-11-24).** `?view=lessons` is a whole page in the `HomePage` union, and
+`btn-open-lessons` opens it from all three headers. Start saves the offset, pushes `?lesson=`, calls
+the runner's own `openLesson`, and one `popstate` listener restores the page and the lesson. The
+prototype is P.1, P.2, P.2.5, P.3, P.4 and P.5 in real curriculum order; states come from the
+verified map (completed / current / available / locked with one-step lookahead), locked platforms
+preview only and name their predecessor, and the runner still opens every lesson by id. The six
+inline-SVG landmarks, the desktop card, the phone `Sheet`, the lazy CSS sheet and the reduced-motion
+rules are in `app/src/components/learningPath/`. No XP, stars, duration or prerequisite store was
+added. Tests: `scripts/test_learning_path.mjs` and `scripts/e2e_learning_path.mjs`; `e2e_micro.mjs`
+now reaches the runner through the path. Still open: the remaining phases below, and the brief's
+minimap, streak display, district entrance transitions and richer city scenery from §14.1.
 
 ---
 

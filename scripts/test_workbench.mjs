@@ -295,6 +295,8 @@ async function main() {
     { label: 'reading', script: 'test_trail_reading.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'paint', script: 'test_paint_timing.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'home', script: 'test_home.mjs', env: { NODE_OPTIONS: TYPES } },
+    // The Learning Path's model, serpentine layout and scroll memory, with no browser.
+    { label: 'path', script: 'test_learning_path.mjs', env: { NODE_OPTIONS: TYPES } },
     // The local CI plan's own integrity: every command it names must exist (`verify_ci.mjs`).
     { label: 'verify-ci', script: 'test_verify_ci.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'weight', script: 'test_weight_budget.mjs' },
@@ -339,6 +341,10 @@ async function main() {
     // These two used to be extra `npm run` steps queued behind a shard, each booting its own server
     // and browser. Both speak the same dev server this runner already has, so they are suites now.
     { label: 'micro2e', script: 'e2e_micro.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    // The Learning Path as a learner meets it: the Lessons door, six platforms in real order, the
+    // seeded four states, a preview, Start into the runner, Back with the scroll kept, a locked
+    // prerequisite, and the phone sheet.
+    { label: 'path2e', script: 'e2e_learning_path.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'game2e', script: 'e2e_game.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-b', browser: true },
   ];
   const unassigned = SUITES.filter((suite) => suite.browser && !PARTITIONS.includes(suite.partition));

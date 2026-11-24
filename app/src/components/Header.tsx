@@ -375,7 +375,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenLessons}
                 data-testid="btn-open-lessons"
                 aria-label="Lessons"
-                data-tip="Lessons — the runner, its lesson list and the open lesson"
+                data-tip="Lessons — the learning path, then the runner and its lesson list"
                 className="btn"
               >
                 <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

@@ -33,7 +33,7 @@ export const STORAGE_KEY_LAST_VISIT = 'mechalab_last_visit_v1';
 /** A reload inside this window returns to the page on screen; past it, Home. */
 export const SITTING_MS = 45 * 60 * 1000;
 
-export type HomePage = 'workbench' | 'home' | 'admin' | 'intro';
+export type HomePage = 'workbench' | 'home' | 'admin' | 'intro' | 'lessons';
 
 export interface LastVisit {
   at: number;
@@ -73,7 +73,8 @@ export function readLastVisit(): LastVisit | null {
       parsed.page !== 'workbench' &&
       parsed.page !== 'home' &&
       parsed.page !== 'admin' &&
-      parsed.page !== 'intro'
+      parsed.page !== 'intro' &&
+      parsed.page !== 'lessons'
     )
       return null;
     if (typeof parsed.at !== 'number' || !Number.isFinite(parsed.at)) return null;
@@ -114,6 +115,7 @@ export function landingPage(input: LandingInput): HomePage {
   if (view === 'intro') return 'intro';
   if (view === 'admin') return 'admin';
   if (view === 'home' || view === 'dashboard') return 'home';
+  if (view === 'lessons') return 'lessons';
   if (view === 'workbench') return 'workbench';
   if (input.hasLesson) return 'workbench';
   if (!input.hasProgress) return 'workbench';
@@ -122,7 +124,9 @@ export function landingPage(input: LandingInput): HomePage {
   const visit = input.lastVisit;
   if (visit && now - visit.at >= 0 && now - visit.at < SITTING_MS) {
     // An admin session is a detour, not a place to be returned to; the workbench is the safe floor.
-    return visit.page === 'home' ? 'home' : 'workbench';
+    // Home and the Learning Path are destinations a reload may resume, because both are pages a
+    // learner reads rather than work in progress.
+    return visit.page === 'home' ? 'home' : visit.page === 'lessons' ? 'lessons' : 'workbench';
   }
   return 'home';
 }

@@ -80,6 +80,9 @@ check('an explicit view wins over everything', () => {
   // because a visitor who asked for it has not been given a Start Here card to read instead.
   assert.equal(landingPage({ ...base, view: 'intro', hasProgress: false }), 'intro');
   assert.equal(landingPage({ ...base, view: 'intro', hasLesson: true }), 'intro');
+  // The Learning Path is a page of its own too: its address opens it even beside a lesson id.
+  assert.equal(landingPage({ ...base, view: 'lessons', hasProgress: false }), 'lessons');
+  assert.equal(landingPage({ ...base, view: 'lessons', hasLesson: true }), 'lessons');
 });
 
 check('a deep link to a lesson is a destination, not a homepage', () => {
@@ -93,6 +96,12 @@ check('a deep link to a lesson is a destination, not a homepage', () => {
 check('a reload inside the sitting returns to the page on screen', () => {
   assert.equal(landingPage({ ...base, lastVisit: { at: NOW - 60_000, page: 'workbench' } }), 'workbench');
   assert.equal(landingPage({ ...base, lastVisit: { at: NOW - 60_000, page: 'home' } }), 'home');
+  assert.equal(landingPage({ ...base, lastVisit: { at: NOW - 60_000, page: 'lessons' } }), 'lessons');
+  // A lesson link outranks the remembered page: it is a promise about the editor.
+  assert.equal(
+    landingPage({ ...base, hasLesson: true, lastVisit: { at: NOW - 60_000, page: 'lessons' } }),
+    'workbench'
+  );
   // An admin session is a detour, not somewhere to be sent back to, and neither is a look at the
   // introduction: the workbench is the floor both fall back to.
   assert.equal(landingPage({ ...base, lastVisit: { at: NOW - 60_000, page: 'admin' } }), 'workbench');

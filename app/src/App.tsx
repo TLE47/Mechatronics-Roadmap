@@ -143,6 +143,7 @@ import {
   readLastVisit,
   type HomePage,
 } from './homeLanding';
+import { rememberPath } from './learningPathScroll';
 import { readReadingPosition } from './readingPosition';
 import { editedLines, readDraft } from './lessonDraft';
 import { draftProgress } from './lessonCoach';
@@ -190,6 +191,16 @@ const AdminDashboard = React.lazy(() =>
  */
 const IntroPage = React.lazy(() =>
   import('./components/intro/IntroPage').then((module) => ({ default: module.IntroPage }))
+);
+
+/**
+ * The Learning Path. A page, not a tab: the shell's sixteen tabs keep their snapshot and their
+ * names, and a learner who never presses Lessons never downloads the city or its style sheet.
+ */
+const LearningPathPage = React.lazy(() =>
+  import('./components/learningPath/LearningPathPage').then((module) => ({
+    default: module.LearningPathPage,
+  }))
 );
 
 /**
@@ -1383,6 +1394,34 @@ export const App: React.FC = () => {
     }
   };
 
+  /**
+   * Start a lesson from the Learning Path.
+   *
+   * The runner's own `openLesson` does the work — the same lesson, the same request, the same
+   * verified map — but the address has to become the lesson's first. A push, not a replace, so the
+   * browser's Back returns to the path rather than to whatever page preceded it, and the path
+   * remembers the offset it was left at for that return.
+   */
+  const startLessonFromPath = (lessonId: string) => {
+    rememberPath({
+      y: typeof window === 'undefined' ? 0 : window.scrollY,
+      selectedId: lessonId,
+    });
+    if (typeof window !== 'undefined' && window.location) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('view');
+      url.searchParams.set('lesson', lessonId);
+      window.history.pushState(
+        { from: 'learning-path' },
+        '',
+        `${url.pathname}${url.search}${url.hash}`
+      );
+    }
+    openLesson(lessonId);
+    setWholePage('workbench');
+    noteVisit('workbench');
+  };
+
   const handlePaletteSelect = (item: PaletteItem) => {
     // A reading page the runner does not carry is not a panel in this window: open it beside the
     // workbench instead of navigating away from the learner's draft.
@@ -1588,6 +1627,27 @@ export const App: React.FC = () => {
   }, []);
 
   const toggleFocusMode = () => setFocusOn(setFocus(!focusRef.current));
+
+  // Back and Forward now cross a page boundary that pushes history: a path start pushes the
+  // lesson's address. Without this listener the address would move and the screen would not, so the
+  // page (and the lesson, when the arrival names one) is re-derived from the location on every pop.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPop = () => {
+      const next = pageFromLocation();
+      setWholePage(next);
+      noteVisit(next);
+      const lesson = lessonIdFromLocation();
+      if (next === 'workbench' && lesson) {
+        setPyodideLessonId(lesson);
+        setLessonRequest((prev) => ({ id: lesson, nonce: (prev?.nonce ?? 0) + 1 }));
+        setActiveTab('tab-pyodide');
+        setHighlightedId(null);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Arriving is a visit too: a reload inside the sitting returns to the page on screen, and the
   // address names the page that is actually open — a learner who lands on Home can copy the URL, and
@@ -1885,7 +1945,7 @@ export const App: React.FC = () => {
           onOpenReview={() => setReviewOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
-          onOpenLessons={() => openTabFromHome('tab-pyodide')}
+          onOpenLessons={() => openPage('lessons')}
           // Hidden with the beta tab itself: the tray never offers a door to a tab it hides.
           onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
           onOpenIntro={() => openPage('intro')}
@@ -1951,6 +2011,12 @@ export const App: React.FC = () => {
                 onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
                 onExportPortfolio={() => setIsPortfolioModalOpen(true)}
                 onExportLog={downloadLearningLog}
+              />
+            ) : wholePage === 'lessons' ? (
+              <LearningPathPage
+                verified={verifiedLessons}
+                onStartLesson={startLessonFromPath}
+                onOpenRunner={() => openTabFromHome('tab-pyodide')}
               />
             ) : (
               <AdminDashboard
@@ -2029,7 +2095,7 @@ export const App: React.FC = () => {
           onOpenReview={() => setReviewOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
-          onOpenLessons={() => openTabFromHome('tab-pyodide')}
+          onOpenLessons={() => openPage('lessons')}
           // Hidden with the beta tab itself: the tray never offers a door to a tab it hides.
           onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
           onOpenIntro={() => openPage('intro')}
@@ -2155,7 +2221,7 @@ export const App: React.FC = () => {
         onOpenReview={() => setReviewOpen(true)}
         onOpenHome={() => openPage('home')}
         onOpenStudio={() => openTabFromHome('tab-studio')}
-        onOpenLessons={() => openTabFromHome('tab-pyodide')}
+        onOpenLessons={() => openPage('lessons')}
         // The workbench renders its own header branch; without this line the tray's Micro door
         // vanished the moment a learner left Home for a lesson.
         onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
