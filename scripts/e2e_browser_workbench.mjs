@@ -3131,9 +3131,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           true,
           'so is the fill: a reload must paint the card with the token it stored'
         );
+        // The size travels as the unitless `--card-font` that the card's own stylesheet resolves
+        // (16 px on a coarse pointer, the chosen size drawn back by `font-size-adjust`), so a stored
+        // default would read 12 here: the 13 is the step the slider took.
         assert.equal(
           await page.getByTestId('workflow-node-title-0').getAttribute('style'),
-          'color: var(--rose); font-size: 13px;',
+          'color: var(--rose); --card-font: 13;',
           'and so are the ink and the size, written only because they were chosen'
         );
         await page.getByTestId('workflow-lane-title-1').fill('Firmware team');
