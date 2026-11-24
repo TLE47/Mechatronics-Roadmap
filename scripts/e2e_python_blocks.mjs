@@ -874,6 +874,34 @@ async function main() {
     await fieldButton.evaluate((field) => field.click());
     const fieldInput = page.getByTestId(`${fieldId}-input`);
     await fieldInput.waitFor({ state: 'visible', timeout: 5000 });
+    // iOS zooms the page when a focused editable computes under 16 px. On a phone the field must
+    // therefore compute 16 px and scale back down to the card's 13 px, inside a wrapper that keeps
+    // the old box — so the statement does not grow when it opens, and the page never zooms.
+    const fieldGeometry = await fieldInput.evaluate((input) => {
+      const wrapper = input.parentElement;
+      const inputBox = input.getBoundingClientRect();
+      const wrapperBox = wrapper.getBoundingClientRect();
+      const style = getComputedStyle(input);
+      return {
+        font: parseFloat(style.fontSize),
+        transform: style.transform,
+        widthDelta: Math.abs(inputBox.width - wrapperBox.width),
+        heightDelta: Math.abs(inputBox.height - wrapperBox.height),
+      };
+    });
+    assert.ok(
+      fieldGeometry.font >= 16,
+      `a phone block field must compute at least 16px so iOS does not zoom, not ${fieldGeometry.font}px`
+    );
+    assert.notEqual(
+      fieldGeometry.transform,
+      'none',
+      'a phone block field must scale its 16px box back to the block size'
+    );
+    assert.ok(
+      fieldGeometry.widthDelta <= 1 && fieldGeometry.heightDelta <= 1,
+      `the scaled field should fill its reserved box, off by ${fieldGeometry.widthDelta}×${fieldGeometry.heightDelta}px`
+    );
     const visualKeyboard = page.getByTestId('python-keyboard');
     await visualKeyboard.waitFor({ state: 'visible', timeout: 5000 });
     assert.equal(

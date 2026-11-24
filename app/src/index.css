@@ -1332,6 +1332,47 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   }
 }
 
+/* A statement's value is edited in a 13 px field, and iOS zooms the whole page when a focused
+   editable computes under 16 px. On a coarse pointer the input is laid out at 16 px — every length
+   enlarged by 16/13 (`--field-ring`) so the scale below returns it to exactly the block's size —
+   and drawn at 13/16 of that. The wrapper reserves the drawn box and clips the larger layout box,
+   so opening a field never moves the statement, the row or the card, and iOS cannot scroll to
+   reveal a box that is bigger than what the learner can see. A mouse keeps the plain 13 px field. */
+.inline-field {
+  --field-font-size: 13px;
+  --field-ring: 1;
+  position: relative;
+  display: inline-block;
+  width: calc(var(--field-chars) * 1ch);
+  max-width: 100%;
+  vertical-align: middle;
+}
+.inline-field > input {
+  display: block;
+  width: calc(var(--field-chars) * 1ch);
+}
+@media (pointer: coarse) {
+  .inline-field {
+    --field-font-size: 16px;
+    --field-ring: 1.230769; /* 16 / 13 */
+    /* The field's old box: 13 px × 1.5 line, plus the two 1 px borders. `contain: paint` clips
+       the larger 16 px box without making the wrapper a scroll container (a focus scroll there
+       would slide the text sideways), and the fill covers the sub-pixel strip under the
+       transformed input's slightly thinner border. */
+    height: 21.5px;
+    contain: paint;
+    border-radius: 4px;
+    background: var(--field-fill);
+  }
+  .inline-field > input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: scale(0.8125); /* 13 / 16 */
+    transform-origin: left top;
+  }
+}
+
 /* A sheet owns the screen while it is open: the phone's fixed Study bar must not sit under its
    last row. The attribute is written by `components/Sheet.tsx`. */
 [data-sheet-open='1'] [data-phone-bar] {

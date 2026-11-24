@@ -117,6 +117,9 @@ flowchart LR
    A page zoom is not the same thing: it magnifies the fixed keyboard with the page, and it is why
    every preset's editor is 16 px on a coarse pointer — iOS raises that zoom itself when a smaller
    editable takes focus, and the keys' right columns and bottom row then sit outside the screen.
+   The Visual face's value fields are 13 px too, so they take the same floor on touch; unlike the
+   editor they must keep the statement's size, so their 16 px box is scaled back to 13/16 inside a
+   wrapper that reserves the old box (`InlineField.tsx`).
    Pinch zoom on the code stays the browser's, as does the text-size setting it exists for; the
    keyboard itself is not a surface to pan or pinch (`touch-action: none`), because a fast thumb
    rolls while it holds a key. That drift used to be read as a page gesture — a 48 px slide dragged the page
@@ -262,6 +265,7 @@ touch laptop gets them and a 390 px window with a mouse does not.
 | small secondary controls | 28 × 28 px | the app-wide minimum |
 | text fields on touch | 16 px type | the size iOS will not zoom on focus |
 | code editor on touch | 16 px type | the same floor in every preset, not only the Study Code surface |
+| block value fields on touch | 16 px computed, 13 px drawn | the same floor, scaled back so a statement keeps its 13 px row |
 
 The element floors live in `@layer base` and the primitives in `@layer components`. That is not
 tidiness: an unlayered rule outranks every Tailwind utility whatever its specificity, and the first

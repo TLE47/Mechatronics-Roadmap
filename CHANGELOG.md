@@ -16,6 +16,14 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — A phone's block values keep their size without the zoom
+
+The Visual face's value fields were 13 px inputs, so focusing one made iOS zoom the page the same
+way the code editor did, turning the statement into a magnified fragment. On a coarse pointer the
+field now computes 16 px — every length enlarged by 16/13 — and is drawn at 13/16 inside a wrapper
+that reserves the field's old box. The row, card and hit target do not move, and a mouse still gets
+the plain 13 px field. The block gate asserts the computed size, the scale and the reserved box.
+
 ## [2026-11-24] — Every phone preset's code is 16 px
 
 The phone editor only raised its type to 16 px on the Study Code surface, so a phone that had saved
