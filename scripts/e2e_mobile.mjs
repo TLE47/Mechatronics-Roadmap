@@ -353,35 +353,48 @@ async function editorHasFocus(page) {
 /**
  * Record the shell's own rect every frame while `action` opens or folds it. The promise is created
  * before the touch, so the first frame is the position the finger found, not the one it left.
+ *
+ * `settleState` keeps the tape running for 250 ms after the shell reaches the state it was heading
+ * for — a quarter second longer than its 200 ms transition — so the last frame is the destination,
+ * not a frame on the way. A fixed 520 ms window alone read the last frame mid-slide on a loaded CI
+ * runner (`the editor keyboard folding: settled at 831.9px, not 851.0px`) and failed a fold that
+ * had already measured correctly locally. The destination is still judged exactly, and a shell
+ * that never arrives still fails at the 2.5 s bound.
  */
-function recordKeyboardFrames(page, testId, duration) {
+function recordKeyboardFrames(page, testId, duration, settleState = null) {
   return page.evaluate(
-    ({ testId, duration }) =>
+    ({ testId, duration, settleState }) =>
       new Promise((resolve) => {
         const shell = document.querySelector(`[data-testid="${testId}"]`);
         const frames = [];
         const started = performance.now();
+        let enteredAt = null;
         const tick = () => {
           const now = performance.now();
           const rect = shell.getBoundingClientRect();
+          const state = shell.getAttribute('data-state');
           frames.push({
             t: now - started,
             y: rect.y,
             height: rect.height,
-            state: shell.getAttribute('data-state'),
+            state,
             visibility: getComputedStyle(shell).visibility,
           });
-          if (now - started < duration) requestAnimationFrame(tick);
-          else resolve(frames);
+          if (state === settleState && enteredAt === null) enteredAt = now;
+          const settled = enteredAt !== null && now - enteredAt >= 250;
+          const elapsed = now - started;
+          if (elapsed < duration || (settleState !== null && !settled && elapsed < 2500)) {
+            requestAnimationFrame(tick);
+          } else resolve(frames);
         };
         requestAnimationFrame(tick);
       }),
-    { testId, duration }
+    { testId, duration, settleState }
   );
 }
 
 async function sampleKeyboardSlide(page, testId, action, duration = 520) {
-  const recording = recordKeyboardFrames(page, testId, duration);
+  const recording = recordKeyboardFrames(page, testId, duration, 'closed');
   await action();
   return recording;
 }
@@ -392,7 +405,7 @@ async function sampleKeyboardSlide(page, testId, action, duration = 520) {
  */
 async function slideTap(page, cdp, testId, locator, options = {}, duration = 900) {
   const point = await fingerPoint(page, locator, options);
-  const recording = recordKeyboardFrames(page, testId, duration);
+  const recording = recordKeyboardFrames(page, testId, duration, 'open');
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
     touchPoints: [{ x: point.x, y: point.y, id: 1, radiusX: 5, radiusY: 5, force: 1 }],
