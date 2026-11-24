@@ -1,4 +1,13 @@
-import { Suspense, lazy, useEffect, useRef, useState, type RefObject } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import { Blocks, Code2, Keyboard } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MobilePythonKeyboard } from '../../MobilePythonKeyboard';
@@ -312,7 +321,7 @@ export function EditorCodePane({
     if (next === 'visual') mainEditorRef.current?.blur();
   };
 
-  const openNativeKeyboard = () => {
+  const openNativeKeyboard = useCallback(() => {
     // Remember the resting viewport before the OS keyboard has a chance to shrink it.
     nativeViewportBaseRef.current = window.visualViewport?.height ?? window.innerHeight;
     // While the tap is still a gesture, hand the focus to the real editor: the property change that
@@ -321,14 +330,14 @@ export function EditorCodePane({
     else mainEditorRef.current?.openNativeKeyboard();
     setKeyboardNative(true);
     setKeyboardOpen(false);
-  };
+  }, [mode]);
 
-  const closeKeyboard = () => {
+  const closeKeyboard = useCallback(() => {
     setKeyboardNative(false);
     setKeyboardOpen(false);
     if (mode === 'visual') visualRef.current?.blurField();
     else mainEditorRef.current?.blur();
-  };
+  }, [mode]);
 
   const toggleKeyboard = () => {
     releaseModeBarHold();
@@ -365,34 +374,48 @@ export function EditorCodePane({
 
   // One keyboard, two adapters: every key asks the face on screen. The code face's adapter is the
   // editor handle (CodeMirror commands own the document), the visual face's is the block handle.
-  const on = (codeAction: () => void, visualAction: () => void) =>
-    mode === 'visual' ? visualAction() : codeAction();
-  const keepEditingFocus = () => {
+  const on = useCallback(
+    (codeAction: () => void, visualAction: () => void) =>
+      mode === 'visual' ? visualAction() : codeAction(),
+    [mode]
+  );
+  const keepEditingFocus = useCallback(() => {
     const active = document.activeElement;
     if (active instanceof Element && active.closest('.cm-editor, [data-block-id]')) return;
     if (mode === 'visual') visualRef.current?.focusField();
     else mainEditorRef.current?.focus();
-  };
-  const keyboardActions = {
-    onInsertText: (text: string) =>
-      on(() => mainEditorRef.current?.insertText(text), () => visualRef.current?.insertText(text)),
-    onBackspace: () =>
-      on(() => mainEditorRef.current?.backspace(), () => visualRef.current?.backspace()),
-    onIndent: () => on(() => mainEditorRef.current?.indent(), () => visualRef.current?.indent()),
-    onDedent: () => on(() => mainEditorRef.current?.dedent(), () => visualRef.current?.dedent()),
-    onNewLine: () =>
-      on(
-        () => mainEditorRef.current?.insertNewLine(),
-        () => visualRef.current?.newStatement()
-      ),
-    onTab: () => on(() => mainEditorRef.current?.insertTab(), () => visualRef.current?.insertTab()),
-    onUndo: () => on(() => mainEditorRef.current?.undo(), () => visualRef.current?.undo()),
-    onRedo: () => on(() => mainEditorRef.current?.redo(), () => visualRef.current?.redo()),
-    onDuplicate: () =>
-      on(() => mainEditorRef.current?.duplicate(), () => visualRef.current?.duplicate()),
-    onDelete: () =>
-      on(() => mainEditorRef.current?.deleteLine(), () => visualRef.current?.deleteSelected()),
-  };
+  }, [mode]);
+  /**
+   * The keyboard's actions, stable until the face changes (`MobilePythonKeyboard` is memoized).
+   *
+   * Every keystroke re-renders this pane, because `code` is a prop that the keystroke just changed.
+   * Fresh arrow functions on every one of those renders would rebuild the keyboard's sixty keys for
+   * a character that CodeMirror has already placed; these close over `mode` and the two editor refs
+   * only, so the keyboard re-renders when it is handed a different face and at no other time.
+   */
+  const keyboardActions = useMemo(
+    () => ({
+      onInsertText: (text: string) =>
+        on(() => mainEditorRef.current?.insertText(text), () => visualRef.current?.insertText(text)),
+      onBackspace: () =>
+        on(() => mainEditorRef.current?.backspace(), () => visualRef.current?.backspace()),
+      onIndent: () => on(() => mainEditorRef.current?.indent(), () => visualRef.current?.indent()),
+      onDedent: () => on(() => mainEditorRef.current?.dedent(), () => visualRef.current?.dedent()),
+      onNewLine: () =>
+        on(
+          () => mainEditorRef.current?.insertNewLine(),
+          () => visualRef.current?.newStatement()
+        ),
+      onTab: () => on(() => mainEditorRef.current?.insertTab(), () => visualRef.current?.insertTab()),
+      onUndo: () => on(() => mainEditorRef.current?.undo(), () => visualRef.current?.undo()),
+      onRedo: () => on(() => mainEditorRef.current?.redo(), () => visualRef.current?.redo()),
+      onDuplicate: () =>
+        on(() => mainEditorRef.current?.duplicate(), () => visualRef.current?.duplicate()),
+      onDelete: () =>
+        on(() => mainEditorRef.current?.deleteLine(), () => visualRef.current?.deleteSelected()),
+    }),
+    [on]
+  );
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
 
   return (

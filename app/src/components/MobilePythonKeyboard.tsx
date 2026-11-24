@@ -1,4 +1,14 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  forwardRef,
+  memo,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {
   ArrowBigUp,
   ArrowRightToLine,
@@ -243,6 +253,109 @@ function capPreviewText(cap: HTMLElement): string {
   return shown.replace(/\s+/g, ' ').trim();
 }
 
+type KeyPreviewState = { text: string; left: number; top: number; stamp: number };
+
+/** What the keyboard asks of the bubble: raise this cap, keep it a moment after a lift, forget it. */
+type KeyPreviewHandle = {
+  show: (cap: HTMLElement) => void;
+  hideSoon: () => void;
+  clear: () => void;
+};
+
+/**
+ * The magnified copy of the pressed cap, directly above it (`KeyPreview`).
+ *
+ * It owns the bubble's state on purpose. The bubble changes on every press and again when its 180 ms
+ * countdown ends, and while that state lived beside the keys each change re-rendered all sixty of
+ * them — twice per character before the text had even been committed, which is work a phone pays
+ * out of the same frame that has to deliver the character. Here a press re-renders one small
+ * absolutely positioned div; the keys keep their DOM and their props. The keyboard reaches it
+ * through a ref, so nothing about a press travels through the parent's render at all.
+ */
+const KeyPreview = forwardRef<KeyPreviewHandle, { section: RefObject<HTMLElement | null> }>(
+  function KeyPreview({ section }, ref) {
+    const [preview, setPreview] = useState<KeyPreviewState | null>(null);
+    const timer = useRef<number | null>(null);
+    const stamp = useRef(0);
+
+    // The timer is the only thing here that could outlive the keyboard.
+    useEffect(
+      () => () => {
+        if (timer.current !== null) window.clearTimeout(timer.current);
+      },
+      []
+    );
+
+    /**
+     * Raise the pressed key's character over that cap, the way a phone does, and keep it there for
+     * a moment after a quick lift. The bubble is positioned in the section's coordinates, so it
+     * climbs with the keyboard as it slides; its centre is held inside the section so an edge key's
+     * bubble cannot hang off the screen.
+     */
+    const show = (cap: HTMLElement) => {
+      const base = section.current?.getBoundingClientRect();
+      if (!base) return;
+      const text = capPreviewText(cap);
+      if (!text) return;
+      if (timer.current !== null) {
+        window.clearTimeout(timer.current);
+        timer.current = null;
+      }
+      const key = cap.getBoundingClientRect();
+      const centre = key.left - base.left + key.width / 2;
+      const edge = Math.min(28, base.width / 2);
+      setPreview({
+        text,
+        left: Math.min(Math.max(centre, edge), base.width - edge),
+        top: key.top - base.top - 6,
+        stamp: (stamp.current += 1),
+      });
+    };
+
+    /** A bubble that has done its job leaves; a new press starts its own countdown. */
+    const hideSoon = () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => {
+        timer.current = null;
+        setPreview(null);
+      }, 180);
+    };
+
+    /** A keyboard that folds under a fresh page drops the bubble instead of carrying it over. */
+    const clear = () => {
+      if (timer.current !== null) {
+        window.clearTimeout(timer.current);
+        timer.current = null;
+      }
+      setPreview(null);
+    };
+
+    useImperativeHandle(ref, () => ({ show, hideSoon, clear }));
+
+    if (!preview) return null;
+
+    return (
+      <div
+        key={preview.stamp}
+        aria-hidden="true"
+        data-testid="python-key-preview"
+        className={`kb-key-pop pointer-events-none absolute z-20 flex items-center justify-center whitespace-nowrap rounded-xl border border-line-strong bg-raise text-center font-mono font-semibold text-body shadow-lg ${
+          preview.text.length <= 2
+            ? 'h-[3.25rem] min-w-[3.25rem] px-1 text-[26px] leading-none'
+            : 'min-w-[2.5rem] px-2.5 py-1 text-[15px] leading-6'
+        }`}
+        style={{
+          left: preview.left,
+          top: preview.top,
+          transform: 'translate(-50%, -100%)',
+        }}
+      >
+        {preview.text}
+      </div>
+    );
+  }
+);
+
 /** One key. `button` keeps the keyboard reachable from a switch or a screen reader. */
 function Key({
   testId,
@@ -374,7 +487,7 @@ function duration(fast: number, slow: number, speed: number): string {
   return `${(slow - (slow - fast) * (speed / 100)).toFixed(2)}s`;
 }
 
-export function MobilePythonKeyboard({
+export const MobilePythonKeyboard = memo(function MobilePythonKeyboard({
   mode,
   open,
   onInsertText,
@@ -408,43 +521,17 @@ export function MobilePythonKeyboard({
     setShift(false);
     setCaps(false);
     shiftTapAt.current = 0;
-    if (previewTimer.current !== null) {
-      window.clearTimeout(previewTimer.current);
-      previewTimer.current = null;
-    }
-    setPreview(null);
+    previewRef.current?.clear();
   }, [open]);
   // The lighting layer, and the choice it remembers. Fn + the layout key opens it; the same key
   // closes it. `page` and `fn` are not reset by the trip, so the learner returns to what they had.
   const [rgbOpen, setRgbOpen] = useState(false);
   const [rgb, setRgb] = useState<RgbSettings>(() => readRgbSettings());
-  const [preview, setPreview] = useState<{
-    text: string;
-    left: number;
-    top: number;
-    stamp: number;
-  } | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
-  const previewTimer = useRef<number | null>(null);
-  const previewStamp = useRef(0);
+  const previewRef = useRef<KeyPreviewHandle>(null);
   const noop = () => undefined;
 
-  /** A bubble that has done its job leaves; a new press starts its own countdown. */
-  const hidePreviewSoon = () => {
-    if (previewTimer.current !== null) window.clearTimeout(previewTimer.current);
-    previewTimer.current = window.setTimeout(() => {
-      previewTimer.current = null;
-      setPreview(null);
-    }, 180);
-  };
-
-  // The timer is the only thing here that could outlive the keyboard.
-  useEffect(
-    () => () => {
-      if (previewTimer.current !== null) window.clearTimeout(previewTimer.current);
-    },
-    []
-  );
+  const hidePreviewSoon = () => previewRef.current?.hideSoon();
 
   // The stamp belongs to the latest press. A finger outside this keyboard clears it before its
   // own focus change, so a blur caused by leaving is never mistaken for one caused by a key.
@@ -463,32 +550,7 @@ export function MobilePythonKeyboard({
     setRgb(writeRgbSettings({ ...rgb, ...patch }));
   };
 
-  /**
-   * Raise the pressed key's character over that cap, the way a phone does, and keep it there for a
-   * moment after a quick lift. The bubble is positioned in the section's coordinates, so it climbs
-   * with the keyboard as it slides; its centre is held inside the section so an edge key's bubble
-   * cannot hang off the screen.
-   */
-  const showPreview = (cap: HTMLElement) => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const text = capPreviewText(cap);
-    if (!text) return;
-    if (previewTimer.current !== null) {
-      window.clearTimeout(previewTimer.current);
-      previewTimer.current = null;
-    }
-    const base = section.getBoundingClientRect();
-    const key = cap.getBoundingClientRect();
-    const centre = key.left - base.left + key.width / 2;
-    const edge = Math.min(28, base.width / 2);
-    setPreview({
-      text,
-      left: Math.min(Math.max(centre, edge), base.width - edge),
-      top: key.top - base.top - 6,
-      stamp: (previewStamp.current += 1),
-    });
-  };
+  const showPreview = (cap: HTMLElement) => previewRef.current?.show(cap);
 
   const visual = mode === 'visual';
   const action = (id: KeyboardAction) => {
@@ -634,28 +696,8 @@ export function MobilePythonKeyboard({
       className="relative min-w-0 touch-none select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
       {/* A magnified copy of the pressed cap, directly above it; never a target, never focused.
-          A character gets a key-shaped bubble the way iOS's keyboard does, while a word a key
-          prints ("space", "New line") would not fit one and keeps a smaller pill. `stamp`
-          remounts it so the pop animation plays again for a repeated key. */}
-      {preview && (
-        <div
-          key={preview.stamp}
-          aria-hidden="true"
-          data-testid="python-key-preview"
-          className={`kb-key-pop pointer-events-none absolute z-20 flex items-center justify-center whitespace-nowrap rounded-xl border border-line-strong bg-raise text-center font-mono font-semibold text-body shadow-lg ${
-            preview.text.length <= 2
-              ? 'h-[3.25rem] min-w-[3.25rem] px-1 text-[26px] leading-none'
-              : 'min-w-[2.5rem] px-2.5 py-1 text-[15px] leading-6'
-          }`}
-          style={{
-            left: preview.left,
-            top: preview.top,
-            transform: 'translate(-50%, -100%)',
-          }}
-        >
-          {preview.text}
-        </div>
-      )}
+          It holds its own state so a press does not re-render the keys (see `KeyPreview`). */}
+      <KeyPreview ref={previewRef} section={sectionRef} />
       <p className="sr-only" role="status">
         {rgbOpen ? `Keyboard lighting: ${lightingName}, colour ${rgb.color}` : ''}
       </p>
@@ -1167,4 +1209,4 @@ export function MobilePythonKeyboard({
       </div>
     </section>
   );
-}
+});

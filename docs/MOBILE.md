@@ -67,7 +67,10 @@ flowchart LR
    180 ms after a quick lift, so a tap too fast to watch still says which key it was. A key with no
    character shows the glyph printed on it (`⌫`, `⇧`, `⌨`) in the same magnified cap; a key that
    prints a word (`space`, `New line`) uses a compact pill, because a word does not fit a key. The
-   bubble pops in with a short scale, which the reduced-motion preference turns off. The press asks for a light vibration where the device has one and sounds
+   bubble pops in with a short scale, which the reduced-motion preference turns off. It owns its
+   state (`KeyPreview`) and the keyboard is memoized with actions that stay stable until the
+   editing face changes, so typing a character never re-renders the caps — only a key that changes
+   the layout (Fn, 123, Shift) does. The press asks for a light vibration where the device has one and sounds
    one short `key` tick through the interface's sound bus — silent while sound or the **Interface**
    switch is off, panned to where the cap sits; Enter is a medium tap and the mode keys answer with
    two ticks. iOS Safari has no Vibration API, so there the press animation, the bubble and the tick

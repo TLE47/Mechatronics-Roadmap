@@ -16,6 +16,20 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — A phone keystroke no longer re-renders the keyboard
+
+A press used to rebuild the keyboard's sixty caps twice: the code update re-rendered the pane that
+draws the keys, and the magnified preview's 180 ms hide re-rendered them again after every quick
+tap. Measured on the built Pages bundle at 390×844 with real touch events, one press held the main
+thread for a median 11.5 ms in a paced burst (p90 14.1 ms) and 12–17 ms across the faster bursts.
+The bubble now owns its state behind a ref (`KeyPreview`), the keyboard is memoized, and its
+actions are stable until the editing face changes: ten typed keys now render the keyboard zero
+times, while Fn still renders it. The same interleaved before/after measurement puts the paced
+burst at 10.8 ms (p90 13.2 ms) — a small win on a desktop VM whose press cost is already inside a
+frame, but the two full reconciliations are gone from a path a phone runs several times a second,
+and they are what the development build pays 45–57 ms for (its `jsxDEV` and prop validation). The
+phone gate still holds every key, its preview, Backspace repeat and the Visual fields.
+
 ## [2026-11-24] — The phone keyboard's gaps are printed, not touched
 
 The caps sit 8 px apart, and the strip between two of them was real dead space. A thumb typing
