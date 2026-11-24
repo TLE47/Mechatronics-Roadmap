@@ -663,7 +663,7 @@ export function MobilePythonKeyboard({
       {rgbOpen ? (
         <>
           {/* Row 1 — the six modes. Each is the same key component as a character. */}
-          <div role="group" aria-label="Lighting mode" className="flex min-w-0 gap-1.5" data-testid="rgb-modes">
+          <div role="group" aria-label="Lighting mode" className="flex min-w-0 gap-2" data-testid="rgb-modes">
             {RGB_MODES.map((entry) => (
               <Key
                 key={entry.id}
@@ -685,7 +685,7 @@ export function MobilePythonKeyboard({
           <div
             role="group"
             aria-label="Lighting colour"
-            className="mt-1.5 flex min-w-0 items-stretch gap-1.5"
+            className="mt-2 flex min-w-0 items-stretch gap-2"
             data-testid="rgb-colours"
           >
             {RGB_PRESETS.map((color) => (
@@ -730,7 +730,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 3 — brightness and speed, the two knobs every mode shares. */}
-          <div role="group" aria-label="Lighting strength" className="mt-1 flex min-w-0 gap-2" data-testid="rgb-sliders">
+          <div role="group" aria-label="Lighting strength" className="mt-2 flex min-w-0 gap-2" data-testid="rgb-sliders">
             <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 text-[9px] font-semibold uppercase tracking-wide text-muted">
               Bright
               <input
@@ -768,7 +768,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Rows 4–6 — the typing layout itself, lit. A press previews the light and types nothing. */}
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {LETTERS.slice(0, 10).map(([key, digit], index) => (
               <Key
                 key={key}
@@ -789,7 +789,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {LETTERS.slice(10, 19).map(([key], index) => (
               <Key
                 key={key}
@@ -804,7 +804,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             <Key
               testId="rgb-preview-shift"
               label="Preview key Shift"
@@ -841,7 +841,7 @@ export function MobilePythonKeyboard({
       ) : page === 'abc' ? (
         <>
           {/* Row 1 — editing actions. Fn swaps each label and, on the last two, the verb. */}
-          <div className="flex min-w-0 gap-1.5">
+          <div className="flex min-w-0 gap-2">
             <Key
               testId="python-key-indent"
               label={fn ? 'Indent block' : 'Indent current line or selection'}
@@ -908,7 +908,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 2 — the programming symbols. `==` and `!=` live only in the operator row below. */}
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {SYMBOLS.map((symbol) => (
               <Key
                 key={symbol.id}
@@ -924,7 +924,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 3 — QWERTY top row, with the digits it becomes under Fn as small labels. */}
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {LETTERS.slice(0, 10).map(([key, digit], index) => (
               <Key
                 key={key}
@@ -949,7 +949,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 4 — the home row. */}
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {LETTERS.slice(10, 19).map(([key], index) => (
               <Key
                 key={key}
@@ -968,7 +968,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 5 — Shift, the bottom letter row, Backspace. */}
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             <Key
               testId="python-key-shift"
               label={
@@ -1017,7 +1017,7 @@ export function MobilePythonKeyboard({
       ) : (
         <>
           {/* The 123 page: digits on the top row, punctuation, then arithmetic and Backspace. */}
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {NUMBERS.map(([digit], index) => (
               <Key
                 key={digit}
@@ -1032,7 +1032,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {NUMERIC_MIDDLE.map((symbol) => (
               <Key
                 key={symbol.id}
@@ -1046,7 +1046,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1.5 flex min-w-0 gap-1.5">
+          <div className="mt-2 flex min-w-0 gap-2">
             {NUMERIC_LAST.map((symbol) => (
               <Key
                 key={symbol.id}
@@ -1077,7 +1077,7 @@ export function MobilePythonKeyboard({
       {/* Row 6 — Fn and the operators. `==` and `!=` are here and nowhere else. In the lighting
           layer the row is not a substitution: the preview rows above already fill this space. */}
       {!rgbOpen && (
-        <div className="mt-1.5 flex min-w-0 gap-1.5">
+        <div className="mt-2 flex min-w-0 gap-2">
           <Key
             testId="python-key-fn"
             label={fn ? 'Fn is on: block operations' : 'Fn: block operations and digits'}
@@ -1111,7 +1111,7 @@ export function MobilePythonKeyboard({
 
       {/* Row 7 — 123/ABC, the native keyboard, space and Done. The row is shared by both layers:
           in the lighting layer the page key is the way back, and space previews instead of typing. */}
-      <div className="mt-1.5 flex min-w-0 items-stretch gap-1.5">
+      <div className="mt-2 flex min-w-0 items-stretch gap-2">
         <Key
           testId="python-key-layout"
           label={layoutName}

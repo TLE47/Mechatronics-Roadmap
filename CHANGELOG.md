@@ -16,6 +16,27 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — Every phone field computes 16 px without growing
+
+The block fields were fixed one at a time, but the rest of the workbench still named its own small
+type: a search box at 12.5 px, a settings select at 11 px, notes at 12.5, a sticky note at 13, and a
+workflow card sized from its document. Each computed under 16 px, so iOS Safari zoomed the page when
+the native keyboard got the caret. On a coarse pointer those fields now compute 16 px and draw their
+glyphs at the size they have always used with `font-size-adjust`; their boxes are unchanged, the
+line-height multiplier is restored for the fields that inherit one, and an `@supports` test leaves
+the size alone on an engine that cannot adjust. The phone gate now asserts the lesson search and the
+rich note composer compute at least 16 px and carry a real adjustment, and an audit of every visible
+editable across the tab picker compared each field's box against a mouse at the same 390 px viewport.
+
+## [2026-11-24] — The phone keyboard's caps sit apart
+
+The custom keys were 6 px apart in both directions. They now sit 8 px apart in both directions, so a
+thumb that drifts between two caps lands in real dead space. The gap gate's floor moves with them:
+7 px either way. The rows stop there rather than a phone keyboard's wider vertical pitch because a
+360×640 phone must still leave 170 px of code above the keys. A press on the mode bar also keeps the
+keys up while a Visual field has the caret, so switching to Python Code no longer drops the tap as
+the keys fold under the finger.
+
 ## [2026-11-24] — A phone's block values keep their size without the zoom
 
 The Visual face's value fields were 13 px inputs, so focusing one made iOS zoom the page the same

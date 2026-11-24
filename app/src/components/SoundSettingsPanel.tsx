@@ -351,7 +351,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
             if (isRandomizeMode(event.target.value)) onRandomize(event.target.value);
           }}
           data-testid={tid('sound-randomize')}
-          className="min-h-[32px] rounded-md border px-1.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
+          className="min-h-[32px] min-w-[8.25rem] rounded-md border px-1.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
           style={{
             borderColor: 'var(--border)',
             backgroundColor: 'var(--panel)',

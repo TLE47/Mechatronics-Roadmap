@@ -153,7 +153,9 @@ export function EditorCodePane({
     // Hold an already-active typing layer; do not summon one from a closed keyboard, or the bar
     // jumps to the top under the press and the click lands nowhere. When the keys are closed, the
     // click opens them and the layer starts after it, not under the finger.
-    if (phoneTyping) setModeBarHolding(true);
+    // Visual keeps the same rule: a field's caret is holding the keys, and the bar's press must not
+    // fold them (and move the bar) before its own click has landed.
+    if (keyboardOpen || phoneTyping) setModeBarHolding(true);
     window.clearTimeout(modeBarPressTimerRef.current);
     modeBarPressTimerRef.current = window.setTimeout(() => {
       modeBarPressRef.current = false;
@@ -296,8 +298,10 @@ export function EditorCodePane({
   }, [isPhone, keyboardNative]);
 
   const chooseMode = (next: BlockMode) => {
-    releaseModeBarHold();
-    if (next === mode) return;
+    if (next === mode) {
+      releaseModeBarHold();
+      return;
+    }
     setMode(next);
     if (next === 'visual') setVisualOpened(true);
     writeBlockSettings({ mode: next });
@@ -548,8 +552,9 @@ export function EditorCodePane({
                     if (!keyboardNative) setKeyboardOpen(true);
                   }}
                   onFieldBlur={() => {
-                    if (!keyboardNative) setKeyboardOpen(false);
+                    if (!keyboardNative && !modeBarHolding) setKeyboardOpen(false);
                   }}
+                  holdFieldBlur={modeBarPressRef}
                 />
               </Suspense>
             )}

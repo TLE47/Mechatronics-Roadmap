@@ -102,6 +102,8 @@ export const PythonBlockEditor = forwardRef<
     onFieldFocus?: () => void;
     /** The caret left every block field, so the keyboard can give the workspace back. */
     onFieldBlur?: () => void;
+    /** A mode-bar press is in flight: its blur must not fold the keys it is switching. */
+    holdFieldBlur?: { current: boolean };
   }
 >(function PythonBlockEditor(
   {
@@ -113,6 +115,7 @@ export const PythonBlockEditor = forwardRef<
     keyboardShowing = false,
     onFieldFocus,
     onFieldBlur,
+    holdFieldBlur,
   },
   ref
 ) {
@@ -447,6 +450,7 @@ export const PythonBlockEditor = forwardRef<
    * should stay, and only a tap on a card or the workspace closes it.
    */
   const onFieldFocusOut = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (holdFieldBlur?.current) return;
     const next = event.relatedTarget;
     if (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement) return;
     // A toolbar, a sheet or the shared keyboard taking the focus for the length of a press is not
@@ -461,7 +465,7 @@ export const PythonBlockEditor = forwardRef<
       return;
     }
     window.setTimeout(() => {
-      if (activeField()) return;
+      if (holdFieldBlur?.current || activeField()) return;
       onFieldBlur?.();
     }, 0);
   };

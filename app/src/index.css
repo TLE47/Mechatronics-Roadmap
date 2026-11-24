@@ -1313,6 +1313,129 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   }
 }
 
+/* A field that names its own size still has to compute 16 px on a phone: the floor above is in
+   `base`, and the utilities layer outranks it, so `text-[11px]` on a search box or a note would
+   compute 11 px and iOS Safari would zoom the page when it gets the caret. `font-size-adjust` draws
+   those glyphs at the size the field has always used, so the field keeps its look and its box —
+   Safari does not count the adjustment when it decides to zoom, it still sees 16 px.
+
+   The ratios are keyed by the class tokens the workbench already uses, matched as whole tokens
+   (`[class~=…]`) so `placeholder:text-[11px]` is never mistaken for an 11 px field. The `@supports`
+   test is what keeps the look safe: an engine that cannot adjust keeps the size its class declares,
+   so nothing grows where the trick cannot preserve the drawing. */
+@supports (font-size-adjust: calc(1ex / 1em * 11 / 16)) {
+  @media (pointer: coarse) {
+    [class~='text-[10.5px]'] {
+      --field-visual-size: 10.5;
+    }
+    [class~='text-[11px]'] {
+      --field-visual-size: 11;
+    }
+    [class~='text-[11.5px]'] {
+      --field-visual-size: 11.5;
+    }
+    [class~='text-[12px]'],
+    [class~='text-xs'] {
+      --field-visual-size: 12;
+    }
+    [class~='text-[0.75rem]'] {
+      /* In px, unitless, because the app's root is 16 px and the ratio below divides by it. */
+      --field-visual-size: 12;
+    }
+    [class~='text-[0.78rem]'] {
+      --field-visual-size: 12.48;
+    }
+    [class~='text-[12.5px]'] {
+      --field-visual-size: 12.5;
+    }
+    [class~='text-[13px]'] {
+      --field-visual-size: 13;
+    }
+    [class~='text-[14px]'],
+    [class~='text-sm'] {
+      --field-visual-size: 14;
+    }
+    [class~='text-[15px]'] {
+      --field-visual-size: 15;
+    }
+    :is(input, textarea, select, [contenteditable='true']):is(
+      [class~='text-[10.5px]'],
+      [class~='text-[11px]'],
+      [class~='text-[11.5px]'],
+      [class~='text-[12px]'],
+      [class~='text-xs'],
+      [class~='text-[0.75rem]'],
+      [class~='text-[0.78rem]'],
+      [class~='text-[12.5px]'],
+      [class~='text-[13px]'],
+      [class~='text-[14px]'],
+      [class~='text-sm'],
+      [class~='text-[15px]']
+    ) {
+      font-size: 16px;
+      font-size-adjust: calc(1ex / 1em * var(--field-visual-size) / 16);
+    }
+
+    /* The fields that name their own line-height: a `leading-*` multiplier would now be read against
+       16 px and space the lines 16/12.5 too far apart. These two ratios restore the line box the
+       field has always drawn. (`leading-5`/`leading-6` are fixed lengths and already unchanged.) */
+    textarea[class~='text-[12.5px]'][class~='leading-relaxed'],
+    [contenteditable='true'][class~='text-[12.5px]'][class~='leading-relaxed'] {
+      line-height: calc(12.5 / 16 * 1.625);
+    }
+    textarea[class~='text-[13px]'][class~='leading-snug'],
+    [contenteditable='true'][class~='text-[13px]'][class~='leading-snug'] {
+      line-height: calc(13 / 16 * 1.375);
+    }
+
+    /* The line box follows the field's size too, or an inherited `line-height: 1.6` would be read
+       against 16 px and make a 12 px search box 5 px taller. In `components` so an explicit
+       `leading-*` utility still owns the field; the named Tailwind sizes, which set their own
+       ratio, are restored underneath in the utilities' own terms. */
+    @layer components {
+      :is(input, textarea, [contenteditable='true']):is(
+        [class~='text-[10.5px]'],
+        [class~='text-[11px]'],
+        [class~='text-[11.5px]'],
+        [class~='text-[12px]'],
+        [class~='text-[0.75rem]'],
+        [class~='text-[0.78rem]'],
+        [class~='text-[12.5px]'],
+        [class~='text-[13px]'],
+        [class~='text-[14px]'],
+        [class~='text-[15px]']
+      ) {
+        line-height: calc(var(--field-visual-size) / 16 * 1.6);
+      }
+    }
+    :is(input, textarea, [contenteditable='true'])[class~='text-xs'] {
+      line-height: calc(var(--field-visual-size) / 16 * 1.3333);
+    }
+    :is(input, textarea, [contenteditable='true'])[class~='text-sm'] {
+      line-height: calc(var(--field-visual-size) / 16 * 1.4286);
+    }
+  }
+}
+
+/* Workflow cards size their own words from a document (`CARD_TYPE`), so they cannot use a utility
+   token: the component hands the chosen size in a unitless custom property and this rule resolves
+   it. On the same iOS Safari rule as the fields above, 16 px is what it computes while the glyphs
+   stay the size the card chose. */
+.card-field {
+  font-size: calc(var(--card-font) * 1px);
+}
+@supports (font-size-adjust: calc(1ex / 1em * 11 / 16)) {
+  @media (pointer: coarse) {
+    .card-field {
+      font-size: 16px;
+      font-size-adjust: calc(1ex / 1em * var(--card-font) / 16);
+    }
+    .card-field[class~='leading-snug'] {
+      line-height: calc(var(--card-font) / 16 * 1.375);
+    }
+  }
+}
+
 /* A statement card is carried by a long press on a phone, so the browser's own long-press
    gestures must not claim the same finger. Selection and iOS's callout are declined by the card,
    not by the page: a field inside it keeps its own selection, because editing one token is what

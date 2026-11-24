@@ -132,7 +132,7 @@ export function PredictPane({
               // every lesson, which was half the answer to P.1's gate and another lesson's output
               // everywhere else.
               placeholder={'one line per line the program prints, e.g.\nLabel: value | Label: value'}
-              className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-[12px] text-body resize-y"
+              className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-xs text-body resize-y"
             />
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button

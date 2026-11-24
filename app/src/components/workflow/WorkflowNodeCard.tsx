@@ -538,10 +538,10 @@ export function WorkflowNodeCard({
             onChange={(event) => onUpdate(node.id, { title: event.target.value })}
             onFocus={() => onSelect(node.id)}
             onContextMenu={openTextMenu}
-            className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
+            className={`card-field peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
               node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
             } ${titleMath || titleFormatted ? 'opacity-0 focus:opacity-100' : ''}`}
-            style={{ color: ink, fontSize: type.title, ...titleFormatStyle }}
+            style={{ color: ink, '--card-font': type.title, ...titleFormatStyle } as CSSProperties}
           />
           {/* A formula is taller than a line of text (a fraction is two), so the rendering gets a
               little room above and below the input's box rather than being clipped to it. */}
@@ -575,10 +575,10 @@ export function WorkflowNodeCard({
             onChange={(event) => onUpdate(node.id, { detail: event.target.value })}
             onFocus={() => onSelect(node.id)}
             onContextMenu={openTextMenu}
-            className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
+            className={`card-field peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
               node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
             } ${detailMath || detailFormatted ? 'opacity-0 focus:opacity-100' : ''}`}
-            style={{ color: detailInk, fontSize: type.detail, ...detailFormatStyle }}
+            style={{ color: detailInk, '--card-font': type.detail, ...detailFormatStyle } as CSSProperties}
           />
           {(detailMath || detailFormatted) && (
             <span

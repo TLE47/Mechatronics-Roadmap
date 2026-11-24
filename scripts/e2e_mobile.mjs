@@ -224,7 +224,44 @@ async function fingerPoint(page, locator, { scroll = false, label = 'the touch t
           requestAnimationFrame(tick);
         })
     );
+  const settleScroll = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          let last = window.scrollY;
+          let stable = 0;
+          const tick = () => {
+            const now = window.scrollY;
+            if (Math.abs(now - last) <= 0.5) stable += 1;
+            else {
+              stable = 0;
+              last = now;
+            }
+            if (stable >= 4) resolve();
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        })
+    );
   if (scroll) await scrollToCentre();
+  // The Study bar is fixed to the keyboard's top edge, so centring can leave a target's middle
+  // underneath it. Lift such a target into the band the bar leaves before measuring the finger's
+  // point; a page that is still scrolling would move the target out from under the tap.
+  if (scroll) {
+    const barTop = await page.evaluate(() => {
+      const bar = document.querySelector('[data-testid="phone-bar"]');
+      const rect = bar?.getBoundingClientRect();
+      return rect && rect.height > 0 && rect.top < window.innerHeight ? rect.top : window.innerHeight;
+    });
+    let found = await target.boundingBox();
+    if (found && found.y + found.height / 2 > barTop - 8) {
+      await target.evaluate((element, top) => {
+        const rect = element.getBoundingClientRect();
+        window.scrollBy(0, rect.top + rect.height / 2 - top / 2);
+      }, barTop);
+      await settleScroll();
+    }
+  }
   let found = await target.boundingBox();
   check(Boolean(found), `${label} has no box for a finger`);
   const viewport = page.viewportSize();
@@ -2005,11 +2042,11 @@ async function main() {
         };
       });
       check(
-        gapPoints.horizontalGap >= 5,
+        gapPoints.horizontalGap >= 7,
         `the gap between two letters is only ${gapPoints.horizontalGap}px: a thumb cannot miss`
       );
       check(
-        gapPoints.verticalGap >= 5,
+        gapPoints.verticalGap >= 7,
         `the gap between two rows is only ${gapPoints.verticalGap}px: a thumb cannot miss`
       );
       for (const name of ['horizontal', 'vertical']) {
@@ -2375,6 +2412,18 @@ async function main() {
         `the page keyboard ends at ${Math.round(firstFieldBox.y + firstFieldBox.height)}px, not ${PHONE.height}px`
       );
       check((await search.getAttribute('inputmode')) === 'none', 'a page field must suppress the OS keyboard');
+      const searchType = await search.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { font: Number.parseFloat(style.fontSize), adjust: style.fontSizeAdjust };
+      });
+      check(
+        searchType.font >= 16,
+        `the lesson search computes ${searchType.font}px: iOS would zoom the page on focus`
+      );
+      check(
+        searchType.adjust !== 'none',
+        'the lesson search must draw its own size through font-size-adjust, not grow to 16 px'
+      );
       const focusedSearch = await page.evaluate(() => window.__touch.focus.at(-1));
       check(
         focusedSearch.id === 'input-lesson-search' && focusedSearch.inputmode === 'none',
@@ -2780,6 +2829,18 @@ async function main() {
       await touchTap(page, cdp, note, { hold: 60, label: 'the note composer' });
       await page.waitForTimeout(300);
       check((await note.getAttribute('inputmode')) === 'none', 'the note composer kept the OS keyboard');
+      const noteType = await note.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { font: Number.parseFloat(style.fontSize), adjust: style.fontSizeAdjust };
+      });
+      check(
+        noteType.font >= 16,
+        `the note composer computes ${noteType.font}px: iOS would zoom the page on focus`
+      );
+      check(
+        noteType.adjust !== 'none',
+        'the note composer must draw its own size through font-size-adjust, not grow to 16 px'
+      );
       const focusedNote = await page.evaluate(() => window.__touch.focus.at(-1));
       check(
         focusedNote.id === 'sticky-note-text' && focusedNote.inputmode === 'none',

@@ -49,9 +49,10 @@ flowchart LR
    keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
    the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
    raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
-   does not allow them to grow wider. The rows sit **6 px** apart in both directions, up from 4 px,
+   does not allow them to grow wider. The caps sit **8 px** apart in both directions, up from 6 px,
    so the gap between two caps is real dead space: a drifting thumb lands there and types nothing,
-   and the gate measures both gaps. A key acts on **pointerdown**, the way a native keyboard does,
+   and the gate measures both gaps. The rows stop at 8 px rather than a phone keyboard's wider
+   vertical pitch because a 360×640 phone must still leave 170 px of code above the keys. A key acts on **pointerdown**, the way a native keyboard does,
    rather than waiting for the synthetic click on the lift. That is also what makes two overlapping
    thumbs work: a browser does not synthesise a click for every touch in a multi-touch sequence, so
    the old click-only key lost those characters entirely. A keyboard or switch activation has
@@ -264,6 +265,7 @@ touch laptop gets them and a 390 px window with a mouse does not.
 | punctuation keys | 44 × 44 px | repeated, without looking |
 | small secondary controls | 28 × 28 px | the app-wide minimum |
 | text fields on touch | 16 px type | the size iOS will not zoom on focus |
+| fields that name a smaller size | 16 px computed, the declared size drawn | search, settings and lesson forms keep their look through `font-size-adjust` |
 | code editor on touch | 16 px type | the same floor in every preset, not only the Study Code surface |
 | block value fields on touch | 16 px computed, 13 px drawn | the same floor, scaled back so a statement keeps its 13 px row |
 
