@@ -1802,6 +1802,38 @@ number-flow {
   transition: opacity 140ms ease;
 }
 
+/* The bubble over the pressed cap pops the way a phone's does. The component positions it with an
+   inline `translate`; the keyframes repeat that transform, because an animated transform replaces
+   the property for the animation's duration. */
+.kb-key-pop {
+  animation: kb-key-pop 120ms var(--ease-out) both;
+}
+/* A short tail points the bubble at the cap below it, so it cannot be mistaken for a key that
+   changed its letter. It reaches into the 6 px above the cap and inherits the bubble's surface. */
+.kb-key-pop::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 9px;
+  height: 9px;
+  transform: translateX(-50%) rotate(45deg);
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  border-bottom-right-radius: 2px;
+  background: var(--panel-2);
+}
+@keyframes kb-key-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
 /* A lit key: the wash under the letter, plus a short spill past the cap's edge. */
 [data-rgb] .kb-key::before {
   background: var(--kb-rgb);
@@ -1864,6 +1896,9 @@ number-flow {
   }
   [data-rgb] .kb-key::before {
     animation: none !important;
+  }
+  .kb-key-pop {
+    animation: none;
   }
   .kb-key:active {
     transform: none;

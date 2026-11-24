@@ -16,6 +16,33 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — The phone keyboard's gaps and its key bubble
+
+Two things made the custom keyboard easy to mistype. Its caps sat only 4 px apart, so a thumb that
+drifted between two of them hit the neighbour rather than the dead space a phone leaves there; the
+rows are now 6 px apart in both directions, and the phone gate measures both gaps. And the key
+preview existed only while a finger stayed down — a real tap is shorter than a blink, so the
+character flashed and vanished before it could be read. The bubble now rises from the pressed cap
+(not from the top of the keyboard), shows the glyph or word printed on keys that type no character
+(`⌫`, `⇧`, `Done`), and lingers 180 ms after a quick lift before leaving; repeated presses move it
+cap to cap. It pops
+in with a 120 ms scale that reduced motion turns off, and the gate holds a key, lifts it, and asserts
+the bubble is still readable and then gone.
+
+## [2026-11-24] — The phone's coding keyboard speaks
+
+The custom keyboard was the one control in the app that made no sound: a cap cancels its
+`pointerdown` so it does not steal the caret, and the interface's delegated listener skips a press
+whose default was already prevented, so every letter typed in silence even with sound on. Each cap
+now sounds one short, dry `key` tick on the way down — the same moment it types — placed where the
+cap sits so a thumb spreads the ticks across the rows, with a held Backspace ticking as it repeats.
+It is a new role on the sound bus rather than a borrowed chip, so the vocabulary stays one timbre
+per kind of control; the key's own `data-sound="none"` keeps the delegated listener from adding a
+second tick when a switch or screen reader activates it. The mute and the Interface switch still
+win, and with either off the key types exactly as before. `npm run test:audio` pins the role and its
+spec, and the phone gate taps a cap with a real touch and asserts the bus received one `key`, not a
+Run.
+
 ## [2026-11-23] — The studio's code card follows the caret
 
 On the Studio's phone Code card a wrapped line that filled the screen stopped following the caret:

@@ -8,8 +8,14 @@
  *    the palette's rows). That attribute is the answer, always.
  * 2. **Derived.** Otherwise the element's own semantics decide: a `role="tab"` is navigation, an
  *    `input[type=range]` is a slider, an `aria-pressed` or `aria-expanded` control is a toggle, and
- *    a plain button is the primary action it looks like. Text fields get nothing — typing is not a
- *    sound in this design — and a disabled control is silent, because it did not do anything.
+ *    a plain button is the primary action it looks like. Text fields get nothing — typing into a
+ *    field is not a sound in this design — and a disabled control is silent, because it did not do
+ *    anything.
+ *
+ * The phone's coding keyboard is the one typing surface that speaks, and it is deliberately not
+ * this map's business: its caps cancel the `pointerdown` the delegated listener would have heard,
+ * and each sounds its own `key` tick (see `MobilePythonKeyboard.tsx`). A map that guessed at a
+ * keyboard from button shape would also sound every other grid of buttons like one.
  *
  * This module is pure: it takes a description, not an element, so the rules can be pinned in Node
  * without a DOM. `SoundClicks.tsx` is the only thing that reads real elements.

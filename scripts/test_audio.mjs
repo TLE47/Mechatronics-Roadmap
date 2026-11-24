@@ -540,10 +540,11 @@ await check('the debug snapshot is a copy', async () => {
 
 // ---- the interface's own sound ---------------------------------------------------------------
 
-await check('seven kinds of control, one sound each, all of them furniture', () => {
+await check('eight kinds of control, one sound each, all of them furniture', () => {
   assert.deepEqual([...UI_ROLES].sort(), [
     'chip',
     'close',
+    'key',
     'nav',
     'primary',
     'row',

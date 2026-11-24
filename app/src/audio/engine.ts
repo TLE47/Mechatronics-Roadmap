@@ -218,7 +218,7 @@ export const CUE_TONES: Record<SoundCue, Tone[]> = {
 };
 
 /**
- * The seven clicks. Same language throughout — a struck body plus a breath of filtered noise — but
+ * The eight clicks. Same language throughout — a struck body plus a breath of filtered noise — but
  * a different shape for each kind of control, so the interface has an accent rather than a beep.
  */
 export const CLICK_SPECS: Record<UiRole, ClickSpec> = {
@@ -262,6 +262,12 @@ export const CLICK_SPECS: Record<UiRole, ClickSpec> = {
   close: {
     tones: [{ freq: 150, type: 'triangle', duration: 0.05, peak: 0.05 }],
     noise: { duration: 0.03, peak: 0.05, type: 'lowpass', freq: 700 },
+  },
+  // A phone keycap: dry and high, almost all edge. It plays several times a second under a thumb,
+  // so it is the shortest tick in the app and carries no verdict of its own.
+  key: {
+    tones: [{ freq: 1150, type: 'sine', duration: 0.016, peak: 0.03 }],
+    noise: { duration: 0.012, peak: 0.045, type: 'highpass', freq: 3600 },
   },
 };
 

@@ -12,6 +12,8 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react';
+import { panFromX } from '../audio/clickMap';
+import { playUi } from '../audio/facade';
 import { haptic, type HapticPattern } from '../keyboard/haptics';
 import {
   RGB_MODES,
@@ -56,8 +58,11 @@ import {
  * the button still receives its click, its Enter and its Space; a key that only changes the keyboard
  * (Shift, Fn, 123/ABC) puts the caret back afterwards. Backspace deletes on the way down and repeats
  * on a held finger, then stops on the lift. The press also asks for a small vibration where the
- * device has one, and raises the pressed character above the cap in the iOS manner; neither is
- * required for a key to work.
+ * device has one, sounds one `key` tick through the sound bus, and raises the pressed key's
+ * character above that cap in the iOS manner, holding it for a moment after a quick lift so a fast
+ * tap still shows what it was; none of them is required for a key to work. The tick follows the
+ * interface's own switch: with sound off, or the interface ticks switched off, the bus drops it and
+ * the key still types.
  *
  * The section and every cap are `touch-action: none` on purpose. A real thumb drifts while it
  * holds a key, and browser panning treated that drift as a page gesture: a 48 px slide dragged the
@@ -212,6 +217,32 @@ const ACTION_CAP =
 const OPERATOR_CAP =
   `kb-key relative flex min-h-[44px] min-w-0 flex-1 cursor-pointer select-none touch-none items-center justify-center rounded-lg border border-line-soft bg-panel font-mono text-[13px] font-semibold text-body shadow-sm ${PRESS}`;
 
+/**
+ * One tick, placed where the cap sits. A key is a button, so the smart keyboard has a light and a
+ * sound but no typing noise of its own: the sound bus carries the press, and a thumb typing across
+ * the rows spreads the ticks left to right.
+ */
+function keyTick(button: HTMLElement | null): void {
+  if (typeof window === 'undefined') return;
+  const rect = button?.getBoundingClientRect();
+  playUi('key', rect ? panFromX(rect.left + rect.width / 2, window.innerWidth) : 0);
+}
+
+/**
+ * What a pressed cap raises above itself. A key that types a character declares it, so Shift and Fn
+ * preview the character they will produce; every other cap shows the word or glyph printed on it,
+ * never its `aria-label`, which is a sentence written for a screen reader.
+ */
+function capPreviewText(cap: HTMLElement): string {
+  const declared = cap.dataset.preview;
+  if (declared) return declared;
+  const shown = [...cap.childNodes]
+    .filter((node) => !(node instanceof Element) || node.getAttribute('aria-hidden') !== 'true')
+    .map((node) => node.textContent ?? '')
+    .join('');
+  return shown.replace(/\s+/g, ' ').trim();
+}
+
 /** One key. `button` keeps the keyboard reachable from a switch or a screen reader. */
 function Key({
   testId,
@@ -225,7 +256,6 @@ function Key({
   index,
   feedback = 'light',
   preview,
-  onPreview,
   onRepeat,
   keepFocus = true,
 }: {
@@ -241,9 +271,8 @@ function Key({
   index?: number;
   /** The tap this key asks for; a character is light, Enter is medium, a mode is a confirmation. */
   feedback?: HapticPattern | 'none';
-  /** The character this key should raise above the cap while it is held, if it has one. */
+  /** The character this key should raise above the cap when it is pressed, if it has one. */
   preview?: string;
-  onPreview?: (next: { text: string; button: HTMLElement } | null) => void;
   /** A held key repeats this until the finger lifts, the way a native Backspace does. */
   onRepeat?: () => void;
   /** Native and Done deliberately move focus away; every other key keeps the caret. */
@@ -265,13 +294,17 @@ function Key({
    * Delete on the way down, then keep deleting while the finger stays, like a phone's Backspace.
    * The synthetic click that follows the lift is swallowed, so one press never deletes twice.
    */
-  const beginRepeat = () => {
+  const beginRepeat = (button: HTMLButtonElement | null) => {
     if (!onRepeat) return;
     stopRepeat();
     if (feedback !== 'none') haptic(feedback);
+    keyTick(button);
     onRepeat();
     holdTimer.current = window.setTimeout(() => {
-      repeatTimer.current = window.setInterval(onRepeat, 55);
+      repeatTimer.current = window.setInterval(() => {
+        onRepeat();
+        keyTick(button);
+      }, 55);
     }, 420);
   };
 
@@ -279,14 +312,20 @@ function Key({
     ...(index === undefined ? {} : ({ '--i': index } as CSSProperties)),
     ...style,
   };
-  const press = () => {
+  const press = (button: HTMLButtonElement | null) => {
     if (feedback !== 'none') haptic(feedback);
+    keyTick(button);
     onPress();
   };
   return (
     <button
       type="button"
       data-testid={testId}
+      // What the bubble above the cap says on a press; the section reads it from the pressed key.
+      data-preview={preview}
+      // The key sounds itself, on the way down, exactly as it acts. The interface's delegated
+      // listener must not add a second tick for a key a switch or a screen reader activates.
+      data-sound="none"
       data-no-keep-focus={keepFocus ? undefined : '1'}
       aria-label={label}
       aria-pressed={pressed}
@@ -305,24 +344,14 @@ function Key({
           } catch {
             // A browser without capture still gets the closing pointerup on the key.
           }
-          beginRepeat();
+          beginRepeat(event.currentTarget);
         } else {
-          press();
+          press(event.currentTarget);
         }
-        if (preview) onPreview?.({ text: preview, button: event.currentTarget });
       }}
-      onPointerUp={() => {
-        stopRepeat();
-        onPreview?.(null);
-      }}
-      onPointerCancel={() => {
-        stopRepeat();
-        onPreview?.(null);
-      }}
-      onPointerLeave={() => {
-        stopRepeat();
-        onPreview?.(null);
-      }}
+      onPointerUp={stopRepeat}
+      onPointerCancel={stopRepeat}
+      onPointerLeave={stopRepeat}
       onLostPointerCapture={() => stopRepeat()}
       onClick={(event) => {
         // Every pointer press has already acted on the way down. Its click is the lift, however
@@ -330,7 +359,7 @@ function Key({
         // activation has `detail === 0` and no pointer behind it; that one press is the only way a
         // switch or screen reader can use a key, so it still acts once.
         if (event.detail > 0) return;
-        press();
+        press(event.currentTarget);
       }}
       className={className}
       style={wide ? { ...merged, flexGrow: wide } : merged}
@@ -379,14 +408,43 @@ export function MobilePythonKeyboard({
     setShift(false);
     setCaps(false);
     shiftTapAt.current = 0;
+    if (previewTimer.current !== null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+    setPreview(null);
   }, [open]);
   // The lighting layer, and the choice it remembers. Fn + the layout key opens it; the same key
   // closes it. `page` and `fn` are not reset by the trip, so the learner returns to what they had.
   const [rgbOpen, setRgbOpen] = useState(false);
   const [rgb, setRgb] = useState<RgbSettings>(() => readRgbSettings());
-  const [preview, setPreview] = useState<{ text: string; left: number } | null>(null);
+  const [preview, setPreview] = useState<{
+    text: string;
+    left: number;
+    top: number;
+    stamp: number;
+  } | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
+  const previewTimer = useRef<number | null>(null);
+  const previewStamp = useRef(0);
   const noop = () => undefined;
+
+  /** A bubble that has done its job leaves; a new press starts its own countdown. */
+  const hidePreviewSoon = () => {
+    if (previewTimer.current !== null) window.clearTimeout(previewTimer.current);
+    previewTimer.current = window.setTimeout(() => {
+      previewTimer.current = null;
+      setPreview(null);
+    }, 180);
+  };
+
+  // The timer is the only thing here that could outlive the keyboard.
+  useEffect(
+    () => () => {
+      if (previewTimer.current !== null) window.clearTimeout(previewTimer.current);
+    },
+    []
+  );
 
   // The stamp belongs to the latest press. A finger outside this keyboard clears it before its
   // own focus change, so a blur caused by leaving is never mistaken for one caused by a key.
@@ -406,19 +464,30 @@ export function MobilePythonKeyboard({
   };
 
   /**
-   * Raise the held character over the key that is holding it, the way a phone does. The bubble is
-   * positioned in the section's coordinates, so it climbs with the keyboard as it slides.
+   * Raise the pressed key's character over that cap, the way a phone does, and keep it there for a
+   * moment after a quick lift. The bubble is positioned in the section's coordinates, so it climbs
+   * with the keyboard as it slides; its centre is held inside the section so an edge key's bubble
+   * cannot hang off the screen.
    */
-  const showPreview = (next: { text: string; button: HTMLElement } | null) => {
-    if (!next) {
-      setPreview(null);
-      return;
-    }
+  const showPreview = (cap: HTMLElement) => {
     const section = sectionRef.current;
     if (!section) return;
+    const text = capPreviewText(cap);
+    if (!text) return;
+    if (previewTimer.current !== null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
     const base = section.getBoundingClientRect();
-    const key = next.button.getBoundingClientRect();
-    setPreview({ text: next.text, left: key.left - base.left + key.width / 2 });
+    const key = cap.getBoundingClientRect();
+    const centre = key.left - base.left + key.width / 2;
+    const edge = Math.min(28, base.width / 2);
+    setPreview({
+      text,
+      left: Math.min(Math.max(centre, edge), base.width - edge),
+      top: key.top - base.top - 6,
+      stamp: (previewStamp.current += 1),
+    });
   };
 
   const visual = mode === 'visual';
@@ -529,20 +598,28 @@ export function MobilePythonKeyboard({
         const target = event.target;
         if (!(target instanceof Element)) return;
         sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()));
-        // A press anywhere on the keys — including the gap between two caps — belongs to the
+                // A press anywhere on the keys — including the gap between two caps — belongs to the
         // keyboard, not the page behind it. The caret must stay where the learner left it.
         if (target.closest('input, textarea, select, label')) return;
+        // The cap under the finger names itself before the press does anything else. A gap names
+        // nothing, and leaves the last bubble to its own countdown.
+        const cap = target.closest('.kb-key');
+        if (cap instanceof HTMLElement) showPreview(cap);
         event.preventDefault();
       }}
+
       // A slow press can outlast the guard's window: the stamp was taken on the way down, and iOS
       // may move the focus on the lift or the click that follows it. The same press stamps again at
       // each of those moments, so a keyboard-caused blur is never read as the learner leaving.
-      onPointerUpCapture={() =>
-        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()))
-      }
-      onPointerCancelCapture={() =>
-        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()))
-      }
+      onPointerUpCapture={() => {
+        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()));
+        hidePreviewSoon();
+      }}
+      onPointerCancelCapture={() => {
+        sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()));
+        hidePreviewSoon();
+      }}
+      onPointerLeave={hidePreviewSoon}
       onClickCapture={(event) => {
         sectionRef.current?.setAttribute('data-pressed-at', String(Date.now()));
         const target = event.target;
@@ -556,13 +633,19 @@ export function MobilePythonKeyboard({
       style={lightingStyle}
       className="relative min-w-0 touch-none select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
-      {/* The held character, above the cap it belongs to; never a target, never focused. */}
+      {/* The pressed character, directly above the cap it belongs to; never a target, never
+          focused. `stamp` remounts it so the pop animation plays again for a repeated key. */}
       {preview && (
         <div
+          key={preview.stamp}
           aria-hidden="true"
           data-testid="python-key-preview"
-          className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-md border border-line-soft bg-panel px-2 py-0.5 font-mono text-[15px] leading-6 text-body shadow-md"
-          style={{ left: preview.left, bottom: '100%', marginBottom: 6 }}
+          className="kb-key-pop pointer-events-none absolute z-10 min-w-[2.25rem] whitespace-nowrap rounded-lg border border-line-strong bg-raise px-2.5 py-1 text-center font-mono text-[18px] font-semibold leading-6 text-body shadow-lg"
+          style={{
+            left: preview.left,
+            top: preview.top,
+            transform: 'translate(-50%, -100%)',
+          }}
         >
           {preview.text}
         </div>
@@ -574,7 +657,7 @@ export function MobilePythonKeyboard({
       {rgbOpen ? (
         <>
           {/* Row 1 — the six modes. Each is the same key component as a character. */}
-          <div role="group" aria-label="Lighting mode" className="flex min-w-0 gap-1" data-testid="rgb-modes">
+          <div role="group" aria-label="Lighting mode" className="flex min-w-0 gap-1.5" data-testid="rgb-modes">
             {RGB_MODES.map((entry) => (
               <Key
                 key={entry.id}
@@ -596,7 +679,7 @@ export function MobilePythonKeyboard({
           <div
             role="group"
             aria-label="Lighting colour"
-            className="mt-1 flex min-w-0 items-stretch gap-1"
+            className="mt-1.5 flex min-w-0 items-stretch gap-1.5"
             data-testid="rgb-colours"
           >
             {RGB_PRESETS.map((color) => (
@@ -679,7 +762,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Rows 4–6 — the typing layout itself, lit. A press previews the light and types nothing. */}
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {LETTERS.slice(0, 10).map(([key, digit], index) => (
               <Key
                 key={key}
@@ -687,7 +770,6 @@ export function MobilePythonKeyboard({
                 label={`Preview key ${key}`}
                 index={index}
                 preview={key}
-                onPreview={showPreview}
                 onPress={noop}
                 className={CAP}
               >
@@ -701,7 +783,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {LETTERS.slice(10, 19).map(([key], index) => (
               <Key
                 key={key}
@@ -709,7 +791,6 @@ export function MobilePythonKeyboard({
                 label={`Preview key ${key}`}
                 index={10 + index}
                 preview={key}
-                onPreview={showPreview}
                 onPress={noop}
                 className={CAP}
               >
@@ -717,7 +798,7 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             <Key
               testId="rgb-preview-shift"
               label="Preview key Shift"
@@ -734,7 +815,6 @@ export function MobilePythonKeyboard({
                 label={`Preview key ${key}`}
                 index={19 + index}
                 preview={key}
-                onPreview={showPreview}
                 onPress={noop}
                 className={CAP}
               >
@@ -755,7 +835,7 @@ export function MobilePythonKeyboard({
       ) : page === 'abc' ? (
         <>
           {/* Row 1 — editing actions. Fn swaps each label and, on the last two, the verb. */}
-          <div className="flex min-w-0 gap-1">
+          <div className="flex min-w-0 gap-1.5">
             <Key
               testId="python-key-indent"
               label={fn ? 'Indent block' : 'Indent current line or selection'}
@@ -822,14 +902,13 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 2 — the programming symbols. `==` and `!=` live only in the operator row below. */}
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {SYMBOLS.map((symbol) => (
               <Key
                 key={symbol.id}
                 testId={`python-key-${symbol.id}`}
                 label={symbol.name}
                 preview={symbol.label}
-                onPreview={showPreview}
                 onPress={() => onInsertText(symbol.insert)}
                 className={`${CAP} font-mono text-[15px]`}
               >
@@ -839,7 +918,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 3 — QWERTY top row, with the digits it becomes under Fn as small labels. */}
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {LETTERS.slice(0, 10).map(([key, digit], index) => (
               <Key
                 key={key}
@@ -847,7 +926,6 @@ export function MobilePythonKeyboard({
                 label={fn ? `Digit ${digit}` : `Letter ${key}`}
                 index={index}
                 preview={fn ? digit : capital ? key.toUpperCase() : key}
-                onPreview={showPreview}
                 onPress={() => (fn ? onInsertText(digit) : letter(key))}
                 className={CAP}
               >
@@ -865,7 +943,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 4 — the home row. */}
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {LETTERS.slice(10, 19).map(([key], index) => (
               <Key
                 key={key}
@@ -873,7 +951,6 @@ export function MobilePythonKeyboard({
                 label={`Letter ${key}`}
                 index={10 + index}
                 preview={capital ? key.toUpperCase() : key}
-                onPreview={showPreview}
                 onPress={() => letter(key)}
                 className={CAP}
               >
@@ -885,7 +962,7 @@ export function MobilePythonKeyboard({
           </div>
 
           {/* Row 5 — Shift, the bottom letter row, Backspace. */}
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             <Key
               testId="python-key-shift"
               label={
@@ -896,6 +973,7 @@ export function MobilePythonKeyboard({
                     : 'Shift, capital for one letter; tap twice for caps lock'
               }
               pressed={capital}
+              preview="⇧"
               onPress={shiftPress}
               wide={1.5}
               className={`${CAP} ${capital ? 'bg-accent-soft text-accent' : 'bg-raise text-muted'}`}
@@ -909,7 +987,6 @@ export function MobilePythonKeyboard({
                 label={`Letter ${key}`}
                 index={19 + index}
                 preview={capital ? key.toUpperCase() : key}
-                onPreview={showPreview}
                 onPress={() => letter(key)}
                 className={CAP}
               >
@@ -921,6 +998,7 @@ export function MobilePythonKeyboard({
             <Key
               testId="python-key-backspace"
               label="Backspace"
+              preview="⌫"
               onPress={onBackspace}
               onRepeat={onBackspace}
               wide={1.5}
@@ -933,7 +1011,7 @@ export function MobilePythonKeyboard({
       ) : (
         <>
           {/* The 123 page: digits on the top row, punctuation, then arithmetic and Backspace. */}
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {NUMBERS.map(([digit], index) => (
               <Key
                 key={digit}
@@ -941,7 +1019,6 @@ export function MobilePythonKeyboard({
                 label={`Digit ${digit}`}
                 index={index}
                 preview={digit}
-                onPreview={showPreview}
                 onPress={() => onInsertText(digit)}
                 className={CAP}
               >
@@ -949,14 +1026,13 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {NUMERIC_MIDDLE.map((symbol) => (
               <Key
                 key={symbol.id}
                 testId={`python-key-${symbol.id}`}
                 label={symbol.name}
                 preview={symbol.label}
-                onPreview={showPreview}
                 onPress={() => onInsertText(symbol.label)}
                 className={`${CAP} font-mono text-[15px]`}
               >
@@ -964,14 +1040,13 @@ export function MobilePythonKeyboard({
               </Key>
             ))}
           </div>
-          <div className="mt-1 flex min-w-0 gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1.5">
             {NUMERIC_LAST.map((symbol) => (
               <Key
                 key={symbol.id}
                 testId={`python-key-${symbol.id}`}
                 label={symbol.name}
                 preview={symbol.label}
-                onPreview={showPreview}
                 onPress={() => onInsertText(symbol.label)}
                 className={`${CAP} font-mono text-[15px]`}
               >
@@ -981,6 +1056,7 @@ export function MobilePythonKeyboard({
             <Key
               testId="python-key-backspace"
               label="Backspace"
+              preview="⌫"
               onPress={onBackspace}
               onRepeat={onBackspace}
               wide={1.5}
@@ -995,7 +1071,7 @@ export function MobilePythonKeyboard({
       {/* Row 6 — Fn and the operators. `==` and `!=` are here and nowhere else. In the lighting
           layer the row is not a substitution: the preview rows above already fill this space. */}
       {!rgbOpen && (
-        <div className="mt-1 flex min-w-0 gap-1">
+        <div className="mt-1.5 flex min-w-0 gap-1.5">
           <Key
             testId="python-key-fn"
             label={fn ? 'Fn is on: block operations' : 'Fn: block operations and digits'}
@@ -1018,7 +1094,6 @@ export function MobilePythonKeyboard({
               testId={`python-key-${operator.id}`}
               label={operator.name}
               preview={operator.label}
-              onPreview={showPreview}
               onPress={() => onInsertText(operator.insert)}
               className={OPERATOR_CAP}
             >
@@ -1030,7 +1105,7 @@ export function MobilePythonKeyboard({
 
       {/* Row 7 — 123/ABC, the native keyboard, space and Done. The row is shared by both layers:
           in the lighting layer the page key is the way back, and space previews instead of typing. */}
-      <div className="mt-1 flex min-w-0 items-stretch gap-1">
+      <div className="mt-1.5 flex min-w-0 items-stretch gap-1.5">
         <Key
           testId="python-key-layout"
           label={layoutName}
@@ -1047,6 +1122,7 @@ export function MobilePythonKeyboard({
         <Key
           testId="python-key-native"
           label="Use the phone's own keyboard"
+          preview="⌨"
           feedback="confirmation"
           keepFocus={false}
           onPress={onNativeKeyboard}
@@ -1059,7 +1135,6 @@ export function MobilePythonKeyboard({
           testId="python-key-space"
           label="Space"
           preview={rgbOpen ? undefined : 'space'}
-          onPreview={showPreview}
           onPress={rgbOpen ? noop : () => onInsertText(' ')}
           wide={3.6}
           className={`${CAP} font-mono text-[13px] text-muted`}

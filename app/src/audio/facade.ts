@@ -28,12 +28,22 @@ export type SoundCue = 'run-start' | 'run-pass' | 'run-fail' | 'verify' | 'boot'
 export type SoundScene = 'home' | 'focus';
 
 /**
- * The seven kinds of control in the workbench. One timbre each, so a learner learns the room's
- * language: a tab does not sound like a Run, and closing something never sounds like starting it.
+ * The eight kinds of control in the workbench. One timbre each, so a learner learns the room's
+ * language: a tab does not sound like a Run, closing something never sounds like starting it, and a
+ * cap on the phone's coding keyboard sounds like the key it is.
  */
-export type UiRole = 'nav' | 'primary' | 'toggle' | 'row' | 'chip' | 'slider' | 'close';
+export type UiRole = 'nav' | 'primary' | 'toggle' | 'row' | 'chip' | 'slider' | 'close' | 'key';
 
-export const UI_ROLES: readonly UiRole[] = ['nav', 'primary', 'toggle', 'row', 'chip', 'slider', 'close'];
+export const UI_ROLES: readonly UiRole[] = [
+  'nav',
+  'primary',
+  'toggle',
+  'row',
+  'chip',
+  'slider',
+  'close',
+  'key',
+];
 
 /** A click never pans further than this, so the room widens without the sound leaving the screen. */
 export const UI_PAN_LIMIT = 0.35;

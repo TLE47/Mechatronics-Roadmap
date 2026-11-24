@@ -33,8 +33,9 @@
  *      and a page field's keys, hold one to raise its preview, type at an uninterrupted finger's
  *      pace, read the haptics, lock capitals on a double Shift, repeat Backspace while it is held,
  *      keep the caret through the gap between two caps and through 123/ABC, return after a native
- *      handoff, retarget between two fields without folding, and measure the slide up and the slide
- *      down at 390 and 360 px. A key that cancels `pointerdown` is exactly where a mouse-only gate lies.
+ *      handoff, retarget between two fields without folding, answer the sound bus as its own key
+ *      tick, and measure the slide up and the slide down at 390 and 360 px. A key that cancels
+ *      `pointerdown` is exactly where a mouse-only gate lies.
  *
  * It is deliberately not a Pyodide suite: `npm run test:e2e` and `npm run test:predict` already own
  * running code, and a 10 MB interpreter on a throttled phone link would make this gate too slow to
@@ -1567,6 +1568,26 @@ async function main() {
       await tapBackspace();
       check((await getEditorCode(page)) === '', 'programmatic key activation did not clean up');
 
+      // ---- A cap answers the sound bus, and as itself ----
+      // The interface's delegated listener never hears these keys: a key cancels its pointerdown, so
+      // it sounds its own `key` tick on the way down. The message, not an AudioContext, is the
+      // contract here — the engine decides whether it can play, and a muted learner still types.
+      await page.evaluate(() => {
+        window.__touch.sounds = [];
+        window.addEventListener('mechalab:sound', (event) => {
+          if (event.detail?.kind === 'ui') window.__touch.sounds.push(event.detail.role);
+        });
+      });
+      await fastTouch(page, cdp, editorShell.getByTestId('python-key-k'), { label: 'k' });
+      await page.waitForTimeout(60);
+      const keySounds = await page.evaluate(() => window.__touch.sounds);
+      check(
+        keySounds.length === 1 && keySounds[0] === 'key',
+        `a phone key must sound as exactly one key tick, got ${JSON.stringify(keySounds)}`
+      );
+      await tapBackspace();
+      check((await getEditorCode(page)) === '', 'the sound check did not clean up');
+
       // ---- The same key interaction at the five typing speeds the plan names ----
       // Every character is its own touch; the wait is the person's inter-key interval, jittered
       // around the WPM target rather than a fixed delay. The measured speed is printed from the
@@ -1961,13 +1982,25 @@ async function main() {
       // The gap between two caps belongs to the keyboard too: it must not move the caret.
       const gapPoints = await page.evaluate(() => {
         const q = document.querySelector('[data-testid="python-key-q"]').getBoundingClientRect();
+        const w = document.querySelector('[data-testid="python-key-w"]').getBoundingClientRect();
         const a = document.querySelector('[data-testid="python-key-a"]').getBoundingClientRect();
         return {
           horizontal: { x: q.right + 2, y: q.top + q.height / 2 },
           vertical: { x: q.left + q.width / 2, y: (q.bottom + a.top) / 2 },
+          horizontalGap: w.left - q.right,
+          verticalGap: a.top - q.bottom,
         };
       });
-      for (const [name, point] of Object.entries(gapPoints)) {
+      check(
+        gapPoints.horizontalGap >= 5,
+        `the gap between two letters is only ${gapPoints.horizontalGap}px: a thumb cannot miss`
+      );
+      check(
+        gapPoints.verticalGap >= 5,
+        `the gap between two rows is only ${gapPoints.verticalGap}px: a thumb cannot miss`
+      );
+      for (const name of ['horizontal', 'vertical']) {
+        const point = gapPoints[name];
         await cdp.send('Input.dispatchTouchEvent', {
           type: 'touchStart',
           touchPoints: [{ x: point.x, y: point.y, id: 1, force: 1 }],
@@ -2008,13 +2041,37 @@ async function main() {
         `a held key typed ${JSON.stringify(heldCode.slice(caret, caret + 2))} before the finger lifted`
       );
       await touchUp(page, cdp);
-      await page.waitForTimeout(140);
-      check((await preview.count()) === 0, 'the character preview stayed after the finger lifted');
+      // A tap is shorter than a blink. The bubble lingers after a quick lift, so the key that was
+      // pressed can still be read, then leaves on its own.
+      await page.waitForTimeout(60);
+      check(
+        (await preview.isVisible()) && (await preview.textContent())?.trim() === 'a',
+        'a quick lift must leave the key preview up long enough to read'
+      );
+      await page.waitForTimeout(320);
+      check((await preview.count()) === 0, 'the character preview stayed after its linger');
       check(
         (await getEditorCode(page)) === heldCode,
         'lifting the finger typed the held letter again'
       );
-      await tapBackspace();
+
+      // A key that prints no character still names itself: Backspace raises its glyph, and the
+      // one delete it performed is all it did.
+      await fingerDown(page, cdp, editorShell.getByTestId('python-key-backspace'), {
+        label: 'Backspace',
+      });
+      await page.waitForTimeout(40);
+      const backspacePreview = (await preview.textContent())?.trim();
+      await touchUp(page, cdp);
+      check(
+        backspacePreview === '⌫',
+        `Backspace previewed ${JSON.stringify(backspacePreview)}, not its glyph`
+      );
+      await page.waitForTimeout(240);
+      check(
+        (await getEditorCode(page)) === baseline,
+        'Backspace after the key preview did not remove exactly one character'
+      );
 
       await clearVibrations();
       await press(editorShell, 'python-key-q');

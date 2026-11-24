@@ -96,7 +96,7 @@ are all present and in its order.
 A **watch run** — the machine repeating a check on the learner's behalf — is silent: it did not press
 Run, so it gets neither the click nor the duck.
 
-## The interface's seven ticks
+## The interface's eight ticks
 
 `audio/clickMap.ts` classifies a control from what it already says about itself, so the app never
 needs a second styling system:
@@ -110,12 +110,16 @@ needs a second styling system:
 | `chip` | a badge, a tag | glass, small and high |
 | `slider` | a range input | the tiniest sound in the app |
 | `close` | close, cancel, skip, back, delete | an unlatch, lower and darker than anything else |
+| `key` | a cap on the phone's coding keyboard | a dry keycap tick, panned to the cap |
 
 Precedence: `data-sound="<role>"` wins; `data-sound="none"` silences a subtree; then `disabled`
-is silent (it did nothing); then the element's own semantics decide. Text fields are silent — typing
-is not a sound in this design. The visual editor's block drags borrow two ticks rather than adding
-an eighth: `row` when a card or toolbox element lifts and `chip` when it lands, because a drag is a
-control press the interface already knows how to say.
+is silent (it did nothing); then the element's own semantics decide. Text fields themselves are
+silent — typing into a field is not a sound in this design. The phone's coding keyboard is the one
+typing surface that speaks: its caps are buttons that act on `pointerdown` (which they also cancel,
+so the delegated listener never hears them) and sound one `key` tick at that same moment, so the
+tick follows the **Interface** switch and the mute like any other control. The visual editor's block
+drags borrow two ticks rather than adding a ninth: `row` when a card or toolbox element lifts and
+`chip` when it lands, because a drag is a control press the interface already knows how to say.
 
 Three budgets keep the ticks from becoming a noisemaker:
 

@@ -49,15 +49,23 @@ flowchart LR
    keyboard — Done, Native, or the caret leaving — clears both, as the OS keyboard does, while Fn,
    the page and the lighting stay remembered. Keys clear the app's 28 px floor at **44 px**, a 10 %
    raise from 40 px: they are hit repeatedly and without looking, and the phone's horizontal budget
-   does not allow them to grow wider. A key acts on **pointerdown**, the way a native keyboard does,
+   does not allow them to grow wider. The rows sit **6 px** apart in both directions, up from 4 px,
+   so the gap between two caps is real dead space: a drifting thumb lands there and types nothing,
+   and the gate measures both gaps. A key acts on **pointerdown**, the way a native keyboard does,
    rather than waiting for the synthetic click on the lift. That is also what makes two overlapping
    thumbs work: a browser does not synthesise a click for every touch in a multi-touch sequence, so
    the old click-only key lost those characters entirely. A keyboard or switch activation has
    `detail === 0` and still acts exactly once. A key cancels its pointer default, so the caret, the
-   field and the open keyboard stay put. It also compresses under the finger (a transform, so no
-   neighbour moves), raises its character above the cap, and asks for a light vibration where the
-   device has one; Enter is a medium tap and the mode keys answer with two ticks. iOS Safari has no
-   Vibration API, so there the press animation is the feedback, and no copy promises otherwise.
+   field and the open keyboard stay put. It compresses under the finger (a transform, so no
+   neighbour moves) and raises the pressed key's character directly above its own cap, the way a
+   phone does — and keeps it for 180 ms after a quick lift, so a tap too fast to watch still says
+   which key it was. A key with no character shows the word or glyph printed on it instead
+   (`⌫`, `⇧`, `Done`). The bubble pops in with a short scale, which the reduced-motion
+   preference turns off. The press asks for a light vibration where the device has one and sounds
+   one short `key` tick through the interface's sound bus — silent while sound or the **Interface**
+   switch is off, panned to where the cap sits; Enter is a medium tap and the mode keys answer with
+   two ticks. iOS Safari has no Vibration API, so there the press animation, the bubble and the tick
+   are the feedback, and no copy promises otherwise.
 
    **Return and Backspace follow the file, not a timer.** A suite header opens its body at four
    spaces (`indentUnit.of('    ')`), so Enter inside `if True:` continues the indent the starters and
