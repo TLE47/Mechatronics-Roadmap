@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.22.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.23.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,39 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-24] — The Learning Path now carries all 97 lessons, from Python to the capstone
+
+The page was never filtered by phase: it rendered a hardcoded six-id array, `PROTOTYPE_LESSON_IDS` in
+`app/src/learningPath.ts`, and that constant *was* the Phase 1–3 cutoff. The curriculum data already
+held the whole course — 97 rows in `PYTHON_LESSONS` across 12 tracks and 50 module rows — so the fix
+was to delete the array and derive from the registry. There is no display limit, pagination, query or
+phase filter left; adding a row to the registry adds a platform on the next build.
+
+The registry's order is preserved exactly, and it is also the district order: 21 districts are its
+contiguous runs — one per track, with `modules` split by the subject embedded in its id, so the
+foundations labs are their own district and `EX.08-capstones.T3.07a` is the last platform in the
+`08 lab` district. Each district has a sticky map chip with its verified count that jumps to its first
+platform and follows the scroll, and an in-world band tinted by region, so the continuous city now
+runs from Python through the math ramp, Stage 0, tracks 00–08 and every lab. The map's active chip
+treats the bottom of the document as the final district, because the last platform cannot reach the
+sticky strip. Desktop and phone render the same 97 rows (3 columns versus 1); the phone keeps the
+shared sheet.
+
+Landmarks became per-region pools: 16 token-drawn structures (`data-vault`, `circuit-yard`,
+`power-station`, `sensor-rig`, `assembly-gantry`, `control-observatory`, `autonomy-dome`,
+`capstone-spire`, `model-arch`, plus the seven original shapes) and a deterministic `landmarkFor` that
+honours a keyword only inside the lesson's own region. Every lesson therefore has a landmark, and a
+new track or module subject inherits its pool automatically. Two things the data genuinely lacks are
+reported rather than invented: there is no `phase`/`tier`/`subject` field (the track is the phase,
+and a module's subject is parsed from its id) and there is no prerequisite graph (the prerequisite is
+the preceding registry row, as it was for the six-lesson slice). No XP, stars, duration or new
+persistence key was added.
+
+`test_learning_path.mjs` now pins all 97 rows in order, the 21 counts, both layouts, band geometry,
+all five regions and their pools, states at the start and middle, and extensibility for an unseen
+track and module subject. `e2e_learning_path.mjs` renders 97 platforms, counts the 21 chips, jumps to
+the capstone, checks the map's cursor at the last district, and repeats the phone pass with all 97.
 
 ## [2026-11-24] — The Lessons tray opens a Learning Path, and its first six platforms stand on it
 

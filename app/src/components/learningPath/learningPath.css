@@ -157,15 +157,83 @@
   color: var(--dim);
 }
 
+/* ---- The district map ---- */
+
+.lp-districts {
+  position: sticky;
+  top: var(--header-h, 57px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 7px 0 8px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg);
+}
+
+.lp-districts-title {
+  flex: none;
+  color: var(--dim);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lp-districts-track {
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.lp-district-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 9px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lp-district-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.lp-district-chip[data-active='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.lp-district-count {
+  color: var(--dim);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
 /* ---- The world ---- */
 
 .lp-world {
   --lp-row-h: 300px;
-  --lp-pad: 120px;
   position: relative;
   isolation: isolate;
   max-width: 1180px;
-  height: calc(var(--lp-rows, 2) * var(--lp-row-h) + var(--lp-pad));
+  height: calc(var(--lp-rows, 2) * var(--lp-row-h));
   margin: 22px auto 0;
   overflow: hidden;
   border: 1px solid var(--border-soft);
@@ -194,7 +262,7 @@
   bottom: 0;
   left: 0;
   z-index: 0;
-  height: 34%;
+  height: 360px;
   opacity: 0.55;
   pointer-events: none;
 }
@@ -235,11 +303,74 @@
   opacity: 0.6;
 }
 
+/* ---- Districts: the bands the city grows through ---- */
+
+.lp-band {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 0;
+  border-top: 1px solid var(--border-soft);
+  pointer-events: none;
+}
+
+.lp-band::before {
+  position: absolute;
+  inset: 0;
+  background: var(--band, var(--accent));
+  opacity: 0.05;
+  content: '';
+}
+
+.lp-band[data-active='true']::before {
+  opacity: 0.1;
+}
+
+.lp-band[data-region='programming'] {
+  --band: var(--accent);
+}
+.lp-band[data-region='electronics'] {
+  --band: var(--amber);
+}
+.lp-band[data-region='robotics'] {
+  --band: var(--rose);
+}
+.lp-band[data-region='cad'] {
+  --band: var(--purple);
+}
+.lp-band[data-region='mathematics'] {
+  --band: var(--emerald);
+}
+
+.lp-band-label {
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--dim);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lp-band-number {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
 /* ---- A platform ---- */
 
 .lp-node {
   position: absolute;
   z-index: 2;
+  scroll-margin-top: calc(var(--header-h, 57px) + 3.6rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -494,6 +625,18 @@
   color: var(--amber);
 }
 
+.lp-preview-tier {
+  margin-left: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .lp-preview-icon {
   width: 13px;
   height: 13px;
@@ -619,14 +762,30 @@
   }
 
   .lp-world {
-    --lp-row-h: 236px;
-    --lp-pad: 70px;
+    --lp-row-h: 206px;
     margin-top: 14px;
     border-radius: 10px;
   }
 
+  .lp-band-label {
+    display: none;
+  }
+
+  .lp-districts {
+    gap: 0;
+    padding: 6px 0 7px;
+  }
+
+  .lp-districts-title {
+    display: none;
+  }
+
   .lp-node {
     max-width: 74vw;
+  }
+
+  .lp-sky {
+    height: 240px;
   }
 
   .lp-platform {

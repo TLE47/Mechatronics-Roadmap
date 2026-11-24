@@ -115,6 +115,131 @@ function RobotFactory() {
   );
 }
 
+function DataVault() {
+  return (
+    <>
+      <TowerBase x={30} width={60} />
+      <rect className={`${SHARED}-base`} x="32" y="44" width="56" height="82" rx="6" />
+      <circle className={`${SHARED}-soft`} cx="60" cy="84" r="19" />
+      <circle className={`${SHARED}-ring`} cx="60" cy="84" r="9" />
+      <path className={`${SHARED}-line`} d="M60 65v7M60 96v7M41 84h7M72 84h7" />
+      <rect className={`${SHARED}-accent`} x="42" y="52" width="36" height="5" rx="2" />
+      <circle className={`${SHARED}-light`} cx="48" cy="116" r="3" />
+      <circle className={`${SHARED}-light`} cx="58" cy="116" r="3" />
+    </>
+  );
+}
+
+function CircuitYard() {
+  return (
+    <>
+      <TowerBase x={24} width={72} />
+      <rect className={`${SHARED}-base`} x="24" y="64" width="72" height="62" rx="4" />
+      <rect className={`${SHARED}-soft`} x="44" y="80" width="32" height="28" rx="3" />
+      <path className={`${SHARED}-line`} d="M32 72h20v8M68 88h20v14M32 110h12M88 72v16h-8" />
+      <circle className={`${SHARED}-accent`} cx="52" cy="110" r="3" />
+      <circle className={`${SHARED}-light`} cx="68" cy="72" r="2.5" />
+      <circle className={`${SHARED}-light`} cx="78" cy="72" r="2.5" />
+      <rect className={`${SHARED}-accent`} x="50" y="88" width="20" height="4" rx="2" />
+    </>
+  );
+}
+
+function PowerStation() {
+  return (
+    <>
+      <TowerBase x={34} width={52} />
+      <rect className={`${SHARED}-base`} x="38" y="46" width="44" height="80" rx="5" />
+      <rect className={`${SHARED}-soft`} x="46" y="58" width="28" height="22" rx="2" />
+      <path className={`${SHARED}-accent`} d="M61 59l-9 14h8l-4 12 13-16h-8z" />
+      <rect className={`${SHARED}-light`} x="46" y="90" width="28" height="4" rx="2" />
+      <rect className={`${SHARED}-soft`} x="46" y="100" width="28" height="10" rx="2" />
+      <path className={`${SHARED}-line`} d="M60 46V33" />
+      <circle className={`${SHARED}-light`} cx="60" cy="30" r="3" />
+    </>
+  );
+}
+
+function SensorRig() {
+  return (
+    <>
+      <TowerBase x={32} width={56} />
+      <path className={`${SHARED}-line`} d="M60 94L38 126M60 94l22 32M60 94v32" />
+      <ellipse className={`${SHARED}-soft`} cx="60" cy="66" rx="30" ry="15" transform="rotate(-18 60 66)" />
+      <path className={`${SHARED}-line`} d="M60 80v14" />
+      <path className={`${SHARED}-accent`} d="M86 52a32 32 0 0 1 6 16" />
+      <path className={`${SHARED}-accent`} d="M92 46a42 42 0 0 1 7 22" />
+      <circle className={`${SHARED}-light`} cx="60" cy="66" r="3" />
+    </>
+  );
+}
+
+function AssemblyGantry() {
+  return (
+    <>
+      <TowerBase x={22} width={76} />
+      <rect className={`${SHARED}-base`} x="28" y="54" width="10" height="72" rx="2" />
+      <rect className={`${SHARED}-base`} x="82" y="54" width="10" height="72" rx="2" />
+      <rect className={`${SHARED}-soft`} x="28" y="46" width="64" height="9" rx="2" />
+      <path className={`${SHARED}-line`} d="M60 55v22" />
+      <path className={`${SHARED}-accent`} d="M51 78h18l-4 9h-10z" />
+      <circle className={`${SHARED}-light`} cx="60" cy="90" r="4" />
+      <circle className={`${SHARED}-light`} cx="60" cy="100" r="2" />
+    </>
+  );
+}
+
+function ControlObservatory() {
+  return (
+    <>
+      <TowerBase x={26} width={68} />
+      <path className={`${SHARED}-base`} d="M30 118a30 30 0 0 1 60 0z" />
+      <path className={`${SHARED}-accent`} d="M42 100c6-12 12-12 18 0s10 8 18-4" />
+      <path className={`${SHARED}-line`} d="M60 88V74M52 80h16" />
+      <rect className={`${SHARED}-soft`} x="46" y="108" width="28" height="10" rx="2" />
+      <circle className={`${SHARED}-light`} cx="60" cy="71" r="3" />
+    </>
+  );
+}
+
+function AutonomyDome() {
+  return (
+    <>
+      <TowerBase x={28} width={64} />
+      <path className={`${SHARED}-base`} d="M30 118a30 30 0 0 1 60 0z" />
+      <path className={`${SHARED}-line`} d="M42 100l18-14 18 14M36 110l24-20 24 20M60 86v32" />
+      <circle className={`${SHARED}-accent`} cx="60" cy="80" r="5" />
+      <path className={`${SHARED}-line`} d="M60 74V60" />
+      <circle className={`${SHARED}-light`} cx="60" cy="57" r="3" />
+    </>
+  );
+}
+
+function CapstoneSpire() {
+  return (
+    <>
+      <TowerBase x={32} width={56} />
+      <path className={`${SHARED}-base`} d="M60 26l15 100H45z" />
+      <ellipse className={`${SHARED}-ring`} cx="60" cy="74" rx="23" ry="7" />
+      <circle className={`${SHARED}-light`} cx="60" cy="28" r="4" />
+      <rect className={`${SHARED}-accent`} x="54" y="96" width="12" height="6" rx="2" />
+      <path className={`${SHARED}-line`} d="M38 126h44" />
+    </>
+  );
+}
+
+function ModelArch() {
+  return (
+    <>
+      <TowerBase x={30} width={60} />
+      <path className={`${SHARED}-base`} d="M36 126V70a24 24 0 0 1 48 0v56h-10V70a14 14 0 0 0-28 0v56z" />
+      <path className={`${SHARED}-accent`} d="M46 92h28M46 100h28M46 108h28" />
+      <circle className={`${SHARED}-ring`} cx="60" cy="44" r="9" />
+      <rect className={`${SHARED}-soft`} x="30" y="112" width="60" height="8" rx="2" />
+    </>
+  );
+}
+
 function RegionTower() {
   return (
     <>
@@ -137,6 +262,15 @@ const ART: Record<LandmarkKey, () => React.JSX.Element> = {
   'branch-arch': BranchArch,
   'library-ring': LibraryRing,
   'robot-factory': RobotFactory,
+  'data-vault': DataVault,
+  'circuit-yard': CircuitYard,
+  'power-station': PowerStation,
+  'sensor-rig': SensorRig,
+  'assembly-gantry': AssemblyGantry,
+  'control-observatory': ControlObservatory,
+  'autonomy-dome': AutonomyDome,
+  'capstone-spire': CapstoneSpire,
+  'model-arch': ModelArch,
   'region-tower': RegionTower,
 };
 

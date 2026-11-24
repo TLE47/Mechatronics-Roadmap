@@ -1,22 +1,34 @@
 # MechaLab Learning Path — implementation plan
 
-Status: **Phases 2 and 3 shipped in 4.22.0.** The page, the model and the six-lesson prototype are
-implemented and gated; the rest of the phased order in §13 is still planned. This page answers the
-fourteen questions the brief asks of the first task. It names real files and real line numbers, and
-it records where the brief's assumptions do not match the repository — the references below are the
-ones the plan was written against, not a claim that later work left them at those lines.
+Status: **The full curriculum shipped in 4.23.0.** `?view=lessons` renders every row of the
+authoritative registry as one continuous city, with no phase cutoff and no page-size limit. This page
+answers the sixteen questions the briefs asked, names real files, and records where the briefs'
+assumptions do not match the repository.
 
-**What shipped (2026-11-24).** `?view=lessons` is a whole page in the `HomePage` union, and
-`btn-open-lessons` opens it from all three headers. Start saves the offset, pushes `?lesson=`, calls
-the runner's own `openLesson`, and one `popstate` listener restores the page and the lesson. The
-prototype is P.1, P.2, P.2.5, P.3, P.4 and P.5 in real curriculum order; states come from the
-verified map (completed / current / available / locked with one-step lookahead), locked platforms
-preview only and name their predecessor, and the runner still opens every lesson by id. The six
-inline-SVG landmarks, the desktop card, the phone `Sheet`, the lazy CSS sheet and the reduced-motion
-rules are in `app/src/components/learningPath/`. No XP, stars, duration or prerequisite store was
-added. Tests: `scripts/test_learning_path.mjs` and `scripts/e2e_learning_path.mjs`; `e2e_micro.mjs`
-now reaches the runner through the path. Still open: the remaining phases below, and the brief's
-minimap, streak display, district entrance transitions and richer city scenery from §14.1.
+**What shipped (2026-11-24, 4.23.0).** `?view=lessons` is a whole page in the `HomePage` union, and
+`btn-open-lessons` opens it from all three headers. The platform list is `PYTHON_LESSONS` in its own
+order — 97 rows across the 12 authored tracks and the 50 module rows. Districts are contiguous runs
+of that order (21: one per track, and the modules split by the subject embedded in their id, e.g.
+`EX.01-electronics.T2.01a` belongs to the `01 lab` district). Each district has a sticky map chip with
+its verified count and an in-world band tinted by its region; a chip jumps to the district's first
+platform. States come from the verified map (completed / current / available / locked with one-step
+lookahead); the prerequisite is still the preceding registry row, there is no authored graph. Locked
+platforms preview only and name that predecessor, and the runner still opens every lesson by id.
+Landmarks live in per-region pools (16 inline SVG structures); a new row inherits its pool by track or
+module subject, so adding a phase is a data edit, not a page redesign. The desktop card, the phone
+`Sheet`, the lazy CSS sheet and the reduced-motion rules are in
+`app/src/components/learningPath/`. No XP, stars, duration or persistence key was added for the path.
+Tests: `scripts/test_learning_path.mjs` (97 rows, 21 districts, every region and landmark, band
+geometry, extensibility) and `scripts/e2e_learning_path.mjs` (97 platforms, map jump to the capstone,
+four states, preview/Start/Back, phone parity); `e2e_micro.mjs` still reaches the runner through the
+path.
+
+**What is genuinely missing from the authoritative data.** (1) There is no `phase`, `tier` or
+`subject` field on `PythonLessonItem`: a lesson's phase *is* its `track`, and a module's subject is
+embedded in its id. The path uses those, not an invented taxonomy. (2) There is no per-lesson
+prerequisite field or graph; the path reports the preceding registry row as the prerequisite, which is
+the only order the data actually has. (3) There is no per-lesson XP, star or duration data. Nothing in
+this feature invents any of them.
 
 ---
 
@@ -88,10 +100,11 @@ outputMatch, instructor test summary and tests). The `track` values in today's b
 | `stage-0` | 2 |
 | `00-foundations` … `08-capstone-projects` | 23 across nine route tracks |
 
-The P track is the brief's "Python Tier 1" neighbourhood. The six-lesson prototype maps to real rows:
-`P.1`, `P.2`, `P.2.5`, `P.3`, `P.4`, `P.5` — **not** an invented order; the actual sixth entry of the
-Python track is `P.5`, and `P.2.5` sits between `P.2` and `P.3`. There is no `python-variables`
-identifier and no `subjectId`; the existing id and `track` fields are authoritative.
+The path's platform order is the registry order: 16 Python rows, 6 ramp rows, 2 Stage 0 rows, 23
+route-track rows and 50 module rows. The Python rows are `P.1`, `P.2`, `P.2.5`, `P.3` … `P.14`, then
+`P.M` — `P.2.5` is the real third entry, not an inserted prototype. There is no `python-variables`
+identifier and no `subjectId`; the existing id and `track` fields are authoritative, and the module id
+is parsed only to recover the subject that `track: 'modules'` omits.
 
 ### 2.2 Progress and prerequisites
 
@@ -118,10 +131,9 @@ There is a reward engine, but it is **not** per-lesson XP or stars:
   hours are per route step (`curriculumData` / generated route data), not per exercise.
 
 The brief's preview shows "Reward: 50 XP" and "Earned stars". Building those means inventing a second
-reward model beside the existing one. Section 14 records this as an unresolved decision; the prototype
-proposal is to show what the app can prove (verified/completed, requirement count, estimated minutes
-from the reader's measured pace once one exists) and to leave XP and stars out until the reward owner
-says otherwise.
+reward model beside the existing one. Section 14 records this as an unresolved decision; the page shows
+what the app can prove (verified/completed, requirement count, module tier) and leaves XP and stars out
+until the reward owner says otherwise.
 
 ---
 
@@ -219,20 +231,20 @@ New pure modules, no parallel curriculum:
   `{ kind: 'start' | 'continue' | 'review' | 'locked', label }` from the same state. Both are pure and
   unit-tested.
 
-**`app/src/learningPathLandmarks.tsx`**
-* `landmarkKey(lesson)` — keyword/lesson-id mapping (`variables` → `storage-tower`, `arithmetic` →
-  `operator-tower`, `conditions` → `branch-arch`, `loops` → `ring-tower`, `functions` →
-  `robot-factory`, `lists` → `library-tower`, …, fallback per region).
-* `LANDMARKS: Record<LandmarkKey, React.FC<{ state; id }>>` — the six prototype structures plus the
-  fallbacks, all inline SVG. A lesson without dedicated art gets its region's fallback silhouette, so
-  no platform is ever empty.
-* Art is replaceable by key without touching layout, as the brief requires.
+**`app/src/learningPath.ts`**
+* `LANDMARK_POOLS: Record<PathRegion, LandmarkKey[]>` and `landmarkFor(lesson, { region, indexInDistrict })`
+  — a keyword rule is honoured only when its landmark is in the lesson's own region pool; otherwise the
+  pool cycles by the lesson's position in its district. Every lesson therefore has art, and a new row
+  is assigned without touching the component.
+* `LandmarkKey` is a closed union; `Landmarks.tsx`'s `ART: Record<LandmarkKey, …>` makes a missing
+  drawing a type error rather than an empty platform.
 
 **`app/src/learningPathLayout.ts`**
-* `layoutFor(count, { columns, spread, rowGap })` → `{ x, y, row, side }[]`. Desktop: four per row,
-  serpentine, alternating direction. Mobile: one per row, alternating left/right. The same node order
-  feeds both; CSS consumes the coordinates, not a second list.
-* `regionBands(nodes)` → the minimap's bands and the scroll anchors.
+* `layoutPath(count, { columns })` → `{ x, y, row, column, side }[]`. Desktop: three per row,
+  serpentine, alternating direction. Phone: one per row, alternating left/right. The y is the middle of
+  the row over the total row count, so 97 rows do not inherit a percentage inset that grows with them.
+* `bandForRows(startRow, endRow, rows)` → `{ top, height }` in percent, exactly the rows a district
+  owns. The page draws one band per district and uses the same runs for the map chips.
 
 ---
 
@@ -320,7 +332,7 @@ the path links into them rather than duplicating them.
 ## 9. Assets
 
 * No new dependency, font, raster or WebGL scene.
-* Six prototype landmarks plus region fallbacks as inline SVG, using only theme tokens
+* Sixteen landmarks across the five region pools as inline SVG, using only theme tokens
   (`--accent`, `--line`, `--panel`, `--ink`, muted variants), so both palettes and the paper theme keep
   working and `docs/THEME.md`'s token contract holds.
 * Scenery uses at most three reusable groups (skyline, lab block, water) and CSS gradients already in
@@ -368,8 +380,9 @@ Plan:
    the runner would silently defeat the brief.
 3. **No prerequisite, XP, star or duration model.** Building them is a product change, not a rendering
    change. Section 14 asks before any of them ships.
-4. **97 nodes is not six.** The prototype renders six; production must render all 97 without a 97-card
-   hover storm. Mitigation: one card, rendered once, anchored; platforms are buttons, not cards.
+4. **97 nodes, one card.** Shipped: one preview rendered once and anchored to the selected platform;
+   the platforms are buttons, not 97 cards, and a phone uses the shared sheet. Measured in the browser
+   suite at 1280×900 and 390×844.
 5. **Card positioning** while scrolling, resizing, zooming or with a phone keyboard open. Fixed-position
    card from a measured rect, closed on scroll-out, one listener; the phone always uses the sheet.
 6. **Back navigation** today is a single page with `replaceState`; the path is the first place a push is
@@ -377,8 +390,9 @@ Plan:
    `page.goto`.
 7. **Scroll restoration** after a lazy chunk mounts: restore after layout, not on mount; test with the
    phone sheet open and closed.
-8. **Landmark quality** is the feature. A weak silhouette defeats the brief's core principle. The six
-   prototype landmarks need a drawing review before the registry is expanded to 97.
+8. **Landmark quality** is the feature. Shipped: 16 token-drawn structures and a pool for every region,
+   so no platform is empty. A visual review of the new late-phase structures is still worthwhile; the
+   code guarantees coverage and region fit, not taste.
 9. **The animation budget** counts looping animations per surface; the current ring's pulse is one, and
    reduced motion must not create a second.
 10. **Dense scenery versus reading**: scenery lives behind the path with a token-based low-contrast
@@ -390,8 +404,8 @@ Plan:
 
 | Gate | What it proves |
 | :-- | :-- |
-| `scripts/test_learning_path.mjs` (new, `npm run test:learning-path`) | Pure modules: states, actions, prerequisites, serpentine coordinates, region mapping, fallback landmark for every lesson, scroll store. |
-| `scripts/e2e_learning_path.mjs` (new, in `e2e-a`) | Button → path; all four states from seeded progress; hover card; Escape/outside close; click → Start → runner with that lesson; Back → path at the same scroll; minimap jump; locked preview names its prerequisite. |
+| `scripts/test_learning_path.mjs` (`npm run test:learning-path`) | Pure modules: all 97 registry rows in order, 21 district counts, both layouts, band geometry, all five regions and their pools, state rules at the start/middle/end, extensibility for a new track and module subject, scroll store. |
+| `scripts/e2e_learning_path.mjs` (in `e2e-a`) | Button → path; 97 platforms in order; 21 district chips; map jump to the final capstone; all four states from seeded progress; preview/Start/Back at the same offset; locked prerequisite; phone gets all 97 and the sheet. |
 | `scripts/e2e_mobile.mjs` (extended) | 390×844: one column, alternating sides, names visible, 44 px targets, no sideways scroll, tap → sheet, sheet closes on outside tap, Start opens the existing Study surface; 844×390 keeps the phone shell. |
 | `npm run test:phone` | The existing phone contract still holds. |
 | `npm run check:weight` | The lazy split and the measured CSS/JS ceilings. |
@@ -412,11 +426,11 @@ after Back, a locked lesson that opens.
 | :-- | :-- | :-- |
 | 1 | This inspection and plan | Approval (this page). |
 | 2 | `?view=lessons`, lazy page shell, button retarget, popstate + scroll store | Button lands on the path; `e2e_micro` updated; `tsc`, build, link checks. |
-| 3 | Pure model: nodes, states, regions, layout, landmarks; six-lesson prototype with real P.1–P.5 + P.2.5 | Unit suite green; all four states visible with seeded progress. |
+| 3 | Pure model: nodes, states, regions, layout, landmarks; six-lesson slice with real P.1–P.5 + P.2.5 (**shipped 4.22.0**) | Unit suite green; all four states visible with seeded progress. |
 | 4 | Desktop serpentine world and scenery | Hover/card/selection work; no sideways scroll at 768/1024/1440. |
 | 5 | Mobile column and `Sheet` preview; minimap | Phone gate extended and green; tap/scroll/reduced-motion checks. |
 | 6 | Start/Continue/Review through `openLesson`; return path, scroll and progress refresh | E2E: start, pass, return, path reflects it; Back restores position. |
-| 7 | Full curriculum (97 nodes), landmark fallbacks, polish, sparkle/glow, lazy art | Unit coverage: every lesson has a landmark and a region; weight measured. |
+| 7 | Full curriculum (97 nodes), 21 districts, the sticky map, all-phase landmarks, polish, lazy art (**shipped 4.23.0**) | Unit coverage: every lesson has a landmark and a region; browser jump reaches the capstone; weight measured. |
 | 8 | Accessibility, performance, docs, budgets, snapshot decision | Axe, animations, weight, full CI green. |
 
 ---
@@ -432,16 +446,16 @@ after Back, a locked lesson that opens.
    unverified lesson after the learner's current one is `locked` for *preview* only — the row still
    opens a preview with the prerequisite named, and deep links/search still open the lesson as they do
    today. Confirm before the prototype shows a lock.
-4. **Prototype slice.** Six real entries: `P.1`, `P.2`, `P.2.5`, `P.3`, `P.4`, `P.5`. Confirm, or name
-   the six you want.
+4. **Curriculum slice.** Resolved in 4.23.0: the page renders the whole registry, so there is no slice
+   to choose. A future track or module subject appears automatically.
 5. **The button's old behavior.** `e2e_micro` expects `btn-open-lessons` to land on the runner. The
    brief changes that on purpose; the suite will be updated. Confirm this is the intended trade.
 6. **Path versus chooser.** Recommended: the path is a new page; the runner keeps its rail/sheet for
    in-lesson switching. The alternative — replacing the chooser with the path — would put the city
    inside the runner and break the sixteen-tab lesson flow; not recommended.
 7. **Minimap.** Recommended: a compact region strip, not a second drawn map. Confirm the scope.
-8. **Art review.** Six inline-SVG landmarks need a visual review before the registry grows to 97; the
-   brief's core principle depends on recognisability, and this plan cannot promise it from code alone.
+8. **Art review.** Resolved for coverage in 4.23.0: 16 landmarks across five region pools, with a
+   deterministic fallback per pool. A taste review is still an editorial task, not a blocker.
 
 ---
 

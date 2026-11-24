@@ -24,9 +24,24 @@ export interface PathPoint {
 export interface LayoutOptions {
   /** Platforms per row. Desktop 3, phone 1. */
   columns?: number;
-  /** Percent of the world kept clear at the top and bottom. */
-  top?: number;
-  bottom?: number;
+}
+
+export interface PathBand {
+  top: number;
+  height: number;
+}
+
+/**
+ * The vertical extent of a district: exactly the rows it owns. Because a platform's centre is the
+ * middle of its row, a band from the first row's edge to the last row's edge never cuts a platform
+ * or overlaps the next district, whatever the total row count.
+ */
+export function bandForRows(startRow: number, endRow: number, rows: number): PathBand {
+  if (rows <= 0) return { top: 0, height: 100 };
+  return {
+    top: (startRow / rows) * 100,
+    height: ((endRow - startRow + 1) / rows) * 100,
+  };
 }
 
 /** How many rows a slice needs at this column count. */
@@ -43,9 +58,6 @@ export function pathRows(count: number, columns = 3): number {
 export function layoutPath(count: number, options: LayoutOptions = {}): PathPoint[] {
   if (count <= 0) return [];
   const columns = Math.max(1, Math.floor(options.columns ?? 3));
-  const top = options.top ?? 10;
-  const bottom = options.bottom ?? 10;
-  const span = Math.max(0, 100 - top - bottom);
   const rows = pathRows(count, columns);
 
   return Array.from({ length: count }, (_, index) => {
@@ -65,7 +77,10 @@ export function layoutPath(count: number, options: LayoutOptions = {}): PathPoin
         : rowCount === 1
           ? 50
           : (slot + 0.5) * slotSpan;
-    const y = rows === 1 ? top + span / 2 : top + (row / (rows - 1)) * span;
+    // The platform sits at the middle of its own row. The world is exactly `rows` rows tall, so the
+    // first and last rows each keep half a row of clearance without a percentage inset that would
+    // grow with the curriculum.
+    const y = ((row + 0.5) / rows) * 100;
     return {
       x,
       y,

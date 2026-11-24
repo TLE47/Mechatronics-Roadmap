@@ -3,12 +3,14 @@ import { ArrowRight, Check, Compass, Lock } from 'lucide-react';
 import { PYTHON_LESSONS } from '../../data/pythonLessonsData.ts';
 import {
   buildLearningPath,
+  pathDistricts,
   pathSummary,
   stateLabel,
+  type PathDistrict,
   type PathNode,
   type PathState,
 } from '../../learningPath.ts';
-import { layoutPath, pathD, pathRows } from '../../learningPathLayout.ts';
+import { bandForRows, layoutPath, pathD, pathRows } from '../../learningPathLayout.ts';
 import { readPathMemory, rememberPath } from '../../learningPathScroll.ts';
 import { readLastLessonId } from '../../lastLesson.ts';
 import { PHONE_VIEWPORT_QUERY } from '../../phoneViewport.ts';
@@ -21,15 +23,19 @@ import './learningPath.css';
 /**
  * The Learning Path (`app/src/components/learningPath/LearningPathPage.tsx`).
  *
- * A page, not a tab: the shell owns sixteen tabs and this is a destination reached from the
- * Home page and from Lessons, in the same way Home and the introduction are. It is lazy-loaded,
- * so the workbench's initial bundle does not carry the city or its style sheet.
+ * A page, not a tab: the shell owns sixteen tabs and this is a destination reached from Home and
+ * from Lessons, in the same way Home and the introduction are. It is lazy-loaded, so the
+ * workbench's initial bundle does not carry the city or its style sheet.
  *
- * Everything drawn here is derived: the six platforms are rows from `pythonLessonsData`, their
- * states come from the verified map the workbench already reads, and the layout is
- * `learningPathLayout`'s percentage points. Starting a lesson goes through the App's existing
- * `openLesson`, so the runner, the cloud snapshot and the lesson history see exactly what they see
- * when the learner picks the lesson from the chooser.
+ * Everything drawn here is derived: the platforms are every row of `pythonLessonsData` in its own
+ * order, the districts are contiguous runs of those rows (`pathDistricts`), their counts and states
+ * come from the verified map the workbench already reads, and the layout is
+ * `learningPathLayout`'s percentage points. There is no page-size limit and no phase filter: a row
+ * added to the registry appears here on the next build.
+ *
+ * The sticky district strip is the map: it names every district, shows its verified count, jumps to
+ * its first platform, and follows the scroll. The bands inside the world carry the same names as the
+ * learner travels through them.
  */
 
 interface LearningPathPageProps {
@@ -46,6 +52,20 @@ const STATE_NOTE: Record<PathState, string> = {
   available: 'one step ahead',
   locked: 'preview only',
 };
+
+function prefersReducedMotion(): boolean {
+  try {
+    return (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  } catch {
+    return false;
+  }
+}
+
+const districtDomId = (district: PathDistrict, index: number) => `${district.key}-${index}`;
 
 export const LearningPathPage: React.FC<LearningPathPageProps> = ({
   verified,
@@ -64,10 +84,11 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
     () => buildLearningPath({ verified, lastLessonId }),
     [verified, lastLessonId]
   );
+  const districts = useMemo(() => pathDistricts(nodes), [nodes]);
   const columns = phone ? 1 : 3;
   const points = useMemo(
-    () => layoutPath(nodes.length, { columns, top: phone ? 8 : 13, bottom: phone ? 8 : 13 }),
-    [nodes.length, columns, phone]
+    () => layoutPath(nodes.length, { columns }),
+    [nodes.length, columns]
   );
   const rows = pathRows(nodes.length, columns);
   const road = useMemo(() => pathD(points), [points]);
@@ -77,6 +98,10 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = nodes.find((node) => node.lesson.id === selectedId) ?? null;
   const nodeRefs = useRef(new Map<string, HTMLButtonElement>());
+  const bandRefs = useRef(new Map<string, HTMLDivElement>());
+  const chipRefs = useRef(new Map<number, HTMLButtonElement>());
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const [activeDistrict, setActiveDistrict] = useState(0);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
 
   // A lesson started from the path unmounts it. Put the learner back where they were when they
@@ -119,7 +144,7 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
       if (!element) return;
       const rect = element.getBoundingClientRect();
       const width = 336;
-      const height = 330;
+      const height = 360;
       const gap = 14;
       const margin = 12;
       const right = rect.right + gap;
@@ -145,9 +170,59 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
     };
   }, [selected, phone]);
 
+  // Which district is on screen: the last band whose top has passed under the sticky strip. This is
+  // the map's cursor, not a second progress store.
+  useEffect(() => {
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      let next = 0;
+      districts.forEach((district, index) => {
+        const band = bandRefs.current.get(districtDomId(district, index));
+        if (band && band.getBoundingClientRect().top <= 170) next = index;
+      });
+      // The last platform cannot reach the sticky strip: the document ends beneath it. At the
+      // bottom of the page the final district is the one on screen, by definition.
+      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8) {
+        next = Math.max(0, districts.length - 1);
+      }
+      setActiveDistrict((prev) => (prev === next ? prev : next));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    measure();
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [districts, phone]);
+
+  // Keep the map's cursor visible in the horizontally scrolling strip.
+  useEffect(() => {
+    const nav = navRef.current;
+    const chip = chipRefs.current.get(activeDistrict);
+    if (!nav || !chip) return;
+    const target = chip.offsetLeft - nav.clientWidth / 2 + chip.clientWidth / 2;
+    if (Math.abs(nav.scrollLeft - target) < 24) return;
+    nav.scrollTo({ left: target, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, [activeDistrict]);
+
   const select = (node: PathNode) => {
     setSelectedId(node.lesson.id);
     rememberPath({ selectedId: node.lesson.id });
+  };
+
+  const jumpTo = (district: PathDistrict) => {
+    const element = nodeRefs.current.get(district.firstLessonId);
+    if (!element) return;
+    element.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    });
   };
 
   return (
@@ -157,11 +232,11 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
           <p className="lp-kicker">
             <Compass className="h-4 w-4" aria-hidden="true" /> Learning Path
           </p>
-          <h1 className="lp-title">Python, one platform at a time</h1>
+          <h1 className="lp-title">Every lesson, one platform at a time</h1>
           <p className="lp-sub">
-            Six lessons from the same registry the runner grades: P.1, P.2, P.2.5, P.3, P.4 and
-            P.5. The city grows a platform at a time — the path is a view of the course, never a
-            second course.
+            All {summary.total} lessons in the registry&apos;s own order: Python, the math on-ramp,
+            Stage 0, tracks 00–08 and every module lab. The city is {districts.length} districts on
+            one road, and the path is a view of the course the runner grades — never a second course.
           </p>
         </div>
         <div className="lp-aside">
@@ -179,7 +254,7 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
             <span className="lp-meter-fill" style={{ width: `${percent}%` }} />
           </div>
           <button type="button" className="lp-runner-link" onClick={onOpenRunner}>
-            All {PYTHON_LESSONS.length} lessons
+            Open the runner ({PYTHON_LESSONS.length} lessons)
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -194,6 +269,33 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
           </li>
         ))}
       </ul>
+
+      <nav className="lp-districts" aria-label="Learning Path districts" data-testid="lp-districts">
+        <span className="lp-districts-title">Map</span>
+        <div className="lp-districts-track" ref={navRef}>
+          {districts.map((district, index) => (
+            <button
+              key={districtDomId(district, index)}
+              type="button"
+              ref={(element) => {
+                if (element) chipRefs.current.set(index, element);
+                else chipRefs.current.delete(index);
+              }}
+              className="lp-district-chip"
+              data-active={activeDistrict === index ? 'true' : 'false'}
+              data-testid={`lp-district-${index}`}
+              aria-current={activeDistrict === index ? 'location' : undefined}
+              aria-label={`${district.label}: ${district.done} of ${district.count} verified. Jump to its first lesson.`}
+              onClick={() => jumpTo(district)}
+            >
+              <span className="lp-district-name">{district.short}</span>
+              <span className="lp-district-count">
+                {district.done}/{district.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </nav>
 
       <div
         className="lp-world"
@@ -219,6 +321,34 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
           </svg>
         </div>
 
+        {districts.map((district, index) => {
+          const band = bandForRows(
+            points[district.first].row,
+            points[district.last].row,
+            rows
+          );
+          return (
+            <div
+              key={districtDomId(district, index)}
+              ref={(element) => {
+                if (element) bandRefs.current.set(districtDomId(district, index), element);
+                else bandRefs.current.delete(districtDomId(district, index));
+              }}
+              className="lp-band"
+              data-region={district.region}
+              data-active={activeDistrict === index ? 'true' : 'false'}
+              data-testid={`lp-band-${index}`}
+              style={{ top: `${band.top}%`, height: `${band.height}%` }}
+              aria-hidden="true"
+            >
+              <span className="lp-band-label">
+                <span className="lp-band-number">{String(index + 1).padStart(2, '0')}</span>
+                {district.label}
+              </span>
+            </div>
+          );
+        })}
+
         <svg
           className="lp-road"
           viewBox="0 0 100 100"
@@ -241,8 +371,9 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
               }}
               className="lp-node"
               data-state={node.state}
+              data-district={node.district}
               data-testid={`lp-lesson-${node.lesson.id}`}
-              aria-label={`Lesson ${node.index}: ${node.lesson.title}. ${stateLabel(node.state)}`}
+              aria-label={`Lesson ${node.index} of ${nodes.length}: ${node.lesson.title}. ${node.districtLabel}. ${stateLabel(node.state)}`}
               data-selected={selectedId === node.lesson.id ? 'true' : 'false'}
               style={{ left: `${point.x}%`, top: `${point.y}%` }}
               onClick={() => select(node)}
@@ -281,6 +412,7 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
       {selected && !phone && anchor && (
         <LessonPreviewCard
           node={selected}
+          total={nodes.length}
           x={anchor.x}
           y={anchor.y}
           onStart={onStartLesson}
@@ -297,7 +429,7 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
           size="md"
           titleLines={2}
         >
-          <LessonPreviewBody node={selected} onStart={onStartLesson} />
+          <LessonPreviewBody node={selected} total={nodes.length} onStart={onStartLesson} />
         </Sheet>
       )}
     </main>
