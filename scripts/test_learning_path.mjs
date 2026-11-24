@@ -275,12 +275,60 @@ check('the desktop layout is a three-wide serpentine over every row', () => {
 check('a phone is one platform per row for the whole curriculum', () => {
   const points = layoutPath(97, { columns: 1 });
   assert.equal(pathRows(97, 1), 97);
-  assert.deepEqual(points.slice(0, 4).map((point) => point.x), [30, 70, 30, 70]);
+  // The street is inset from the edge by enough to hold a 64vw label beside every platform.
+  assert.deepEqual(points.slice(0, 4).map((point) => point.x), [36, 64, 36, 64]);
   assert.ok(points.every((point, index) => index === 0 || point.y > points[index - 1].y));
   assert.equal(points[0].side, 'left');
   // Ninety-seven is odd, so the last row is an even row and leans left like the first.
   assert.equal(points[96].side, 'left');
   assert.equal(points[95].side, 'right');
+});
+
+check('district-aware rows give every band a clean top edge', () => {
+  const nodes = buildLearningPath({ verified: {} });
+  const districts = pathDistricts(nodes);
+  const points = layoutPath(97, {
+    columns: 3,
+    groups: districts.map((district) => district.count),
+  });
+  assert.equal(points.length, 97);
+  const rows = points[points.length - 1].row + 1;
+  assert.equal(rows, 39, 'a district that ends mid-row leaves the rest of the row open');
+
+  let expectedRow = 0;
+  for (const district of districts) {
+    const first = points[district.first];
+    const last = points[district.last];
+    assert.equal(first.row, expectedRow, `${district.short} starts on a fresh row`);
+    assert.equal(last.row, expectedRow + Math.ceil(district.count / 3) - 1);
+    assert.ok(
+      points
+        .slice(district.first, district.last + 1)
+        .every((point) => point.row >= first.row && point.row <= last.row),
+      `${district.short} owns only its own rows`
+    );
+    expectedRow = last.row + 1;
+  }
+  assert.equal(expectedRow, rows);
+
+  // The bands now tile the world: every seam is the previous band's end, with no overlap.
+  let seam = 0;
+  for (const district of districts) {
+    const band = bandForRows(
+      points[district.first].row,
+      points[district.last].row,
+      rows
+    );
+    assert.ok(Math.abs(band.top - seam) < 1e-9, `${district.short} band starts at the last seam`);
+    seam = band.top + band.height;
+  }
+  assert.ok(Math.abs(seam - 100) < 1e-9, 'the last band reaches the bottom of the world');
+
+  // A district's short last row still gets a whole row and a centred platform, not a half-row stub.
+  // Python has sixteen nodes: five full rows and P.M alone on the sixth.
+  assert.equal(points[15].x, 50);
+  assert.equal(points[15].row, 5);
+  assert.throws(() => layoutPath(5, { columns: 3, groups: [2, 2] }), /cover 4 nodes/);
 });
 
 check('a district band covers exactly the rows it owns', () => {

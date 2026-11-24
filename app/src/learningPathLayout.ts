@@ -6,6 +6,11 @@
  * platform per row, alternating sides around the centre line. Both are percentages of the world box,
  * so the world can be any height and the same points still draw the road.
  *
+ * A district starts on a fresh row. That is not cosmetic: a district's band is a full-width stripe,
+ * so two districts sharing a row would paint two stripes over each other and print their labels in
+ * the same corner. The page therefore passes the district counts as `groups`; a district that ends
+ * mid-row leaves the rest of that row open, and the next district's label has a clean top edge.
+ *
  * The module is pure: no DOM, no measurement. `pathD` turns the points into one smooth SVG path in
  * the same 0–100 space, which is why the road and the platforms cannot drift apart.
  */
@@ -24,6 +29,11 @@ export interface PathPoint {
 export interface LayoutOptions {
   /** Platforms per row. Desktop 3, phone 1. */
   columns?: number;
+  /**
+   * District sizes, in order. Each group begins on a new row so every district owns whole rows and
+   * its band can never overlap the next one. Omit for plain packing.
+   */
+  groups?: readonly number[];
 }
 
 export interface PathBand {
@@ -58,37 +68,59 @@ export function pathRows(count: number, columns = 3): number {
 export function layoutPath(count: number, options: LayoutOptions = {}): PathPoint[] {
   if (count <= 0) return [];
   const columns = Math.max(1, Math.floor(options.columns ?? 3));
-  const rows = pathRows(count, columns);
+  const rows: number[][] = [];
 
-  return Array.from({ length: count }, (_, index) => {
-    const row = Math.floor(index / columns);
-    const inRow = index % columns;
-    const rowCount = Math.min(columns, count - row * columns);
-    // Serpentine: odd rows run the other way, so the road never jumps across the page.
-    const slot = row % 2 === 1 ? rowCount - 1 - inRow : inRow;
-    const slotSpan = 100 / rowCount;
-    // One column is the phone's street: alternate sides so the road keeps its width and the label
-    // has room, rather than stacking every platform on the centre line.
-    const x =
-      columns === 1
-        ? row % 2 === 1
-          ? 70
-          : 30
-        : rowCount === 1
-          ? 50
-          : (slot + 0.5) * slotSpan;
-    // The platform sits at the middle of its own row. The world is exactly `rows` rows tall, so the
-    // first and last rows each keep half a row of clearance without a percentage inset that would
-    // grow with the curriculum.
-    const y = ((row + 0.5) / rows) * 100;
-    return {
-      x,
-      y,
-      row,
-      column: slot,
-      side: columns === 1 ? (row % 2 === 1 ? 'right' : 'left') : 'center',
-    };
-  });
+  const groups = (options.groups ?? []).filter((size) => size > 0);
+  let offset = 0;
+  if (groups.length > 0) {
+    for (const groupCount of groups) {
+      for (let inGroup = 0; inGroup < groupCount; inGroup += columns) {
+        const size = Math.min(columns, groupCount - inGroup);
+        rows.push(Array.from({ length: size }, (_, slot) => offset + inGroup + slot));
+      }
+      offset += groupCount;
+    }
+    // The groups are derived from the same node list; a mismatch is a caller bug, not a layout.
+    if (offset !== count) {
+      throw new Error(`layoutPath groups cover ${offset} nodes, expected ${count}`);
+    }
+  } else {
+    for (let index = 0; index < count; index += columns) {
+      const size = Math.min(columns, count - index);
+      rows.push(Array.from({ length: size }, (_, slot) => index + slot));
+    }
+  }
+
+  return rows.flatMap((indices, row) =>
+    indices.map((index, inRow) => {
+      const rowCount = indices.length;
+      // Serpentine: odd rows run the other way, so the road never jumps across the page.
+      const slot = row % 2 === 1 ? rowCount - 1 - inRow : inRow;
+      const slotSpan = 100 / rowCount;
+      // One column is the phone's street: alternate sides so the road keeps its width and the label
+      // has room, rather than stacking every platform on the centre line. The 36/64 split leaves
+      // enough viewport for a 64vw lesson label on each side on a 320 px screen.
+      const x =
+        columns === 1
+          ? row % 2 === 1
+            ? 64
+            : 36
+          : rowCount === 1
+            ? 50
+            : (slot + 0.5) * slotSpan;
+      // The platform sits at the middle of its own row. The world is exactly `rows` rows tall, so the
+      // first and last rows each keep half a row of clearance without a percentage inset that would
+      // grow with the curriculum.
+      const y = ((row + 0.5) / rows.length) * 100;
+      return {
+        x,
+        y,
+        row,
+        column: slot,
+        side: columns === 1 ? (row % 2 === 1 ? 'right' : 'left') : 'center',
+      };
+    })
+  );
 }
 
 /**

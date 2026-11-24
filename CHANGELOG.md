@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.23.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.23.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,26 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-24] — Learning Path district bands now meet cleanly at every seam
+
+A screenshot review of the full city found a rendering defect the geometry tests could not: a
+district band was a full-width stripe computed from whole rows, so whenever two districts shared a
+serpentine row their stripes overlapped and their labels printed in the same corner. The middle of
+the curriculum showed it plainly — the `07`, `08` and foundations-lab labels collided, and later
+bands painted over earlier ones. The phone pass found the second defect: a lesson label could reach
+past the viewport on the outer side of the street.
+
+`layoutPath` now accepts the district counts as groups and starts every district on a fresh row; a
+district that ends mid-row leaves the rest of that row open. The 21 bands therefore tile the world
+with zero overlap (39 desktop rows), and each label owns a clean top edge. The phone street is inset
+to 36/64 percent and its lesson labels are capped at 64vw, which keeps both the label and the art
+inside a 320 px world. No curriculum content, lesson, phase or landmark was changed.
+
+`test_learning_path.mjs` pins the grouped rows, the exact band tiling and the phone inset. Captures
+of the Python start, the old P.5 boundary, the Python→Ramp seam, the midpoint at `08`/foundations and
+the final `08 lab`/capstone were reviewed at 1280×1400 and 390×844; sampled art is present and
+unclipped in both widths. The browser and text gates are green.
 
 ## [2026-11-24] — The Learning Path now carries all 97 lessons, from Python to the capstone
 

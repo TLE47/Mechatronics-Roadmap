@@ -10,7 +10,7 @@ import {
   type PathNode,
   type PathState,
 } from '../../learningPath.ts';
-import { bandForRows, layoutPath, pathD, pathRows } from '../../learningPathLayout.ts';
+import { bandForRows, layoutPath, pathD } from '../../learningPathLayout.ts';
 import { readPathMemory, rememberPath } from '../../learningPathScroll.ts';
 import { readLastLessonId } from '../../lastLesson.ts';
 import { PHONE_VIEWPORT_QUERY } from '../../phoneViewport.ts';
@@ -87,10 +87,15 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
   const districts = useMemo(() => pathDistricts(nodes), [nodes]);
   const columns = phone ? 1 : 3;
   const points = useMemo(
-    () => layoutPath(nodes.length, { columns }),
-    [nodes.length, columns]
+    () =>
+      layoutPath(nodes.length, {
+        columns,
+        // Each district starts on its own row, so a full-width band cannot overlap the next one.
+        groups: districts.map((district) => district.count),
+      }),
+    [nodes.length, columns, districts]
   );
-  const rows = pathRows(nodes.length, columns);
+  const rows = points.length === 0 ? 1 : points[points.length - 1].row + 1;
   const road = useMemo(() => pathD(points), [points]);
   const summary = pathSummary(nodes);
   const percent = summary.total === 0 ? 0 : Math.round((summary.done / summary.total) * 100);
