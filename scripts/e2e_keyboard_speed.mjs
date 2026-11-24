@@ -717,6 +717,26 @@ async function main() {
     );
     ok('a 360x640 phone keeps the caret above the Study bar with the page still');
 
+    // 16 px is the rule for every saved preset, not only the Study code surface that carries
+    // `data-phone-code`. A learner who last worked in Write, Read, Debug or Compact draws the same
+    // CodeMirror at the smaller desk size; iOS then zooms the page on focus (16 / 12.5 ≈ 1.28),
+    // magnifying the fixed keyboard until its right columns and bottom row are off the screen.
+    const presetFonts = {};
+    for (const preset of ['write', 'read', 'debug', 'compact', 'study']) {
+      await page.getByTestId('layout-select').selectOption(preset);
+      await delay(220);
+      presetFonts[preset] = await page.evaluate(() => {
+        const content = document.querySelector('.cm-content');
+        return content ? parseFloat(getComputedStyle(content).fontSize) : 0;
+      });
+    }
+    const smallPresets = Object.entries(presetFonts).filter(([, size]) => size < 16);
+    check(
+      smallPresets.length === 0,
+      `presets small enough for iOS to zoom on focus: ${smallPresets.map(([name, size]) => `${name} ${size}px`).join(', ')}`
+    );
+    ok('every phone preset draws the code at 16 px, the size iOS will not zoom on focus');
+
     check(pageErrors.length === 0, `the speed session threw: ${pageErrors.join('; ')}`);
     check(
       consoleErrors.length === 0,

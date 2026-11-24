@@ -1384,6 +1384,18 @@ body[data-phone-typing='1'][data-phone-lock='1'] {
   --editor-max-h: none;
   --pane-floor: 20rem;
 }
+/* A phone's editor is 16 px in every preset, not only the Study code surface that
+   `data-phone-code` marks: Write, Read, Debug and Compact draw the same CodeMirror without it, and
+   iOS zooms the page on focus when the editable is smaller than 16 px. The zoom magnifies the
+   fixed keyboard with the page, so its right-hand columns and its bottom row leave the screen.
+   A coarse pointer is the rule, as it is for the fields above: a narrow desktop browser with a
+   mouse does not zoom and keeps the editor's 12.5 px line. */
+@media (pointer: coarse) {
+  [data-editor] {
+    --editor-font-size: 16px;
+  }
+}
+
 [data-phone-code='1'] .cm-editor {
   height: 100%;
 }

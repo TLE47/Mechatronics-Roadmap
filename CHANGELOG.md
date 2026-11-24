@@ -16,6 +16,16 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — Every phone preset's code is 16 px
+
+The phone editor only raised its type to 16 px on the Study Code surface, so a phone that had saved
+Write, Read, Debug or Compact from a laptop drew the same CodeMirror at 12.5 px. iOS zooms the page
+when a focused editable is smaller than 16 px, and at 16 / 12.5 it magnified everything by 1.28 —
+including the fixed keyboard, whose right-hand columns and bottom row then sat outside the screen.
+The size is now a coarse-pointer rule for the editor itself, so every preset opens at 16 px, while a
+narrow desktop browser with a mouse keeps the 12.5 px line. The speed gate switches through all five
+presets and asserts each one's computed type is at least 16 px.
+
 ## [2026-11-24] — The key bubble is the key, magnified
 
 The bubble that names the pressed key was a small pill with 18 px text — readable, but not the

@@ -112,11 +112,14 @@ flowchart LR
    under `prefers-reduced-motion`. The choice is stored with the editor's other device preferences.
 
    Sizing is in CSS pixels inside the fixed shell and never reads the editor's `--editor-font-size`,
-   so zooming the code grows the code, not the keyboard; the keys keep their 44 px floor at every
-   viewport and `env(safe-area-inset-bottom)` keeps the last row clear of a home indicator. Pinch
-   zoom on the code stays the browser's, as does the text-size setting it exists for; the keyboard
-   itself is not a surface to pan or pinch (`touch-action: none`), because a fast thumb rolls while
-   it holds a key. That drift used to be read as a page gesture — a 48 px slide dragged the page
+   so changing the code's type size grows the code, not the keyboard; the keys keep their 44 px floor
+   at every viewport and `env(safe-area-inset-bottom)` keeps the last row clear of a home indicator.
+   A page zoom is not the same thing: it magnifies the fixed keyboard with the page, and it is why
+   every preset's editor is 16 px on a coarse pointer — iOS raises that zoom itself when a smaller
+   editable takes focus, and the keys' right columns and bottom row then sit outside the screen.
+   Pinch zoom on the code stays the browser's, as does the text-size setting it exists for; the
+   keyboard itself is not a surface to pan or pinch (`touch-action: none`), because a fast thumb
+   rolls while it holds a key. That drift used to be read as a page gesture — a 48 px slide dragged the page
    44 px and the next finger dragged it back, the recoil a learner saw while typing. The section and
    every cap now opt out, while the RGB sliders still take a drag.
 
@@ -258,6 +261,7 @@ touch laptop gets them and a 390 px window with a mouse does not.
 | punctuation keys | 44 × 44 px | repeated, without looking |
 | small secondary controls | 28 × 28 px | the app-wide minimum |
 | text fields on touch | 16 px type | the size iOS will not zoom on focus |
+| code editor on touch | 16 px type | the same floor in every preset, not only the Study Code surface |
 
 The element floors live in `@layer base` and the primitives in `@layer components`. That is not
 tidiness: an unlayered rule outranks every Tailwind utility whatever its specificity, and the first
@@ -341,8 +345,8 @@ measurement reads **median 15.4–21.2 ms, max 29.1 ms across runs** after keys 
 pointerdown; the click-on-release path measured 34.2 ms median on the same VM.
 
 The speed gate also checks the lock itself: the body is `position: fixed` with no page scroll, the
-mode bar is at the top of the screen, and the editable's computed type is at least 16 px, the size
-iOS refuses to zoom on focus.
+mode bar is at the top of the screen, and the editable's computed type is at least 16 px in every
+saved preset (Study, Write, Read, Debug and Compact), the size iOS refuses to zoom on focus.
 
 `scripts/e2e_keyboard_speed.mjs` is the changing-speed gate. It first types a fixed slow opening that
 accelerates to 8 ms keys, then the exact two-thumb overlap that typed nothing before keys acted on
