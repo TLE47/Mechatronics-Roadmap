@@ -2033,6 +2033,25 @@ async function main() {
         (await preview.textContent())?.trim() === 'a',
         `the held key previewed ${JSON.stringify(await preview.textContent())}`
       );
+      // The bubble is the key, magnified — a phone's popup, not a small label: it is wider than
+      // the cap, at least 48 px square, and floats just above the cap it belongs to.
+      const bubbleBox = await preview.boundingBox();
+      const aKeyBox = await editorShell.getByTestId('python-key-a').boundingBox();
+      check(
+        Boolean(bubbleBox && aKeyBox) &&
+          bubbleBox.width >= 48 &&
+          bubbleBox.height >= 48 &&
+          bubbleBox.width > aKeyBox.width,
+        `the key bubble is ${Math.round(bubbleBox?.width ?? 0)}×${Math.round(
+          bubbleBox?.height ?? 0
+        )}px over a ${Math.round(aKeyBox?.width ?? 0)}px cap`
+      );
+      check(
+        Boolean(bubbleBox && aKeyBox) &&
+          bubbleBox.y + bubbleBox.height <= aKeyBox.y &&
+          aKeyBox.y - (bubbleBox.y + bubbleBox.height) <= 12,
+        'the key bubble must float directly above the cap it magnifies'
+      );
       // A native keyboard types on the way down, not on the lift. The hold must not have to end
       // before the character appears, and the lift's synthetic click must not type it a second time.
       const heldCode = await getEditorCode(page);

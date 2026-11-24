@@ -16,6 +16,16 @@ flowchart LR
 
 ---
 
+## [2026-11-24] — The key bubble is the key, magnified
+
+The bubble that names the pressed key was a small pill with 18 px text — readable, but not the
+popup a phone shows. It is now a magnified keycap, the way iOS raises one over the finger: 52 px
+square with the character at 26 px and a 10 px radius, floating in the 6 px gap above the cap it
+belongs to. Keys that print a word (`space`, `New line`) keep a compact pill so their label fits.
+The tail is gone, because the magnifier is the key itself and its centre already names the cap
+below it. The phone gate holds a key and asserts the bubble is wider than the cap, at least 48 px
+square, and directly above it.
+
 ## [2026-11-24] — The phone keyboard's gaps and its key bubble
 
 Two things made the custom keyboard easy to mistype. Its caps sat only 4 px apart, so a thumb that

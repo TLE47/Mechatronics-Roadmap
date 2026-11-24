@@ -633,14 +633,20 @@ export function MobilePythonKeyboard({
       style={lightingStyle}
       className="relative min-w-0 touch-none select-none border-t border-line-soft bg-canvas px-1.5 pb-[env(safe-area-inset-bottom)] pt-1.5 shadow-[0_-12px_30px_rgba(0,0,0,0.28)]"
     >
-      {/* The pressed character, directly above the cap it belongs to; never a target, never
-          focused. `stamp` remounts it so the pop animation plays again for a repeated key. */}
+      {/* A magnified copy of the pressed cap, directly above it; never a target, never focused.
+          A character gets a key-shaped bubble the way iOS's keyboard does, while a word a key
+          prints ("space", "New line") would not fit one and keeps a smaller pill. `stamp`
+          remounts it so the pop animation plays again for a repeated key. */}
       {preview && (
         <div
           key={preview.stamp}
           aria-hidden="true"
           data-testid="python-key-preview"
-          className="kb-key-pop pointer-events-none absolute z-10 min-w-[2.25rem] whitespace-nowrap rounded-lg border border-line-strong bg-raise px-2.5 py-1 text-center font-mono text-[18px] font-semibold leading-6 text-body shadow-lg"
+          className={`kb-key-pop pointer-events-none absolute z-20 flex items-center justify-center whitespace-nowrap rounded-xl border border-line-strong bg-raise text-center font-mono font-semibold text-body shadow-lg ${
+            preview.text.length <= 2
+              ? 'h-[3.25rem] min-w-[3.25rem] px-1 text-[26px] leading-none'
+              : 'min-w-[2.5rem] px-2.5 py-1 text-[15px] leading-6'
+          }`}
           style={{
             left: preview.left,
             top: preview.top,

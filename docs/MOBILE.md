@@ -57,11 +57,12 @@ flowchart LR
    the old click-only key lost those characters entirely. A keyboard or switch activation has
    `detail === 0` and still acts exactly once. A key cancels its pointer default, so the caret, the
    field and the open keyboard stay put. It compresses under the finger (a transform, so no
-   neighbour moves) and raises the pressed key's character directly above its own cap, the way a
-   phone does — and keeps it for 180 ms after a quick lift, so a tap too fast to watch still says
-   which key it was. A key with no character shows the word or glyph printed on it instead
-   (`⌫`, `⇧`, `Done`). The bubble pops in with a short scale, which the reduced-motion
-   preference turns off. The press asks for a light vibration where the device has one and sounds
+   neighbour moves) and raises a magnified copy of the key directly above its own cap, the way iOS
+   does: a 52 px rounded cap with the character at 26 px, floating in the row gap. It keeps it for
+   180 ms after a quick lift, so a tap too fast to watch still says which key it was. A key with no
+   character shows the glyph printed on it (`⌫`, `⇧`, `⌨`) in the same magnified cap; a key that
+   prints a word (`space`, `New line`) uses a compact pill, because a word does not fit a key. The
+   bubble pops in with a short scale, which the reduced-motion preference turns off. The press asks for a light vibration where the device has one and sounds
    one short `key` tick through the interface's sound bus — silent while sound or the **Interface**
    switch is off, panned to where the cap sits; Enter is a medium tap and the mode keys answer with
    two ticks. iOS Safari has no Vibration API, so there the press animation, the bubble and the tick
