@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { LandmarkKey } from '../../learningPath';
+import { LandmarkRenderer } from './LandmarkRenderer.tsx';
 
 /**
  * The city's landmarks (`app/src/components/learningPath/Landmarks.tsx`).
@@ -1069,16 +1070,5 @@ const ART: Record<LandmarkKey, () => React.JSX.Element> = {
 
 export function Landmark({ kind, locked }: { kind: LandmarkKey; locked: boolean }) {
   const Art = ART[kind] ?? RegionTower;
-  return (
-    <svg
-      className={`lp-art${locked ? ' lp-art--locked' : ''}`}
-      viewBox="0 0 280 260"
-      role="presentation"
-      focusable="false"
-      data-landmark={kind}
-      aria-hidden="true"
-    >
-      <Art />
-    </svg>
-  );
+  return <LandmarkRenderer kind={kind} locked={locked} art={Art} />;
 }

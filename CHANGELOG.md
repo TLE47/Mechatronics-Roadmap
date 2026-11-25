@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.24.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.24.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,19 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-25] — Learning Path landmark SVG frame extracted
+
+`LandmarkRenderer.tsx` now owns the shared landmark `<svg>` frame: its viewBox, `lp-art` and
+`lp-art--locked` classes, `data-landmark` hook and decorative accessibility attributes.
+`Landmarks.tsx` keeps all sixteen structures, the isometric kit, the `ART` registry and the
+`Landmark` export used by `LessonNode.tsx`, and passes the selected artwork into the renderer. No
+artwork, CSS, dimensions, theme inheritance or interactions changed; no additional landmark was
+migrated.
+
+Verified with the 16 path unit checks, the path browser suite, the production build and `git diff
+--check`; desktop 1440×1100, phone 390×844 and storage-tower close-up captures are byte-identical to
+the baseline.
 
 ## [2026-11-25] — Learning Path lesson platforms extracted without visual change
 
