@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.23.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.24.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,32 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-25] — The Learning Path becomes an isometric engineering city
+
+The third visual pass keeps the daylight palette, the illustrated city, the green completion checks,
+the gold current stop, the winding road and the phone journey, and makes the world the page's main
+visual. All sixteen landmark structures were redrawn as multi-level isometric solids with shaded
+faces, window bays, doors, roofs, planters, lamps, cranes, steam and cast shadows. Each district now
+has its own architectural identity: a Python data campus, a mathematics observatory and hexagonal
+deck, a circuit laboratory, a steel mechanics works, a robotics campus, an embedded control block,
+sensor masts, an operations centre, a systems hall and a gold capstone complex.
+
+The environment gained three layers: a painted sky with hills, clouds and a distant skyline; a
+middle ground of roads, ponds, parks, footbridges and themed campus silhouettes; and the foreground
+islands, trees, lamps and landmark details. A canal runs along the right edge and is crossed by
+bridges. District ground tints and a repeating city pattern make the long scroll read as places
+rather than empty grass.
+
+The hero is a compact banner instead of a landing page. The 21-district grid starts collapsed: a
+horizontal chip strip, a native selector, previous/next buttons and an `All 21 districts` panel keep
+every district reachable without pushing the city below the fold. The phone keeps its one-platform
+per-row street, gains a full summary, denser controls and 150 px landmarks. Lesson data, registry
+order, ids, progress, four states, previews, the shared sheet and the runner entry are unchanged;
+`check:lessons` still reports 97 lessons in sync. Verified with the production build, the 16 path
+unit checks, the browser suite (97 platforms, 21 districts, map jump, four states, preview/Start/Back
+and phone parity), an axe scan at 1440×1100 and 390×844 with zero violations, and both weight shapes
+inside their raised ceilings.
 
 ## [2026-11-24] — Learning Path district bands now meet cleanly at every seam
 

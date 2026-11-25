@@ -23,6 +23,19 @@ geometry, extensibility) and `scripts/e2e_learning_path.mjs` (97 platforms, map 
 four states, preview/Start/Back, phone parity); `e2e_micro.mjs` still reaches the runner through the
 path.
 
+**Visual pass 3 (4.24.0, 2026-11-25).** The page now reads as an isometric engineering city rather
+than a map of cards. `Landmarks.tsx` draws sixteen multi-level structures from a small solid-geometry
+kit (boxes, tapered cylinders, domes, pitched and sawtooth roofs, window bays, doors, trees, lamps,
+cranes and shadows); `CityScenery.tsx` supplies the painted sky, three environment layers, district
+themes, ground pattern, canal and bridges; `districtTheme()` gives the ten subject identities a
+platform shape, palette and campus silhouette. The hero is a compact banner and the 21-district
+grid is collapsed behind a horizontal chip strip, a native select, previous/next and an expandable
+panel, so the city starts around 420 px on a 1440×1100 desktop and around 620 px on a 390×844 phone.
+The curriculum registry, layout, ids, progress and preview/runner contracts were not touched. The
+16 unit checks, browser suite, axe scan (zero violations at both viewports), `check:lessons` (97
+lessons) and both weight shapes are green; measured weights and the raised ceilings are recorded in
+`docs/weight-budget.json` under `_why_budget_2026_11_25_learning_path_pass3`.
+
 **What is genuinely missing from the authoritative data.** (1) There is no `phase`, `tier` or
 `subject` field on `PythonLessonItem`: a lesson's phase *is* its `track`, and a module's subject is
 embedded in its id. The path uses those, not an invented taxonomy. (2) There is no per-lesson

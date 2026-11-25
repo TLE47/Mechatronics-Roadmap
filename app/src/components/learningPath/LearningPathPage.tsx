@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Compass, Lock } from 'lucide-react';
-import { PYTHON_LESSONS } from '../../data/pythonLessonsData.ts';
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Compass,
+  Lock,
+} from 'lucide-react';
 import {
   buildLearningPath,
   pathDistricts,
@@ -16,6 +24,13 @@ import { readLastLessonId } from '../../lastLesson.ts';
 import { PHONE_VIEWPORT_QUERY } from '../../phoneViewport.ts';
 import { useMediaQuery } from '../../useMediaQuery.ts';
 import { Sheet } from '../Sheet';
+import {
+  districtTheme,
+  DistrictScenery,
+  SkyScenery,
+  WorldCanal,
+  WorldGround,
+} from './CityScenery.tsx';
 import { Landmark } from './Landmarks.tsx';
 import { LessonPreviewBody, LessonPreviewCard } from './LessonPreview.tsx';
 import './learningPath.css';
@@ -99,6 +114,8 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
   const road = useMemo(() => pathD(points), [points]);
   const summary = pathSummary(nodes);
   const percent = summary.total === 0 ? 0 : Math.round((summary.done / summary.total) * 100);
+  const districtsDone = districts.filter((district) => district.done === district.count).length;
+  const quarters = new Set(nodes.map((node) => node.region)).size;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = nodes.find((node) => node.lesson.id === selectedId) ?? null;
@@ -107,7 +124,9 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
   const chipRefs = useRef(new Map<number, HTMLButtonElement>());
   const navRef = useRef<HTMLDivElement | null>(null);
   const [activeDistrict, setActiveDistrict] = useState(0);
+  const [allDistricts, setAllDistricts] = useState(false);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const active = districts[Math.min(activeDistrict, districts.length - 1)] ?? null;
 
   // A lesson started from the path unmounts it. Put the learner back where they were when they
   // come back: the offset is read once, after the world has been laid out.
@@ -206,20 +225,23 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
     };
   }, [districts, phone]);
 
-  // Keep the map's cursor visible in the horizontally scrolling strip.
-  useEffect(() => {
-    const nav = navRef.current;
-    const chip = chipRefs.current.get(activeDistrict);
-    if (!nav || !chip) return;
-    const target = chip.offsetLeft - nav.clientWidth / 2 + chip.clientWidth / 2;
-    if (Math.abs(nav.scrollLeft - target) < 24) return;
-    nav.scrollTo({ left: target, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  }, [activeDistrict]);
-
   const select = (node: PathNode) => {
     setSelectedId(node.lesson.id);
     rememberPath({ selectedId: node.lesson.id });
   };
+
+  // Keep the phone's chapter strip centred on the district that is on screen. The desktop board
+  // is a wrapping grid with no overflow, so this is a no-op there.
+  useEffect(() => {
+    const nav = navRef.current;
+    const chip = chipRefs.current.get(activeDistrict);
+    if (!nav || !chip || nav.scrollWidth <= nav.clientWidth + 2) return;
+    const target = chip.offsetLeft - nav.clientWidth / 2 + chip.clientWidth / 2;
+    nav.scrollTo({
+      left: Math.max(0, target),
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+  }, [activeDistrict]);
 
   const jumpTo = (district: PathDistrict) => {
     const element = nodeRefs.current.get(district.firstLessonId);
@@ -230,24 +252,47 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
     });
   };
 
+  const stepDistrict = (delta: number) => {
+    const next = districts[Math.max(0, Math.min(districts.length - 1, activeDistrict + delta))];
+    if (next && next !== active) jumpTo(next);
+  };
+
   return (
     <main className="lp-root" data-testid="learning-path">
       <header className="lp-header">
-        <div>
+        <div className="lp-header-copy">
           <p className="lp-kicker">
-            <Compass className="h-4 w-4" aria-hidden="true" /> Learning Path
+            <Compass className="h-4 w-4" aria-hidden="true" /> MechaLab Learning Path
           </p>
-          <h1 className="lp-title">Every lesson, one platform at a time</h1>
+          <h1 className="lp-title">Explore the engineering city</h1>
           <p className="lp-sub">
-            All {summary.total} lessons in the registry&apos;s own order: Python, the math on-ramp,
-            Stage 0, tracks 00–08 and every module lab. The city is {districts.length} districts on
-            one road, and the path is a view of the course the runner grades — never a second course.
+            One road through all {summary.total} lessons and {districts.length} districts, from
+            Python to the capstone. Preview a landmark; verified stops light their windows and the
+            next raises a flag.
+          </p>
+          <p className="lp-facts" aria-label="The city at a glance">
+            <span>
+              <strong>{summary.total}</strong> stops
+            </span>
+            <span>
+              <strong>{districts.length}</strong> districts
+            </span>
+            <span>
+              <strong>{quarters}</strong> quarters
+            </span>
+            <span>one continuous road</span>
           </p>
         </div>
-        <div className="lp-aside">
-          <p className="lp-progress" data-testid="lp-progress">
-            {summary.done} of {summary.total} verified
-          </p>
+        <aside className="lp-aside" aria-label="Your progress through the city">
+          <div className="lp-aside-top">
+            <div>
+              <span className="lp-aside-label">Expedition progress</span>
+              <p className="lp-progress" data-testid="lp-progress">
+                {summary.done} of {summary.total} verified
+              </p>
+            </div>
+            <span className="lp-aside-percent">{percent}%</span>
+          </div>
           <div
             className="lp-meter"
             role="progressbar"
@@ -258,14 +303,24 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
           >
             <span className="lp-meter-fill" style={{ width: `${percent}%` }} />
           </div>
-          <button type="button" className="lp-runner-link" onClick={onOpenRunner}>
-            Open the runner ({PYTHON_LESSONS.length} lessons)
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-        </div>
+          <div className="lp-aside-foot">
+            <p className="lp-aside-note">
+              {districtsDone === 0
+                ? 'The first district is waiting.'
+                : `${districtsDone} of ${districts.length} districts fully lit.`}
+            </p>
+            <button type="button" className="lp-runner-link" onClick={onOpenRunner}>
+              Open the runner
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </aside>
       </header>
 
       <ul className="lp-legend" aria-label="Platform states">
+        <li className="lp-legend-title" aria-hidden="true">
+          Reading the city
+        </li>
         {STATES.map((state) => (
           <li key={state} className="lp-legend-item" data-state={state}>
             <span className="lp-legend-dot" aria-hidden="true" />
@@ -275,9 +330,85 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
         ))}
       </ul>
 
-      <nav className="lp-districts" aria-label="Learning Path districts" data-testid="lp-districts">
-        <span className="lp-districts-title">Map</span>
-        <div className="lp-districts-track" ref={navRef}>
+      <nav
+        className="lp-districts"
+        aria-label="Learning Path districts"
+        data-testid="lp-districts"
+        data-expanded={allDistricts ? 'true' : 'false'}
+      >
+        <div className="lp-map-bar">
+          <div className="lp-map-heading">
+            <p className="lp-map-eyebrow">Course map</p>
+            <div className="lp-map-current" aria-live="polite">
+              <span className="lp-map-index">
+                {String(activeDistrict + 1).padStart(2, '0')}
+              </span>
+              <span className="lp-map-title">{active?.label ?? 'The city'}</span>
+              {active && (
+                <span className="lp-map-count">
+                  {active.done}/{active.count} verified
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="lp-map-actions">
+            <button
+              type="button"
+              className="lp-map-step"
+              onClick={() => stepDistrict(-1)}
+              disabled={activeDistrict <= 0}
+              aria-label="Previous district"
+            >
+              <ChevronLeft aria-hidden="true" />
+            </button>
+            <label className="lp-map-jump">
+              <span className="lp-map-jump-label">Travel to</span>
+              <select
+                aria-label="Jump to district"
+                value={activeDistrict}
+                onChange={(event) => {
+                  const next = districts[Number(event.target.value)];
+                  if (next) jumpTo(next);
+                }}
+              >
+                {districts.map((district, index) => (
+                  <option key={districtDomId(district, index)} value={index}>
+                    {String(index + 1).padStart(2, '0')} · {district.label} ({district.done}/
+                    {district.count})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="lp-map-step"
+              onClick={() => stepDistrict(1)}
+              disabled={activeDistrict >= districts.length - 1}
+              aria-label="Next district"
+            >
+              <ChevronRight aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="lp-map-toggle"
+              aria-expanded={allDistricts}
+              aria-controls="lp-districts-track"
+              onClick={() => setAllDistricts((open) => !open)}
+            >
+              {allDistricts ? 'Compact map' : `All ${districts.length} districts`}
+              {allDistricts ? (
+                <ChevronUp aria-hidden="true" />
+              ) : (
+                <ChevronDown aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </div>
+        <div
+          className="lp-districts-track"
+          id="lp-districts-track"
+          ref={navRef}
+        >
           {districts.map((district, index) => (
             <button
               key={districtDomId(district, index)}
@@ -294,8 +425,17 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
               onClick={() => jumpTo(district)}
             >
               <span className="lp-district-name">{district.short}</span>
+              <span className="lp-district-full">{district.label}</span>
               <span className="lp-district-count">
                 {district.done}/{district.count}
+              </span>
+              <span className="lp-district-meter" aria-hidden="true">
+                <span
+                  className="lp-district-meter-fill"
+                  style={{
+                    width: `${district.count === 0 ? 0 : (district.done / district.count) * 100}%`,
+                  }}
+                />
               </span>
             </button>
           ))}
@@ -307,24 +447,9 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
         data-testid="lp-world"
         style={{ '--lp-rows': rows } as React.CSSProperties}
       >
-        <div className="lp-sky" aria-hidden="true">
-          <svg viewBox="0 0 1200 300" preserveAspectRatio="none">
-            <g className="lp-skyline">
-              <rect x="0" y="180" width="90" height="120" />
-              <rect x="96" y="140" width="54" height="160" />
-              <rect x="158" y="205" width="120" height="95" />
-              <rect x="290" y="120" width="70" height="180" />
-              <rect x="370" y="170" width="150" height="130" />
-              <rect x="532" y="90" width="48" height="210" />
-              <rect x="590" y="160" width="120" height="140" />
-              <rect x="720" y="200" width="90" height="100" />
-              <rect x="820" y="130" width="64" height="170" />
-              <rect x="894" y="180" width="130" height="120" />
-              <rect x="1034" y="110" width="58" height="190" />
-              <rect x="1100" y="190" width="100" height="110" />
-            </g>
-          </svg>
-        </div>
+        <SkyScenery />
+        <WorldGround />
+        <WorldCanal />
 
         {districts.map((district, index) => {
           const band = bandForRows(
@@ -341,14 +466,22 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
               }}
               className="lp-band"
               data-region={district.region}
+              data-theme={districtTheme(district.key, district.region)}
               data-active={activeDistrict === index ? 'true' : 'false'}
               data-testid={`lp-band-${index}`}
               style={{ top: `${band.top}%`, height: `${band.height}%` }}
               aria-hidden="true"
             >
+              <DistrictScenery
+                theme={districtTheme(district.key, district.region)}
+                variant={index}
+              />
               <span className="lp-band-label">
                 <span className="lp-band-number">{String(index + 1).padStart(2, '0')}</span>
-                {district.label}
+                <span className="lp-band-name">{district.label}</span>
+                <span className="lp-band-count">
+                  {district.done}/{district.count}
+                </span>
               </span>
             </div>
           );
@@ -360,6 +493,7 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
           preserveAspectRatio="none"
           aria-hidden="true"
         >
+          <path className="lp-road-curb" d={road} vectorEffect="non-scaling-stroke" />
           <path className="lp-road-bed" d={road} vectorEffect="non-scaling-stroke" />
           <path className="lp-road-line" d={road} vectorEffect="non-scaling-stroke" />
         </svg>
@@ -377,21 +511,31 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
               className="lp-node"
               data-state={node.state}
               data-district={node.district}
+              data-theme={districtTheme(node.district, node.region)}
               data-testid={`lp-lesson-${node.lesson.id}`}
               aria-label={`Lesson ${node.index} of ${nodes.length}: ${node.lesson.title}. ${node.districtLabel}. ${stateLabel(node.state)}`}
               data-selected={selectedId === node.lesson.id ? 'true' : 'false'}
               style={{ left: `${point.x}%`, top: `${point.y}%` }}
               onClick={() => select(node)}
             >
-              <span className="lp-platform" aria-hidden="true">
+              <span
+                className="lp-platform"
+                data-theme={districtTheme(node.district, node.region)}
+                aria-hidden="true"
+              >
                 <span className="lp-platform-shadow" />
+                <span className="lp-plaza" />
                 <Landmark kind={node.landmark} locked={node.state === 'locked'} />
+                <span className="lp-state-ring" />
                 {node.state === 'completed' && (
-                  <Check className="lp-mark lp-mark-check" aria-hidden="true" />
+                  <>
+                    <span className="lp-spark lp-spark-a" />
+                    <span className="lp-spark lp-spark-b" />
+                    <span className="lp-spark lp-spark-c" />
+                    <Check className="lp-mark lp-mark-check" />
+                  </>
                 )}
-                {node.state === 'locked' && (
-                  <Lock className="lp-mark lp-mark-lock" aria-hidden="true" />
-                )}
+                {node.state === 'locked' && <Lock className="lp-mark lp-mark-lock" />}
               </span>
               <span className="lp-label">
                 <span className="lp-number">{node.index}</span>
