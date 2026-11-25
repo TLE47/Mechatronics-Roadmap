@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.24.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.24.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,18 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-25] — Learning Path lesson platforms extracted without visual change
+
+The 97 lesson buttons moved out of `LearningPathPage.tsx` into `LessonNode.tsx`, taking the themed
+platform, inline landmark, label, number, four-state marks and Current flag with them. The component
+renders the same button with no wrapper, so the existing CSS, `data-*` attributes, test ids,
+click/keyboard behaviour, preview and runner handoff are unchanged. Curriculum, layout, road
+geometry, district navigation and progress were not touched.
+
+Verified with the 16 path unit checks, the browser suite (97 platforms, 21 districts, four states,
+preview/Start/Back, locked prerequisite and phone parity), the production build and `git diff
+--check`; desktop 1440×1100 and phone 390×844 captures are byte-identical to the baseline.
 
 ## [2026-11-25] — The Learning Path becomes an isometric engineering city
 

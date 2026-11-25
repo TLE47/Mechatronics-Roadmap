@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Compass,
-  Lock,
 } from 'lucide-react';
 import {
   buildLearningPath,
@@ -31,7 +29,7 @@ import {
   WorldCanal,
   WorldGround,
 } from './CityScenery.tsx';
-import { Landmark } from './Landmarks.tsx';
+import { LessonNode } from './LessonNode.tsx';
 import { LessonPreviewBody, LessonPreviewCard } from './LessonPreview.tsx';
 import './learningPath.css';
 
@@ -501,48 +499,20 @@ export const LearningPathPage: React.FC<LearningPathPageProps> = ({
         {nodes.map((node, index) => {
           const point = points[index];
           return (
-            <button
+            <LessonNode
               key={node.lesson.id}
-              type="button"
-              ref={(element) => {
-                if (element) nodeRefs.current.set(node.lesson.id, element);
-                else nodeRefs.current.delete(node.lesson.id);
+              node={node}
+              total={nodes.length}
+              theme={districtTheme(node.district, node.region)}
+              x={point.x}
+              y={point.y}
+              selected={selectedId === node.lesson.id}
+              onSelect={select}
+              registerButton={(lessonId, element) => {
+                if (element) nodeRefs.current.set(lessonId, element);
+                else nodeRefs.current.delete(lessonId);
               }}
-              className="lp-node"
-              data-state={node.state}
-              data-district={node.district}
-              data-theme={districtTheme(node.district, node.region)}
-              data-testid={`lp-lesson-${node.lesson.id}`}
-              aria-label={`Lesson ${node.index} of ${nodes.length}: ${node.lesson.title}. ${node.districtLabel}. ${stateLabel(node.state)}`}
-              data-selected={selectedId === node.lesson.id ? 'true' : 'false'}
-              style={{ left: `${point.x}%`, top: `${point.y}%` }}
-              onClick={() => select(node)}
-            >
-              <span
-                className="lp-platform"
-                data-theme={districtTheme(node.district, node.region)}
-                aria-hidden="true"
-              >
-                <span className="lp-platform-shadow" />
-                <span className="lp-plaza" />
-                <Landmark kind={node.landmark} locked={node.state === 'locked'} />
-                <span className="lp-state-ring" />
-                {node.state === 'completed' && (
-                  <>
-                    <span className="lp-spark lp-spark-a" />
-                    <span className="lp-spark lp-spark-b" />
-                    <span className="lp-spark lp-spark-c" />
-                    <Check className="lp-mark lp-mark-check" />
-                  </>
-                )}
-                {node.state === 'locked' && <Lock className="lp-mark lp-mark-lock" />}
-              </span>
-              <span className="lp-label">
-                <span className="lp-number">{node.index}</span>
-                <span className="lp-name">{node.lesson.title}</span>
-              </span>
-              {node.state === 'current' && <span className="lp-now">Current</span>}
-            </button>
+            />
           );
         })}
       </div>
